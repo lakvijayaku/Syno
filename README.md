@@ -12,10 +12,10 @@ Project documentation is in place. Development has not yet begun.
 _To be documented in an upcoming commit._
 
 ### AI-Assisted Development
-SYNO does not accept "vibe-coded" contributions. All code in this repository must be written by a human, and every commit must be made by a human. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full policy.
+SYNO does not accept "vibe-coded" contributions. All code in this repository must be written by a human, and every commit must be made by a human. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full policy.
 
 ### Contact
 Questions, bug reports, and suggestions can be sent to the project owner at lakvijayaku@gmail.com.
 
 ### License
-SYNO is a free and open-source project, licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for details.
+SYNO is a free and open-source project, licensed under the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for details.
