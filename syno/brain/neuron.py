@@ -1,3 +1,8 @@
+# ── SYNO · syno/brain/neuron.py ─────────────────────────
+# A single artificial neuron with a stable sigmoid.
+# Laksheth Vijayakumar · 2026-10-04 · GPL-3.0
+# ────────────────────────────────────────────────────────
+
 import math
 
 class Neuron:
