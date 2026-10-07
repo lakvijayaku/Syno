@@ -1,8 +1,28 @@
 ## Progress
 
-### 2026-10-04
-Documentation set up: README, CONTRIBUTING, Code of Conduct, glossary, architecture, biology, evaluation, and ADR 0001. Default branch is `master`. Roadmap step 1 complete: `Neuron` class with a numerically stable sigmoid, covered by 22 unit tests. Next: roadmap step 2, a network and backpropagation.
-Step 2a complete: `Layer` class, covered by 17 unit tests. Next: step 2b, the network.
+### Current Status
+Working on **step 2c: Loss**.
 
-### 2026-10-06
-Step 2b complete: `Network` class, covered by 15 unit tests. Next: step 2c, loss.
+### Roadmap
+| Step | Milestone | Status |
+|---|---|---|
+| **1** | Single neuron | ✅ Done |
+| **2a** | Layer | ✅ Done |
+| **2b** | Network | ✅ Done |
+| **2c** | Loss | ⏳ Next |
+| **2d** | Gradient descent on a single neuron | ⬜ Planned |
+| **2e** | Backpropagation | ⬜ Planned |
+| **2f** | Train on XOR | ⬜ Planned |
+| **3** | Habitat (grid world) | ⬜ Planned |
+
+### Log
+#### 2026-10-06
+- **Step 2b complete:** `Network` class that chains layers, covered by 15 unit tests.
+- Standardized the header format across all code files.
+
+#### 2026-10-04
+- **Documentation:** README, CONTRIBUTING, Code of Conduct, glossary, architecture, biology, evaluation, and ADR 0001.
+- **Step 1 complete:** `Neuron` class with a numerically stable sigmoid, covered by 22 unit tests.
+- **Step 2a complete:** `Layer` class, covered by 17 unit tests.
+- **Policy:** CONTRIBUTING updated to permit AI-drafted tests.
+- Default branch set to `master`.
