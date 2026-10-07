@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Working on **step 2c: Loss**.
+Working on **step 2d: Gradient descent on a single neuron**.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -9,14 +9,15 @@ Working on **step 2c: Loss**.
 | **1** | Single neuron | ✅ Done |
 | **2a** | Layer | ✅ Done |
 | **2b** | Network | ✅ Done |
-| **2c** | Loss | ⏳ Next |
-| **2d** | Gradient descent on a single neuron | ⬜ Planned |
+| **2c** | Loss | ✅ Done |
+| **2d** | Gradient descent on a single neuron | ⏳ Next |
 | **2e** | Backpropagation | ⬜ Planned |
 | **2f** | Train on XOR | ⬜ Planned |
 | **3** | Habitat (grid world) | ⬜ Planned |
 
 ### Log
 #### 2026-10-06
+- **Step 2c complete:** `mean_squared_error` loss function, covered by 20 unit tests.
 - **Step 2b complete:** `Network` class that chains layers, covered by 15 unit tests.
 - Standardized the header format across all code files.
 
