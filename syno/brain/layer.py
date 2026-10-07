@@ -1,5 +1,5 @@
-# ── SYNO · syno/brain/layer.py ─────────────────────────
-# A layer of neurons that handle the same inputs.
+# ── SYNO · syno/brain/layer.py ──────────────────────────
+# A layer of neurons that handle the same inputs
 # Laksheth Vijayakumar · 2026-10-04 · GPL-3.0
 # ────────────────────────────────────────────────────────
 
