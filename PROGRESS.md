@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Working on **step 6: Logging and plots**.
+Working on **step 7: Memory**.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -16,10 +16,12 @@ Working on **step 6: Logging and plots**.
 | **3** | Habitat (grid world) | ✅ Done |
 | **4** | Dopamine as reward prediction error | ✅ Done |
 | **5** | Drives | ✅ Done |
-| **6** | Logging and plots | ⏳ Next |
+| **6** | Logging and plots | ✅ Done |
+| **7** | Memory | ⏳ Next |
 
 ### Log
 #### 2026-10-07
+- **Step 6c complete:** `moving_average`, and the curiosity experiment now saves every life to `runs/curiosity.csv` and a chart to `runs/curiosity.svg`, covered by 9 unit tests. Step 6 (Logging and plots) is complete.
 - **Step 6b complete:** `line_chart` draws data as an SVG chart, covered by 12 unit tests.
 - **Step 6a complete:** `Recorder` saves run data as CSV, covered by 18 unit tests.
 - Documentation brought up to date: README status and AI policy, architecture overview and loop, biology, evaluation statuses, and glossary terms.

@@ -3,6 +3,7 @@
 # Laksheth Vijayakumar · 2026-10-07 · GPL-3.0
 # ────────────────────────────────────────────────────────
 
+import os
 import random
 
 from experiments.xor import make_layer
@@ -12,6 +13,9 @@ from syno.brain.learning import learn
 from syno.world.habitat import Habitat
 from syno.body.homeostasis import HomeostaticCore, homeostatic_reward
 from syno.brain.novelty import NoveltySystem
+from syno.tools.recorder import Recorder
+from syno.tools.plot import line_chart
+from syno.tools.stats import moving_average
 
 # Shared settings and helpers are reused from the hunger experiment, so the
 # only differences between the two experiments are defined in this file.
@@ -96,8 +100,9 @@ def live(network: Network) -> float:
 
 def main():
     """
-    Trains SYNO over many lives and prints its average energy every 500
-    lives, for comparison with the hunger experiment.
+    Trains SYNO over many lives, prints its average energy every 500 lives
+    for comparison with the hunger experiment, and saves every life's energy
+    to runs/curiosity.csv and a chart to runs/curiosity.svg.
     """
     random.seed(0)
 
@@ -108,14 +113,30 @@ def main():
         make_layer(len(ACTION_NAMES), HIDDEN_NEURONS, "linear")
     ])
 
+    # Every life is recorded, so the whole run can be saved and charted.
     energies = []
+    recorder = Recorder(["life", "energy"])
 
     for life in range(1, LIVES + 1):
-        energies.append(live(network))
+        energy = live(network)
+        energies.append(energy)
+        recorder.record({"life": life, "energy": energy})
 
         if life % 500 == 0:
             avg_energy = sum(energies[-500:]) / 500
             print(f"Life {life:4d} | Avg Energy: {avg_energy:.3f}")
+
+    # Results go in runs/, which git ignores: they can be recreated at any
+    # time by running the experiment. The chart is smoothed with a moving
+    # average, because energy varies a lot from one life to the next.
+    os.makedirs("runs", exist_ok=True)
+    recorder.save("runs/curiosity.csv")
+    line_chart(
+        moving_average(energies, 100),
+        "runs/curiosity.svg",
+        "SYNO average energy per life (moving average of 100)",
+    )
+    print("Saved runs/curiosity.csv and runs/curiosity.svg")
 
 if __name__ == "__main__":
     main()

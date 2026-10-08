@@ -13,4 +13,4 @@ This document defines how SYNO's behavior is measured. "Human-like" is not direc
 | **E6** | Habituation | Exploration of a familiar area declines over time and recovers after absence. | [`biology.md`](biology.md), Novelty and Habituation | Verified for the Novelty System only, not yet in behavior |
 
 ### Method
-Signatures are measured with recorded data from experiment runs. A signature passes only when the result is reproducible across multiple runs with different random seeds. The recording tools are in progress (roadmap step 6), so no signature has been formally measured yet.
+Signatures are measured with recorded data from experiment runs. A signature passes only when the result is reproducible across multiple runs with different random seeds. The recording tools are in place (`syno/tools/`), but no signature has been formally measured yet.
