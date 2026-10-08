@@ -5,12 +5,12 @@ This document maps each SYNO component to the biological mechanism it is modeled
 ### Homeostatic Regulation
 The hypothalamus regulates food intake by integrating signals about the body's energy state [1]. Ghrelin, released by the stomach, rises when it is empty and increases hunger. Satiety hormones such as CCK and GLP-1 rise during a meal and reduce hunger gradually rather than instantly. Leptin, released by fat tissue, signals long-term energy stores.
 
-**In SYNO:** The **HC** holds energy and stomach fill. The **SE** compute a hunger signal and a satiety signal from those values.
+**In SYNO:** The **HC** holds energy and stomach fill, and digests food into energy gradually. SYNO senses its energy deficit and stomach fill directly; separate hunger and satiety signals (**SE**) are not yet modeled.
 
 ### Reward Prediction Error
 Dopamine neurons encode the difference between received and expected reward [2]. An unexpected reward causes a burst of activity. Once a cue reliably predicts the reward, the burst shifts to the cue, and an omitted reward causes activity to fall below baseline. Dopamine also ramps upward as an animal approaches a distant reward [3].
 
-**In SYNO:** The **VE** predicts expected reward. The **DS** computes the RPE and uses it as the learning signal. Anticipation of food is expected to emerge, not to be programmed.
+**In SYNO:** The **DN**'s outputs predict the value of each action, acting as the **VE**. The **DS** computes the RPE and uses it as the learning signal. At the formula level, the RPE reproduces the burst for unexpected reward, no response for predicted reward, a dip for omitted reward, and a burst at a predictive cue.
 
 ### Wanting vs. Liking
 Dopamine drives "wanting," the motivation to pursue a reward, which is separate from "liking," the pleasure of consuming it [4].
@@ -20,7 +20,7 @@ Dopamine drives "wanting," the motivation to pursue a reward, which is separate 
 ### State-Dependent Reward
 The same stimulus is more rewarding when the body needs it more, a principle called alliesthesia [5]. Homeostatic reinforcement learning formalizes this by defining reward as a reduction in physiological deficit [6].
 
-**In SYNO:** Reward is the reduction in deficit. A full SYNO receives little reward from food; a hungry SYNO receives a lot. Eating while partially full emerges when food is close enough that its small reward outweighs the cost of reaching it.
+**In SYNO:** Reward is the reduction in drive, where drive is the squared energy deficit. Squaring makes the same food worth more to a hungrier SYNO: digestion that is worth 0.014 when nearly full is worth 0.062 when hungry. In experiments, a trained SYNO chooses to eat whenever it is hungry, including when partially full.
 
 ### Novelty and Habituation
 Novel stimuli elicit a response that weakens with repeated exposure [7].
@@ -30,7 +30,7 @@ Novel stimuli elicit a response that weakens with repeated exposure [7].
 ### Exploration and Exploitation
 The locus coeruleus–norepinephrine system adjusts whether an animal focuses on a known reward or disengages to explore [8].
 
-**In SYNO:** The **AS** will tune the exploration–exploitation balance. Planned for a later phase.
+**In SYNO:** The **AS** is not modeled. Exploration comes from the **NS** plus a small random exploration rate. Without any randomness, SYNO did not learn.
 
 ### Simplifications
 - Hormones are single numbers, not concentrations that diffuse through tissue.

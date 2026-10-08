@@ -20,6 +20,8 @@ Working on **step 6: Logging and plots**.
 
 ### Log
 #### 2026-10-07
+- **Step 6a complete:** `Recorder` saves run data as CSV, covered by 18 unit tests.
+- Documentation brought up to date: README status and AI policy, architecture overview and loop, biology, evaluation statuses, and glossary terms.
 - **Step 5e complete:** `NoveltySystem` with habituation and recovery, and `experiments/curiosity.py`, covered by 21 tests. Curiosity let SYNO learn with 5% random exploration instead of 30%, reaching an average energy of 0.86 to 0.91. Step 5 (Drives) is complete.
 - Glossary statuses updated for the components built so far.
 - **Step 5d complete:** `experiments/hunger.py`, where SYNO keeps itself fed with reward coming only from its body, covered by 7 tests. Average energy over a life rose from 0.23 to 0.82, and SYNO eats whenever hungry, including when half-full.

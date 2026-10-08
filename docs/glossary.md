@@ -23,7 +23,11 @@ This glossary defines every named component and key term used in SYNO. Component
 - **Tick:** One step of the simulation loop. SYNO senses, acts, and learns once per tick.
 - **Homeostasis:** The tendency of a body to keep internal variables near a set-point.
 - **Deficit:** The distance between an internal variable and its set-point. Larger deficit means stronger need.
-- **Reward:** In SYNO, a reduction in deficit. Reward is never assigned directly to a behavior.
+- **Reward:** In SYNO, a reduction in drive, plus a novelty bonus. Reward is never assigned directly to a behavior.
+- **Drive:** The squared energy deficit. Reward is the reduction in drive over a step.
+- **Q-Learning:** The learning method SYNO uses: each output of the DN predicts the value of one action, and only the action taken is updated by its RPE.
+- **Epsilon-Greedy:** Choosing the best-valued action, except for a random action a small fraction (epsilon) of the time.
+- **Life:** One run of an experiment, from SYNO's first step to its last.
 - **Reward Prediction Error (RPE):** Actual reward minus expected reward. Positive when better than expected, negative when worse.
 - **Alliesthesia:** The principle that the same stimulus is more rewarding when the body needs it more.
 - **Habituation:** The gradual weakening of a response to a repeated stimulus.

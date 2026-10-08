@@ -6,34 +6,42 @@ This document describes how SYNO is structured and how its components interact. 
 SYNO's behavior is never hard-coded. Only the physiology is defined: internal body variables, how they change over time, and the signals released in response. All behavior, including when to eat, explore, or rest, must emerge from learning. See [`ADR 0001`](adr/0001-no-hard-coded-behavior.md).
 
 ### Overview
-SYNO consists of two parts: the **Habitat (HB)**, which is the external world, and the **Artificial Mind (AM)**, which perceives, decides, and learns.
+SYNO consists of the **Habitat (HB)**, which is the external world, a body, the **Homeostatic Core (HC)**, and the **Artificial Mind (AM)**, which perceives, decides, and learns. The code is organized the same way:
+
+| Package | Contains |
+|---|---|
+| `syno/world/` | The Habitat: the grid, movement, eating, and senses |
+| `syno/body/` | The Homeostatic Core: energy, stomach, drive, and reward |
+| `syno/brain/` | Neurons, layers, networks, training, the Dopamine System, action selection, and the Novelty System |
+| `syno/tools/` | Recording data from runs |
 
 ```
 ┌──────────────────────── HB ────────────────────────┐
-│  food, obstacles, open space                       │
+│  food and open space, bounded by walls             │
 └──────────┬──────────────────────────────▲──────────┘
      senses│                              │action
 ┌──────────▼─────────────── AM ───────────┴──────────┐
 │          SI ─────────────► DN ──────────┘          │
 │                            ▲ ▲                     │
-│   HC ──► SE ───────────────┘ │ RPE                 │
+│   HC ──────────────────────┘ │ RPE                 │
 │   │                          │                     │
 │   └──► reward ──► DS ────────┘                     │
-│          ▲        ▲ │                              │
-│          NS      VE◄┘ RPE                          │
+│          ▲        ▲                                │
+│          NS       └── DN's own value prediction    │
 └────────────────────────────────────────────────────┘
 ```
+
+The **Value Estimator (VE)** is currently built into the **DN**: each DN output predicts the value of one action (Q-learning). The **Signal Emitters (SE)** are not yet separate: the HC's energy deficit and stomach fill are sensed directly.
 
 ### The Simulation Loop
 Each tick follows the same sequence:
 
-1. The **SI** converts the current view of the HB into input signals.
-2. The **SE** report the current hunger and satiety levels from the **HC**.
-3. The **DN** selects an action from the sensory and internal signals.
-4. The **HB** applies the action. The **HC** updates: energy drains, movement costs extra energy, and eating fills the stomach.
-5. Reward is computed as the reduction in deficit, plus a novelty bonus from the **NS**.
-6. The **DS** compares the reward against the **VE** prediction to produce the RPE.
-7. The **DN** and **VE** update their weights using the RPE.
+1. The **SI** converts the current view of the HB into input signals, and the **HC**'s energy deficit and stomach fill are added to them.
+2. The **DN** predicts the value of each action. The best action is chosen, except for a small random fraction of steps.
+3. The **HB** applies the action. The **HC** updates: food is digested, energy drains, and movement costs extra energy.
+4. Reward is computed as the reduction in drive (the squared energy deficit), scaled, plus a novelty bonus from the **NS**.
+5. The **DS** compares the reward with the DN's prediction to produce the RPE.
+6. The **DN** updates its weights for the action taken, using the RPE.
 
 ### Hard-Coded vs. Emergent
 | Hard-Coded (Physiology) | Emergent (Behavior) |
@@ -41,7 +49,8 @@ Each tick follows the same sequence:
 | Internal variables and set-points | Eating when partially full |
 | Energy drain and movement cost | Choosing whether to pursue distant food |
 | Signal formulas (hunger, satiety, novelty) | Anticipation when food is seen |
-| Reward as deficit reduction; RPE | Boredom, resting, and renewed curiosity |
+| Reward as drive reduction; RPE | Boredom, resting, and renewed curiosity |
+| A small random exploration rate (temporary) | |
 
 ### Development Phases
 - **Phase 1:** Pure Python, standard library only.
