@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Working on **step 7: Memory**.
+Working on **step 8: Neuron growth**.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -17,10 +17,12 @@ Working on **step 7: Memory**.
 | **4** | Dopamine as reward prediction error | ✅ Done |
 | **5** | Drives | ✅ Done |
 | **6** | Logging and plots | ✅ Done |
-| **7** | Memory | ⏳ Next |
+| **7** | Memory | ✅ Done |
+| **8** | Neuron growth | ⏳ Next |
 
 ### Log
 #### 2026-10-07
+- **Step 7c complete:** priority-weighted recall in `MemoryStore`, and `experiments/consolidation.py`, where surprising memories are replayed most often, covered by 18 tests. Average energy reached 0.72 in the first 500 lives, and the worst dip after learning rose to 0.86. Step 7 (Memory) is complete.
 - **Step 7b complete:** `experiments/replay.py`, where SYNO replays 2 random memories after every step, covered by 7 tests. Average energy reached about 0.86 roughly three times sooner than without replay, and stayed between 0.90 and 0.93.
 - **Step 7a complete:** `MemoryStore` holds recent experiences and forgets the oldest, covered by 11 unit tests.
 - **Step 6c complete:** `moving_average`, and the curiosity experiment now saves every life to `runs/curiosity.csv` and a chart to `runs/curiosity.svg`, covered by 9 unit tests. Step 6 (Logging and plots) is complete.

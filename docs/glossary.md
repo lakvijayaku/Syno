@@ -15,7 +15,7 @@ This glossary defines every named component and key term used in SYNO. Component
 | **DS** | Dopamine System | Computes the reward prediction error (actual reward minus expected reward) and broadcasts it as the learning signal. | Built: `syno/brain/dopamine.py` |
 | **NS** | Novelty System | Produces a novelty signal for unfamiliar states, which fades with repeated exposure. | Built: `syno/brain/novelty.py` |
 | **AS** | Arousal System | Norepinephrine analog that tunes the balance between exploring and exploiting. | Planned |
-| **MS** | Memory Store | Records experiences for replay, forgetting, and consolidation. | Built: `syno/brain/memory.py`, replayed in `experiments/replay.py` |
+| **MS** | Memory Store | Records experiences for replay, forgetting, and consolidation. | Built: `syno/brain/memory.py`, with uniform replay (`experiments/replay.py`) and surprise-weighted replay (`experiments/consolidation.py`) |
 | **GE** | Growth Engine | Adds neurons and connections to the DN over time (NEAT). | Planned |
 | **EM** | Endocrine Modulator | Slow, global hormone and emotion analogs that modulate all other components. | Planned |
 

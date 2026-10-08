@@ -33,9 +33,9 @@ The locus coeruleus–norepinephrine system adjusts whether an animal focuses on
 **In SYNO:** The **AS** is not modeled. Exploration comes from the **NS** plus a small random exploration rate. Without any randomness, SYNO did not learn.
 
 ### Memory Replay
-During rest and sleep, the hippocampus replays sequences of recent experience, which helps consolidate them into long-term memory [9].
+During rest and sleep, the hippocampus replays sequences of recent experience, which helps consolidate them into long-term memory [9]. Replay is not uniform: experiences linked to reward are replayed more often [10], and replay patterns match a model that favors the memories most useful to learn from [11].
 
-**In SYNO:** The **MS** holds SYNO's most recent experiences and forgets the oldest when full. After every step, SYNO re-learns from 2 experiences recalled at random. With replay, SYNO reached an average energy of about 0.86 roughly three times sooner, and its worst dip after learning was smaller (0.76 rather than 0.64), though not eliminated.
+**In SYNO:** The **MS** holds SYNO's most recent experiences and forgets the oldest when full. After every step, SYNO re-learns from 2 recalled experiences. Recalling at random, SYNO reached an average energy of about 0.86 roughly three times sooner, and its worst dip after learning was smaller (0.76 rather than 0.64). Recalling in proportion to surprise, measured as the size of each memory's RPE, SYNO learned faster still, and its worst dip after learning rose to 0.86.
 
 ### Simplifications
 - Hormones are single numbers, not concentrations that diffuse through tissue.
@@ -53,3 +53,5 @@ During rest and sleep, the hippocampus replays sequences of recent experience, w
 7. Thompson, R. F., & Spencer, W. A. (1966). Habituation: A model phenomenon for the study of neuronal substrates of behavior. *Psychological Review*, 73(1), 16–43.
 8. Aston-Jones, G., & Cohen, J. D. (2005). An integrative theory of locus coeruleus–norepinephrine function: Adaptive gain and optimal performance. *Annual Review of Neuroscience*, 28, 403–450.
 9. Wilson, M. A., & McNaughton, B. L. (1994). Reactivation of hippocampal ensemble memories during sleep. *Science*, 265(5172), 676–679.
+10. Ambrose, R. E., Pfeiffer, B. E., & Foster, D. J. (2016). Reverse replay of hippocampal place cells is uniquely modulated by changing reward. *Neuron*, 91(5), 1124–1136.
+11. Mattar, M. G., & Daw, N. D. (2018). Prioritized memory access explains planning and hippocampal replay. *Nature Neuroscience*, 21(11), 1609–1617.
