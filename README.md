@@ -6,7 +6,7 @@
 SYNO is a brain-inspired artificial organism built from scratch as a learning project. Instead of being trained purely on a fixed objective, SYNO is driven by internal motivations: artificial dopamine, drives such as hunger and novelty, memory, and, eventually, hormones and emotions that act as slow, global modulators of behavior, loosely modeled on human motivation.
 
 ### Project Status
-Project documentation is in place. Development has not yet begun.
+Phase 1 is in progress. The neural network core (neurons, layers, networks, loss, and backpropagation) is complete and covered by unit tests. See [`PROGRESS.md`](PROGRESS.md) for details.
 
 ### Architecture
 SYNO consists of a simulated world, the Habitat, and an Artificial Mind (AM) that perceives, decides, and learns within it. Only physiology is hard-coded; all behavior must emerge from learning. See [`docs/architecture.md`](docs/architecture.md) for the full design, [`docs/biology.md`](docs/biology.md) for its biological basis, and [`docs/glossary.md`](docs/glossary.md) for component names.

@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Working on **step 2e: Backpropagation**.
+Working on **step 2f: Train on XOR**.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -11,11 +11,15 @@ Working on **step 2e: Backpropagation**.
 | **2b** | Network | ✅ Done |
 | **2c** | Loss | ✅ Done |
 | **2d** | Gradient descent on a single neuron | ✅ Done |
-| **2e** | Backpropagation | ⏳ Next |
-| **2f** | Train on XOR | ⬜ Planned |
+| **2e** | Backpropagation | ✅ Done |
+| **2f** | Train on XOR | ⏳ Next |
 | **3** | Habitat (grid world) | ⬜ Planned |
 
 ### Log
+#### 2026-10-07
+- **Step 2e complete:** `train_network_step` backpropagation for multi-layer networks, covered by 14 unit tests.
+- README project status updated to reflect current progress.
+
 #### 2026-10-06
 - **Step 2d complete:** `train_step` gradient descent for a single neuron, covered by 17 unit tests.
 - **Step 2c complete:** `mean_squared_error` loss function, covered by 20 unit tests.
