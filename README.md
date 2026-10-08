@@ -15,7 +15,7 @@ SYNO consists of a simulated world, the Habitat, and an Artificial Mind (AM) tha
 SYNO does not accept "vibe-coded" contributions. All code in this repository must be written by a human, and every commit must be made by a human. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full policy.
 
 ### Contact
-Questions, bug reports, and suggestions can be sent to the project owner at lakvijayaku@gmail.com.
+Questions, bug reports, and suggestions can be sent to the project owner at [`lakvijayaku@gmail.com`](mailto:lakvijayaku@gmail.com).
 
 ### License
 SYNO is a free and open-source project, licensed under the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for details.

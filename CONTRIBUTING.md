@@ -15,4 +15,4 @@ The policy is as follows:
 Contributors who commit unverified AI-generated content, whether code or documentation, may be banned from the project.
 
 ### How to Contribute
-At this stage, the project owner is learning neural networks and brain-inspired AI and intends to write the code personally. Code contributions are therefore not being accepted yet. The best way to contribute is to report bugs or suggest improvements by email to lakvijayaku@gmail.com.
+At this stage, the project owner is learning neural networks and brain-inspired AI and intends to write the code personally. Code contributions are therefore not being accepted yet. The best way to contribute is to report bugs or suggest improvements by email to [`lakvijayaku@gmail.com`](mailto:lakvijayaku@gmail.com).
