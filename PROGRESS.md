@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-All 9 roadmap steps are complete.
+Steps 1 to 9 are complete. Step 10 (Evaluation signatures) is in progress.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -20,9 +20,11 @@ All 9 roadmap steps are complete.
 | **7** | Memory | ✅ Done |
 | **8** | Neuron growth | ✅ Done |
 | **9** | Hormones and emotions | ✅ Done |
+| **10** | Evaluation signatures | 🔄 In progress |
 
 ### Log
 #### 2026-10-08
+- Documentation brought up to the current state: README (status, running SYNO), architecture (packages, diagram), glossary (AS status, new terms), biology, and PROGRESS (step 10).
 - **Step 9b complete:** `experiments/arousal.py`, where an arousal hormone fed by surprise sets the learning rate, covered by 10 tests. After moving to a larger world, SYNO recovered faster (average energy 0.65 rather than 0.46 over the next 250 lives) but performed about the same in the long run. A stress hormone that raised exploration was tested and rejected. `spawn_food` now works on any grid size. Step 9 (Hormones and emotions) is complete, and with it the roadmap.
 
 #### 2026-10-07

@@ -30,7 +30,7 @@ Novel stimuli elicit a response that weakens with repeated exposure [7].
 ### Exploration and Exploitation
 The locus coeruleus–norepinephrine system adjusts whether an animal focuses on a known reward or disengages to explore [8].
 
-**In SYNO:** The **AS** is not modeled. Exploration comes from the **NS** plus a small random exploration rate. Without any randomness, SYNO did not learn.
+**In SYNO:** The **AS** is not modeled. Exploration comes from the **NS** plus a small random exploration rate. The novelty bonus let the random rate fall from 30% to 5%, but without any randomness, SYNO did not learn.
 
 ### Memory Replay
 During rest and sleep, the hippocampus replays sequences of recent experience, which helps consolidate them into long-term memory [9]. Replay is not uniform: experiences linked to reward are replayed more often [10], and replay patterns match a model that favors the memories most useful to learn from [11].
@@ -50,7 +50,7 @@ Hormones and neuromodulators act slowly and globally, so their levels reflect th
 ### Simplifications
 - Hormones are single numbers, not concentrations that diffuse through tissue.
 - The hypothalamus, VTA, and nucleus accumbens are not modeled as separate brain regions.
-- Leptin and long-term energy storage are not modeled in the first version.
+- Leptin and long-term energy storage are not modeled.
 - "Liking" and conscious experience are not modeled. SYNO's signals are numbers; they do not imply feelings.
 
 ### References

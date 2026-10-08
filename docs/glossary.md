@@ -14,7 +14,7 @@ This glossary defines every named component and key term used in SYNO. Component
 | **VE** | Value Estimator | Predicts how much reward SYNO expects from its current situation. | Built into the DN: each output predicts the value of one action |
 | **DS** | Dopamine System | Computes the reward prediction error (actual reward minus expected reward) and broadcasts it as the learning signal. | Built: `syno/brain/dopamine.py` |
 | **NS** | Novelty System | Produces a novelty signal for unfamiliar states, which fades with repeated exposure. | Built: `syno/brain/novelty.py` |
-| **AS** | Arousal System | Norepinephrine analog that tunes the balance between exploring and exploiting. | Planned |
+| **AS** | Arousal System | Norepinephrine analog that tunes the balance between exploring and exploiting. | Not modeled. The arousal hormone in `experiments/arousal.py` sets the learning rate, not exploration |
 | **MS** | Memory Store | Records experiences for replay, forgetting, and consolidation. | Built: `syno/brain/memory.py`, with uniform replay (`experiments/replay.py`) and surprise-weighted replay (`experiments/consolidation.py`) |
 | **GE** | Growth Engine | Adds neurons to the DN over time, without changing what the DN outputs. | Built: `syno/brain/growth.py`. In `experiments/neurogenesis.py`, SYNO grows when its surprise stops falling |
 | **EM** | Endocrine Modulator | Slow, global hormone and emotion analogs that modulate all other components. | Built: `syno/body/hormones.py`. In `experiments/arousal.py`, an arousal hormone fed by surprise sets the learning rate |
@@ -32,4 +32,12 @@ This glossary defines every named component and key term used in SYNO. Component
 - **Alliesthesia:** The principle that the same stimulus is more rewarding when the body needs it more.
 - **Habituation:** The gradual weakening of a response to a repeated stimulus.
 - **Exploration / Exploitation:** Trying unfamiliar actions versus repeating actions known to be rewarding.
+- **Learning Rate:** How large a change each RPE makes to the DN's weights.
+- **Experience Replay:** Re-learning from past steps recalled from the MS, in addition to the current step.
+- **Prioritized Replay:** Experience replay that recalls each memory in proportion to its surprise, measured as the size of its RPE.
+- **Neurogenesis:** Adding new neurons to a network that is already learning. In SYNO, this is done by the GE.
+- **Hormone:** A slow signal whose level moves a fixed fraction of the way toward its input on every tick, so it reflects the recent past.
+- **Arousal:** In SYNO, a hormone fed by surprise that raises the learning rate after surprising outcomes (the Pearce-Hall model).
+- **Seed:** The starting value for random numbers. The same seed reproduces the same run exactly.
+- **Behavioral Signature:** A behavior documented in biological research that SYNO should reproduce without it being hard-coded. Listed in [`evaluation.md`](evaluation.md).
 - **Emergent Behavior:** Behavior that arises from the interaction of components rather than being explicitly programmed.

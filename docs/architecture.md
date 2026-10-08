@@ -14,6 +14,8 @@ SYNO consists of the **Habitat (HB)**, which is the external world, a body, the 
 | `syno/body/` | The Homeostatic Core (energy, stomach, drive, and reward) and hormones |
 | `syno/brain/` | Neurons, layers, networks, training, the Dopamine System, action selection, the Novelty System, the Memory Store, and the Growth Engine |
 | `syno/tools/` | Recording data from runs, smoothing it, and drawing it as charts |
+| `experiments/` | Runnable experiments, each adding one mechanism to the one before |
+| `tests/` | Unit tests for every module and experiment |
 
 ```
 ┌──────────────────────── HB ────────────────────────┐
@@ -26,8 +28,10 @@ SYNO consists of the **Habitat (HB)**, which is the external world, a body, the 
 │   HC ──────────────────────┘ │ RPE                 │
 │   │                          │                     │
 │   └──► reward ──► DS ────────┘                     │
-│          ▲        ▲                                │
-│          NS       └── DN's own value prediction    │
+│          ▲        ▲   │                            │
+│          NS       │   ├──► MS ──► replay ──► DN    │
+│                   │   └──► EM ──► learning rate    │
+│                   └── DN's own value prediction    │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -53,7 +57,8 @@ Across lives, the **GE** adds a hidden neuron to the DN whenever SYNO's average 
 | Energy drain and movement cost | Choosing whether to pursue distant food |
 | Signal formulas (hunger, satiety, novelty) | Anticipation when food is seen |
 | Reward as drive reduction; RPE | Boredom, resting, and renewed curiosity |
-| A small random exploration rate (temporary) | |
+| A small random exploration rate | |
+| When the GE adds a neuron | |
 
 ### Development Phases
 - **Phase 1:** Pure Python, standard library only.
