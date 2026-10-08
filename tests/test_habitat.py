@@ -214,5 +214,57 @@ class TestHabitatMove(unittest.TestCase):
             self.assertEqual(abs(dx) + abs(dy), 1)
 
 
+
+class TestHabitatEat(unittest.TestCase):
+    """Verifies eating."""
+
+    def test_step_3c_sequence(self):
+        habitat = Habitat(4, 1, (0, 0), [(1, 0), (3, 0)])
+        self.assertFalse(habitat.eat())
+        self.assertEqual(habitat.food, [(1, 0), (3, 0)])
+        habitat.move("right")
+        self.assertTrue(habitat.eat())
+        self.assertEqual(habitat.food, [(3, 0)])
+        self.assertFalse(habitat.eat())
+        self.assertEqual(habitat.food, [(3, 0)])
+
+    def test_eating_removes_only_the_food_under_syno(self):
+        habitat = Habitat(3, 3, (1, 1), [(0, 0), (1, 1), (2, 2)])
+        habitat.eat()
+        self.assertEqual(habitat.food, [(0, 0), (2, 2)])
+
+    def test_eating_with_no_food_anywhere(self):
+        habitat = Habitat(3, 3, (1, 1), [])
+        self.assertFalse(habitat.eat())
+        self.assertEqual(habitat.food, [])
+
+    def test_eating_does_not_move_syno(self):
+        habitat = Habitat(3, 3, (1, 1), [(1, 1)])
+        habitat.eat()
+        self.assertEqual(habitat.agent, (1, 1))
+
+    def test_eaten_food_disappears_from_render(self):
+        habitat = Habitat(3, 1, (0, 0), [(1, 0)])
+        habitat.move("right")
+        habitat.eat()
+        habitat.move("right")
+        self.assertEqual(habitat.render(), "..S")
+
+    def test_eat_all_food(self):
+        habitat = Habitat(3, 1, (0, 0), [(0, 0), (1, 0), (2, 0)])
+        eaten = 0
+        for _ in range(3):
+            eaten += habitat.eat()
+            habitat.move("right")
+        self.assertEqual(eaten, 3)
+        self.assertEqual(habitat.food, [])
+
+    def test_eating_does_not_affect_callers_food_list(self):
+        food = [(0, 0)]
+        habitat = Habitat(2, 1, (0, 0), food)
+        habitat.eat()
+        self.assertEqual(food, [(0, 0)])
+
+
 if __name__ == "__main__":
     unittest.main()

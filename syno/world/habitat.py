@@ -101,3 +101,16 @@ class Habitat:
             return False
         self.agent = new_position
         return True
+
+    def eat(self) -> bool:
+        """
+        Eats the food on SYNO's square, if there is any.
+
+        :return: True if food was eaten, or False if the square had no food.
+        """
+        if self.agent not in self.food:
+            return False
+        # Eaten food is removed from the world. remove() deletes only the
+        # first matching position.
+        self.food.remove(self.agent)
+        return True

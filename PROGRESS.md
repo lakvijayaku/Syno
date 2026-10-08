@@ -17,6 +17,7 @@ Working on **step 3: Habitat (grid world)**.
 
 ### Log
 #### 2026-10-07
+- **Step 3c complete:** eating removes food from SYNO's square, covered by 7 unit tests.
 - **Step 3b complete:** movement actions with grid edges acting as walls, covered by 12 unit tests.
 - **Step 3a complete:** `Habitat` grid with bounds checking and text rendering, covered by 16 unit tests.
 - **Step 2f complete:** `experiments/xor.py` trains a 2-3-1 network to solve XOR, covered by 7 tests.
