@@ -42,6 +42,11 @@ New neurons continue to be born in parts of the adult brain, including the human
 
 **In SYNO:** The **GE** adds a neuron to a hidden layer of the **DN**. The new neuron's outgoing connections start at zero, so the DN's output is unchanged at first, and the connections are then learned. A network too small to learn XOR solved it after growing two neurons. In the habitat, SYNO starts with one hidden neuron and grows one whenever its average surprise stops falling. It took off once it reached 5 to 6 neurons, matching the performance of the 8-neuron network that was sized by hand. Surprise also stops falling once the task is mastered, so SYNO keeps growing after learning is complete, up to a fixed limit.
 
+### Hormones and Arousal
+Hormones and neuromodulators act slowly and globally, so their levels reflect the recent past rather than the present moment. In the Pearce-Hall model of learning, attention to a situation, and so the speed of learning about it, rises after surprising outcomes and falls as outcomes become predictable [13].
+
+**In SYNO:** A hormone's level drifts a fixed fraction of the way toward its signal on every step. An arousal hormone fed by surprise (the size of the RPE) sets SYNO's learning rate. When SYNO moved from a 3x3 world to a 5x5 world, arousal raised its average energy over the next 250 lives from 0.46 to 0.65 for seed 0, and from 0.46 to 0.55 averaged over 6 seeds, with 5 of 6 seeds improving; over the longer run, SYNO performed about the same with or without it. A stress hormone fed by hunger that raised random exploration was also tested, and made SYNO worse after the move. These hormones are numbers that change how SYNO learns. They do not imply feelings.
+
 ### Simplifications
 - Hormones are single numbers, not concentrations that diffuse through tissue.
 - The hypothalamus, VTA, and nucleus accumbens are not modeled as separate brain regions.
@@ -61,3 +66,4 @@ New neurons continue to be born in parts of the adult brain, including the human
 10. Ambrose, R. E., Pfeiffer, B. E., & Foster, D. J. (2016). Reverse replay of hippocampal place cells is uniquely modulated by changing reward. *Neuron*, 91(5), 1124–1136.
 11. Mattar, M. G., & Daw, N. D. (2018). Prioritized memory access explains planning and hippocampal replay. *Nature Neuroscience*, 21(11), 1609–1617.
 12. Eriksson, P. S., Perfilieva, E., Björk-Eriksson, T., Alborn, A.-M., Nordborg, C., Peterson, D. A., & Gage, F. H. (1998). Neurogenesis in the adult human hippocampus. *Nature Medicine*, 4(11), 1313–1317.
+13. Pearce, J. M., & Hall, G. (1980). A model for Pavlovian learning: Variations in the effectiveness of conditioned but not of unconditioned stimuli. *Psychological Review*, 87(6), 532–552.

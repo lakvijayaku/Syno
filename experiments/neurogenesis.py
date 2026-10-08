@@ -175,10 +175,10 @@ def main():
 
         current_hidden = len(network.layers[0].neurons)
         recorder.record({
-            "life": float(life),
+            "life": life,
             "energy": energy,
             "surprise": surprise,
-            "hidden": float(current_hidden)
+            "hidden": current_hidden
         })
 
         if life % 250 == 0:

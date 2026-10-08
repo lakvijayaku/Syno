@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Working on **step 9: Hormones and emotions**.
+All 9 roadmap steps are complete.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -19,9 +19,12 @@ Working on **step 9: Hormones and emotions**.
 | **6** | Logging and plots | ✅ Done |
 | **7** | Memory | ✅ Done |
 | **8** | Neuron growth | ✅ Done |
-| **9** | Hormones and emotions | ⏳ Next |
+| **9** | Hormones and emotions | ✅ Done |
 
 ### Log
+#### 2026-10-08
+- **Step 9b complete:** `experiments/arousal.py`, where an arousal hormone fed by surprise sets the learning rate, covered by 10 tests. After moving to a larger world, SYNO recovered faster (average energy 0.65 rather than 0.46 over the next 250 lives) but performed about the same in the long run. A stress hormone that raised exploration was tested and rejected. `spawn_food` now works on any grid size. Step 9 (Hormones and emotions) is complete, and with it the roadmap.
+
 #### 2026-10-07
 - **Step 9a complete:** `Hormone`, a slow signal that builds up and fades gradually, covered by 11 unit tests.
 - **Step 8b complete:** `experiments/neurogenesis.py`, where SYNO starts with one hidden neuron and grows whenever its surprise stops falling, covered by 8 tests. It reached an average energy of 0.93, matching the hand-sized network. Step 8 (Neuron growth) is complete.

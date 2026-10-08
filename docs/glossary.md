@@ -17,7 +17,7 @@ This glossary defines every named component and key term used in SYNO. Component
 | **AS** | Arousal System | Norepinephrine analog that tunes the balance between exploring and exploiting. | Planned |
 | **MS** | Memory Store | Records experiences for replay, forgetting, and consolidation. | Built: `syno/brain/memory.py`, with uniform replay (`experiments/replay.py`) and surprise-weighted replay (`experiments/consolidation.py`) |
 | **GE** | Growth Engine | Adds neurons to the DN over time, without changing what the DN outputs. | Built: `syno/brain/growth.py`. In `experiments/neurogenesis.py`, SYNO grows when its surprise stops falling |
-| **EM** | Endocrine Modulator | Slow, global hormone and emotion analogs that modulate all other components. | In progress: `syno/body/hormones.py` provides the slow hormone signal |
+| **EM** | Endocrine Modulator | Slow, global hormone and emotion analogs that modulate all other components. | Built: `syno/body/hormones.py`. In `experiments/arousal.py`, an arousal hormone fed by surprise sets the learning rate |
 
 ### Terms
 - **Tick:** One step of the simulation loop. SYNO senses, acts, and learns once per tick.

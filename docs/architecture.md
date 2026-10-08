@@ -44,7 +44,7 @@ Each tick follows the same sequence:
 6. The **DN** updates its weights for the action taken, using the RPE.
 7. The step is stored in the **MS** with a priority equal to the size of its RPE, and SYNO re-learns from a few past steps, recalled in proportion to their priority (memory replay).
 
-Across lives, the **GE** adds a hidden neuron to the DN whenever SYNO's average surprise stops falling.
+Across lives, the **GE** adds a hidden neuron to the DN whenever SYNO's average surprise stops falling. In the arousal experiment, the **EM**'s arousal hormone, fed by surprise, sets the learning rate at the start of each step.
 
 ### Hard-Coded vs. Emergent
 | Hard-Coded (Physiology) | Emergent (Behavior) |

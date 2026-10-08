@@ -34,12 +34,13 @@ LIFE_STEPS = 100
 
 def spawn_food(habitat: Habitat) -> None:
     """
-    Places one new piece of food on a random square that is free.
+    Places one new piece of food on a random free square. Works for a
+    habitat of any size.
 
     :param habitat: The habitat to add food to.
     """
     while True:
-        position = (random.randrange(GRID_SIZE), random.randrange(GRID_SIZE))
+        position = (random.randrange(habitat.width), random.randrange(habitat.height))
         if position != habitat.agent and position not in habitat.food:
             habitat.food.append(position)
             return
@@ -128,3 +129,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
