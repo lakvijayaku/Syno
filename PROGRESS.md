@@ -19,6 +19,7 @@ Working on **step 5: Drives**.
 
 ### Log
 #### 2026-10-07
+- **Step 5d complete:** `experiments/hunger.py`, where SYNO keeps itself fed with reward coming only from its body, covered by 7 tests. Average energy over a life rose from 0.23 to 0.82, and SYNO eats whenever hungry, including when half-full.
 - **Step 5c complete:** linear activation for neurons, with training using each neuron's own slope, covered by 15 new unit tests.
 - **Step 5b complete:** drive and `homeostatic_reward`, so reward comes from reducing hunger, covered by 9 unit tests.
 - **Step 5a complete:** `HomeostaticCore` with energy, digestion, and stomach capacity, covered by 20 unit tests.

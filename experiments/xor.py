@@ -10,12 +10,13 @@ from syno.brain.network import Network
 from syno.brain.layer import Layer
 from syno.brain.training import train_network_step
 
-def make_layer(num_neurons, num_inputs):
+def make_layer(num_neurons: int, num_inputs: int, activation: str = "sigmoid"):
     """
     Builds a layer of neurons with random starting weights and biases.
 
     :param num_neurons: How many neurons the layer contains.
     :param num_inputs: How many inputs each neuron receives.
+    :param activation: "sigmoid" (the default) or "linear", passed to every neuron.
     :return: A Layer whose weights and biases are drawn uniformly from [-1, 1].
     """
     # Random starting values break the symmetry between neurons. If every
@@ -25,7 +26,7 @@ def make_layer(num_neurons, num_inputs):
     for _ in range(num_neurons):
         weights = [random.uniform(-1.0, 1.0) for _ in range(num_inputs)]
         bias = random.uniform(-1.0, 1.0)
-        neurons.append(Neuron(weights, bias))
+        neurons.append(Neuron(weights, bias, activation))
     return Layer(neurons)
 
 def main():
