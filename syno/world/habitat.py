@@ -114,3 +114,38 @@ class Habitat:
         # first matching position.
         self.food.remove(self.agent)
         return True
+
+    def sense(self, radius: int) -> list[float]:
+        """
+        Describes the square window around SYNO as numbers its brain can read.
+
+        Each square becomes 1.0 for food, 0.0 for empty, or -1.0 for off the
+        grid. Values are ordered row by row from the top-left of the window,
+        the same order as render. SYNO's own square is included.
+
+        :param radius: How many squares SYNO can see in each direction.
+        :return: A list of (2 * radius + 1) ** 2 values.
+        :raises ValueError: If radius is negative.
+        """
+        if radius < 0:
+            raise ValueError("Radius must be at least 0.")
+
+        x, y = self.agent
+        senses = []
+
+        # This reports raw facts only. It never tells SYNO where to go; the
+        # brain must learn what the numbers mean. The range ends at radius + 1
+        # because range excludes its end value.
+        for dy in range(-radius, radius + 1):
+            for dx in range(-radius, radius + 1):
+                position = (x + dx, y + dy)
+                # Walls get their own value, so SYNO can tell the edge of the
+                # world apart from empty floor.
+                if not self.in_bounds(position):
+                    senses.append(-1.0)
+                elif position in self.food:
+                    senses.append(1.0)
+                else:
+                    senses.append(0.0)
+
+        return senses

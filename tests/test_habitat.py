@@ -266,5 +266,87 @@ class TestHabitatEat(unittest.TestCase):
         self.assertEqual(food, [(0, 0)])
 
 
+
+class TestHabitatSense(unittest.TestCase):
+    """Verifies what SYNO perceives."""
+
+    def test_step_3d_example(self):
+        habitat = Habitat(4, 3, (0, 0), [(1, 0), (1, 1)])
+        self.assertEqual(
+            habitat.sense(1),
+            [-1.0, -1.0, -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0],
+        )
+
+    def test_output_size_is_always_the_window_area(self):
+        # The size must not change near walls, so the brain always receives
+        # the same number of inputs.
+        for agent in [(0, 0), (2, 1), (4, 2)]:
+            habitat = Habitat(5, 3, agent, [])
+            for radius in range(4):
+                with self.subTest(agent=agent, radius=radius):
+                    self.assertEqual(len(habitat.sense(radius)), (2 * radius + 1) ** 2)
+
+    def test_radius_zero_sees_only_its_own_square(self):
+        self.assertEqual(Habitat(3, 3, (1, 1), []).sense(0), [0.0])
+        self.assertEqual(Habitat(3, 3, (1, 1), [(1, 1)]).sense(0), [1.0])
+
+    def test_window_is_ordered_row_by_row(self):
+        # Food directly above SYNO is the 2nd value; directly to the left is
+        # the 4th; directly to the right is the 6th; directly below is the 8th.
+        cases = {(1, 0): 1, (0, 1): 3, (2, 1): 5, (1, 2): 7}
+        for food, index in cases.items():
+            with self.subTest(food=food):
+                senses = Habitat(3, 3, (1, 1), [food]).sense(1)
+                self.assertEqual(senses[index], 1.0)
+                self.assertEqual(senses.count(1.0), 1)
+
+    def test_center_of_open_grid_sees_no_walls(self):
+        senses = Habitat(5, 5, (2, 2), []).sense(2)
+        self.assertEqual(senses, [0.0] * 25)
+
+    def test_each_wall_appears_on_the_correct_side(self):
+        # On a 1x1 grid, every square except SYNO's own is a wall.
+        senses = Habitat(1, 1, (0, 0), []).sense(1)
+        self.assertEqual(senses, [-1.0] * 4 + [0.0] + [-1.0] * 4)
+
+    def test_far_wall_is_seen_only_within_radius(self):
+        habitat = Habitat(5, 1, (0, 0), [])
+        # Radius 1 sees the left wall but not the right wall 5 squares away.
+        middle_row = habitat.sense(1)[3:6]
+        self.assertEqual(middle_row, [-1.0, 0.0, 0.0])
+
+    def test_food_outside_the_window_is_not_seen(self):
+        habitat = Habitat(9, 1, (0, 0), [(5, 0)])
+        self.assertNotIn(1.0, habitat.sense(2))
+        self.assertIn(1.0, habitat.sense(5))
+
+    def test_values_are_only_minus_one_zero_or_one(self):
+        habitat = Habitat(4, 4, (1, 2), [(0, 0), (3, 3), (2, 2)])
+        for value in habitat.sense(3):
+            self.assertIn(value, (-1.0, 0.0, 1.0))
+            self.assertIsInstance(value, float)
+
+    def test_senses_follow_syno_after_moving(self):
+        habitat = Habitat(3, 1, (0, 0), [(2, 0)])
+        self.assertEqual(habitat.sense(1)[3:6], [-1.0, 0.0, 0.0])
+        habitat.move("right")
+        self.assertEqual(habitat.sense(1)[3:6], [0.0, 0.0, 1.0])
+
+    def test_eaten_food_is_no_longer_sensed(self):
+        habitat = Habitat(3, 3, (1, 1), [(1, 1)])
+        habitat.eat()
+        self.assertEqual(habitat.sense(0), [0.0])
+
+    def test_negative_radius_raises_value_error(self):
+        with self.assertRaises(ValueError):
+            Habitat(3, 3, (1, 1), []).sense(-1)
+
+    def test_sensing_does_not_change_the_habitat(self):
+        habitat = Habitat(3, 3, (1, 1), [(0, 0)])
+        habitat.sense(2)
+        self.assertEqual(habitat.agent, (1, 1))
+        self.assertEqual(habitat.food, [(0, 0)])
+
+
 if __name__ == "__main__":
     unittest.main()

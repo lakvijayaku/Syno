@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Working on **step 3: Habitat (grid world)**.
+Working on **step 4: Dopamine as reward prediction error**.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -13,10 +13,12 @@ Working on **step 3: Habitat (grid world)**.
 | **2d** | Gradient descent on a single neuron | ✅ Done |
 | **2e** | Backpropagation | ✅ Done |
 | **2f** | Train on XOR | ✅ Done |
-| **3** | Habitat (grid world) | ⏳ Next |
+| **3** | Habitat (grid world) | ✅ Done |
+| **4** | Dopamine as reward prediction error | ⏳ Next |
 
 ### Log
 #### 2026-10-07
+- **Step 3d complete:** senses report a window around SYNO as numbers, covered by 13 unit tests. Step 3 (Habitat) is complete.
 - **Step 3c complete:** eating removes food from SYNO's square, covered by 7 unit tests.
 - **Step 3b complete:** movement actions with grid edges acting as walls, covered by 12 unit tests.
 - **Step 3a complete:** `Habitat` grid with bounds checking and text rendering, covered by 16 unit tests.
