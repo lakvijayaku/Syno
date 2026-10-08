@@ -40,7 +40,7 @@ During rest and sleep, the hippocampus replays sequences of recent experience, w
 ### Neurogenesis
 New neurons continue to be born in parts of the adult brain, including the human hippocampus [12], and must integrate into existing circuits without disrupting them.
 
-**In SYNO:** The **GE** adds a neuron to a hidden layer of the **DN**. The new neuron's outgoing connections start at zero, so the DN's output is unchanged at first, and the connections are then learned. A network too small to learn XOR solved it after growing two neurons.
+**In SYNO:** The **GE** adds a neuron to a hidden layer of the **DN**. The new neuron's outgoing connections start at zero, so the DN's output is unchanged at first, and the connections are then learned. A network too small to learn XOR solved it after growing two neurons. In the habitat, SYNO starts with one hidden neuron and grows one whenever its average surprise stops falling. It took off once it reached 5 to 6 neurons, matching the performance of the 8-neuron network that was sized by hand. Surprise also stops falling once the task is mastered, so SYNO keeps growing after learning is complete, up to a fixed limit.
 
 ### Simplifications
 - Hormones are single numbers, not concentrations that diffuse through tissue.
