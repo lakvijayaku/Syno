@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Working on **step 4: Dopamine as reward prediction error**.
+Working on **step 5: Drives**.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -14,10 +14,12 @@ Working on **step 4: Dopamine as reward prediction error**.
 | **2e** | Backpropagation | ✅ Done |
 | **2f** | Train on XOR | ✅ Done |
 | **3** | Habitat (grid world) | ✅ Done |
-| **4** | Dopamine as reward prediction error | ⏳ Next |
+| **4** | Dopamine as reward prediction error | ✅ Done |
+| **5** | Drives | ⏳ Next |
 
 ### Log
 #### 2026-10-07
+- **Step 4d complete:** `experiments/forage.py`, where SYNO learns to find and eat food from its own RPE, covered by 9 tests. On a 3x3 grid, the average steps to eat fell from 38.7 to 6.1. Step 4 (Dopamine) is complete.
 - **Step 4c complete:** `learn` Q-learning update driven by the RPE, covered by 15 unit tests.
 - **Step 4b complete:** `choose_action` epsilon-greedy policy, covered by 11 unit tests.
 - **Step 4a complete:** `reward_prediction_error`, the Dopamine System, covered by 14 unit tests.
