@@ -23,6 +23,7 @@ Working on **step 9: Hormones and emotions**.
 
 ### Log
 #### 2026-10-07
+- **Step 9a complete:** `Hormone`, a slow signal that builds up and fades gradually, covered by 11 unit tests.
 - **Step 8b complete:** `experiments/neurogenesis.py`, where SYNO starts with one hidden neuron and grows whenever its surprise stops falling, covered by 8 tests. It reached an average energy of 0.93, matching the hand-sized network. Step 8 (Neuron growth) is complete.
 - **Step 8a complete:** `grow_neuron` adds a neuron to a hidden layer without changing the network's output, covered by 14 unit tests.
 - **Step 7c complete:** priority-weighted recall in `MemoryStore`, and `experiments/consolidation.py`, where surprising memories are replayed most often, covered by 18 tests. Average energy reached 0.72 in the first 500 lives, and the worst dip after learning rose to 0.86. Step 7 (Memory) is complete.

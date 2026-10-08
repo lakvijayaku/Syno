@@ -27,7 +27,7 @@ class Recorder:
         self.fields = list(fields)
         self.rows = []
 
-    def record(self, row: dict[str, float]) -> None:
+    def record(self, row: dict[str, float]) -> None: 
         """
         Adds one row of data.
 
