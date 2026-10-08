@@ -18,6 +18,7 @@ Working on **step 4: Dopamine as reward prediction error**.
 
 ### Log
 #### 2026-10-07
+- **Step 4a complete:** `reward_prediction_error`, the Dopamine System, covered by 14 unit tests.
 - **Step 3d complete:** senses report a window around SYNO as numbers, covered by 13 unit tests. Step 3 (Habitat) is complete.
 - **Step 3c complete:** eating removes food from SYNO's square, covered by 7 unit tests.
 - **Step 3b complete:** movement actions with grid edges acting as walls, covered by 12 unit tests.
