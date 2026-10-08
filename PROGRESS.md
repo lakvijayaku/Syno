@@ -17,6 +17,7 @@ Working on **step 3: Habitat (grid world)**.
 
 ### Log
 #### 2026-10-07
+- **Step 3a complete:** `Habitat` grid with bounds checking and text rendering, covered by 16 unit tests.
 - **Step 2f complete:** `experiments/xor.py` trains a 2-3-1 network to solve XOR, covered by 7 tests.
 - **Step 2e complete:** `train_network_step` backpropagation for multi-layer networks, covered by 14 unit tests.
 - README project status updated to reflect current progress.
