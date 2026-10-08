@@ -22,6 +22,7 @@ Working on **step 8: Neuron growth**.
 
 ### Log
 #### 2026-10-07
+- **Step 8a complete:** `grow_neuron` adds a neuron to a hidden layer without changing the network's output, covered by 14 unit tests.
 - **Step 7c complete:** priority-weighted recall in `MemoryStore`, and `experiments/consolidation.py`, where surprising memories are replayed most often, covered by 18 tests. Average energy reached 0.72 in the first 500 lives, and the worst dip after learning rose to 0.86. Step 7 (Memory) is complete.
 - **Step 7b complete:** `experiments/replay.py`, where SYNO replays 2 random memories after every step, covered by 7 tests. Average energy reached about 0.86 roughly three times sooner than without replay, and stayed between 0.90 and 0.93.
 - **Step 7a complete:** `MemoryStore` holds recent experiences and forgets the oldest, covered by 11 unit tests.

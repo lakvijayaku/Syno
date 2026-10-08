@@ -37,6 +37,11 @@ During rest and sleep, the hippocampus replays sequences of recent experience, w
 
 **In SYNO:** The **MS** holds SYNO's most recent experiences and forgets the oldest when full. After every step, SYNO re-learns from 2 recalled experiences. Recalling at random, SYNO reached an average energy of about 0.86 roughly three times sooner, and its worst dip after learning was smaller (0.76 rather than 0.64). Recalling in proportion to surprise, measured as the size of each memory's RPE, SYNO learned faster still, and its worst dip after learning rose to 0.86.
 
+### Neurogenesis
+New neurons continue to be born in parts of the adult brain, including the human hippocampus [12], and must integrate into existing circuits without disrupting them.
+
+**In SYNO:** The **GE** adds a neuron to a hidden layer of the **DN**. The new neuron's outgoing connections start at zero, so the DN's output is unchanged at first, and the connections are then learned. A network too small to learn XOR solved it after growing two neurons.
+
 ### Simplifications
 - Hormones are single numbers, not concentrations that diffuse through tissue.
 - The hypothalamus, VTA, and nucleus accumbens are not modeled as separate brain regions.
@@ -55,3 +60,4 @@ During rest and sleep, the hippocampus replays sequences of recent experience, w
 9. Wilson, M. A., & McNaughton, B. L. (1994). Reactivation of hippocampal ensemble memories during sleep. *Science*, 265(5172), 676–679.
 10. Ambrose, R. E., Pfeiffer, B. E., & Foster, D. J. (2016). Reverse replay of hippocampal place cells is uniquely modulated by changing reward. *Neuron*, 91(5), 1124–1136.
 11. Mattar, M. G., & Daw, N. D. (2018). Prioritized memory access explains planning and hippocampal replay. *Nature Neuroscience*, 21(11), 1609–1617.
+12. Eriksson, P. S., Perfilieva, E., Björk-Eriksson, T., Alborn, A.-M., Nordborg, C., Peterson, D. A., & Gage, F. H. (1998). Neurogenesis in the adult human hippocampus. *Nature Medicine*, 4(11), 1313–1317.
