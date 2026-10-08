@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Working on **step 2f: Train on XOR**.
+Working on **step 3: Habitat (grid world)**.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -12,11 +12,12 @@ Working on **step 2f: Train on XOR**.
 | **2c** | Loss | ✅ Done |
 | **2d** | Gradient descent on a single neuron | ✅ Done |
 | **2e** | Backpropagation | ✅ Done |
-| **2f** | Train on XOR | ⏳ Next |
-| **3** | Habitat (grid world) | ⬜ Planned |
+| **2f** | Train on XOR | ✅ Done |
+| **3** | Habitat (grid world) | ⏳ Next |
 
 ### Log
 #### 2026-10-07
+- **Step 2f complete:** `experiments/xor.py` trains a 2-3-1 network to solve XOR, covered by 7 tests.
 - **Step 2e complete:** `train_network_step` backpropagation for multi-layer networks, covered by 14 unit tests.
 - README project status updated to reflect current progress.
 
