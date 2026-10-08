@@ -3,6 +3,15 @@
 # Laksheth Vijayakumar · 2026-10-07 · GPL-3.0
 # ────────────────────────────────────────────────────────
 
+# Each movement action maps to its change in (x, y). Up decreases y, because
+# y counts rows from the top of the grid.
+ACTIONS = {
+    "up": (0, -1),
+    "down": (0, 1),
+    "left": (-1, 0),
+    "right": (1, 0)
+}
+
 class Habitat:
     """
     A rectangular grid containing SYNO and food.
@@ -73,3 +82,22 @@ class Habitat:
             rows.append(row)
         return "\n".join(rows)
 
+    def move(self, action: str) -> bool:
+        """
+        Moves SYNO one square in the given direction, if the grid allows it.
+
+        :param action: One of the keys of ACTIONS: "up", "down", "left", or "right".
+        :return: True if SYNO moved, or False if the edge of the grid blocked it.
+        :raises ValueError: If the action is not recognized.
+        """
+        if action not in ACTIONS:
+            raise ValueError(f"Invalid action '{action}'. Valid options are: {list(ACTIONS.keys())}")
+        dx, dy = ACTIONS[action]
+        x, y = self.agent
+        new_position = (x + dx, y + dy)
+        # The edge of the grid acts as a wall: SYNO stays where it is. The
+        # habitat only reports what happened; it never judges the move.
+        if not self.in_bounds(new_position):
+            return False
+        self.agent = new_position
+        return True
