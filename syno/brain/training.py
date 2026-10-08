@@ -26,8 +26,10 @@ def train_step(neuron: Neuron, inputs: list[float], target: float, learning_rate
     # delta is the slope of the loss with respect to the weighted sum z, built
     # with the chain rule from two links:
     #   2 * (output - target)     how the loss changes with the output
-    #   output * (1 - output)     how the sigmoid output changes with z
-    delta = 2 * (output - target) * output * (1 - output)
+    #   neuron.slope(output)      how the output changes with z (the
+    #                             activation's slope: 1.0 for linear,
+    #                             output * (1 - output) for sigmoid)
+    delta = 2 * (output - target) * neuron.slope(output)
 
     # Each weight's slope is delta times its input. Subtracting the slope moves
     # the weight downhill. The loop runs over positions so that each number is
@@ -69,8 +71,9 @@ def train_network_step(network: Network, inputs: list[float], targets: list[floa
     loss = mean_squared_error(outputs, targets)
 
     # Output deltas: the same chain rule as train_step, but with 2 / n in
-    # place of 2, because the loss averages over n outputs.
-    deltas = [ (2 / len(outputs)) * (output - target) * output * (1 - output) for output, target in zip(outputs, targets, strict=True)]
+    # place of 2, because the loss averages over n outputs. Each output uses
+    # its own neuron's slope, so linear and sigmoid outputs both work.
+    deltas = [ (2 / len(outputs)) * (output - target) * neuron.slope(output) for output, target, neuron in zip(outputs, targets, network.layers[-1].neurons, strict=True)]
 
     # Backward pass: walk the layers from last to first.
     for layer_index in reversed(range(len(network.layers))):
@@ -79,7 +82,7 @@ def train_network_step(network: Network, inputs: list[float], targets: list[floa
 
         # Pass the blame back to the previous layer. Each hidden neuron's error
         # is the sum of the deltas of the neurons it feeds, weighted by its
-        # connection to each, then multiplied by its own sigmoid slope. This
+        # connection to each, then multiplied by its own activation slope. This
         # must run before the updates below, so it uses the same weights as
         # the forward pass. The first layer has no previous layer to blame.
         if layer_index > 0:
@@ -88,7 +91,7 @@ def train_network_step(network: Network, inputs: list[float], targets: list[floa
                 error = 0.0
                 for j in range(len(layer.neurons)):
                     error += deltas[j] * layer.neurons[j].weights[k]
-                previous_deltas.append(error * layer_in[k] * (1 - layer_in[k]))
+                previous_deltas.append(error * network.layers[layer_index - 1].neurons[k].slope(layer_in[k]))
 
         # Update every neuron in this layer, exactly as in train_step.
         for j in range(len(layer.neurons)):

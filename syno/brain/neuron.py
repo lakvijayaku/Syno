@@ -6,13 +6,19 @@
 import math
 
 class Neuron:
-    def __init__(self, weights: list[float], bias: float):
+    def __init__(self, weights: list[float], bias: float, activation: str = "sigmoid"):
         """
         Initializes a simple artificial neuron.
 
         :param weights: A list of weights (floats) for each input.
         :param bias: The bias value (float) of the neuron.
+        :param activation: "sigmoid" squashes the output into the range 0 to
+            1. "linear" outputs the weighted sum unchanged, so the neuron can
+            produce any value, including negative ones.
+        :raises ValueError: If activation is not "sigmoid" or "linear".
         """
+        if activation not in ("sigmoid", "linear"):
+            raise ValueError("activation must be either 'sigmoid' or 'linear'")
         # Store a copy of the weights rather than a reference to the caller's
         # list, so changes made to the original list outside this class cannot
         # alter the neuron's weights.
@@ -21,6 +27,7 @@ class Neuron:
         # the line in y = mx + b. Without it, the output would always be 0.5
         # when every input is 0.
         self.bias = bias
+        self.activation = activation
 
     def forward(self, inputs: list[float]) -> float:
         """
@@ -42,6 +49,11 @@ class Neuron:
                 f"Mismatched input dimensions. Expected {len(self.weights)} inputs, got {len(inputs)}."
             ) from e
 
+        # A linear neuron skips the sigmoid, so its output is not limited to
+        # the range 0 to 1. Output layers that predict values use this.
+        if self.activation == "linear":
+            return weighted_sum
+
         # Sigmoid is computed in two branches so that math.exp() only ever
         # receives a value <= 0. Floats overflow above roughly 1.8e308, so
         # math.exp() raises an OverflowError for inputs above about 709.
@@ -57,3 +69,15 @@ class Neuron:
             exp_z = math.exp(weighted_sum)
             return exp_z / (1 + exp_z)
 
+    def slope(self, output: float) -> float:
+        """
+        Measures how fast the neuron's output changes with its weighted sum,
+        for use in the chain rule during training.
+
+        :param output: The output the neuron produced.
+        :return: 1.0 for a linear neuron, or output * (1 - output) for a
+            sigmoid neuron.
+        """
+        if self.activation == "linear":
+            return 1.0
+        return output * (1 - output)

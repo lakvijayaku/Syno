@@ -31,7 +31,7 @@ def numerical_slopes(neuron: Neuron, inputs: list[float], target: float) -> tupl
     step = 1e-6
 
     def loss_with(weights: list[float], bias: float) -> float:
-        return mean_squared_error([Neuron(weights, bias).forward(inputs)], [target])
+        return mean_squared_error([Neuron(weights, bias, neuron.activation).forward(inputs)], [target])
 
     weight_slopes = []
     for i in range(len(neuron.weights)):
@@ -171,7 +171,7 @@ class TestTrainStepSafety(unittest.TestCase):
 def copy_network(network: Network) -> Network:
     """Builds an independent copy of a network with the same weights and biases."""
     return Network([
-        Layer([Neuron(list(n.weights), n.bias) for n in layer.neurons])
+        Layer([Neuron(list(n.weights), n.bias, n.activation) for n in layer.neurons])
         for layer in network.layers
     ])
 
@@ -372,6 +372,83 @@ class TestTrainNetworkStepSafety(unittest.TestCase):
 
     def test_returns_a_float(self):
         self.assertIsInstance(train_network_step(self.build_network(), [1.0, 0.0], [1.0], 0.5), float)
+
+
+
+class TestLinearOutputTraining(unittest.TestCase):
+    """Verifies training with linear neurons, which can predict any value."""
+
+    def test_step_5c_worked_example(self):
+        neuron = Neuron([0.0], 0.0, "linear")
+        loss = train_step(neuron, [1.0], 1.0, 0.1)
+        self.assertAlmostEqual(loss, 1.0)
+        self.assertAlmostEqual(neuron.weights[0], 0.2)
+        self.assertAlmostEqual(neuron.bias, 0.2)
+        self.assertAlmostEqual(neuron.forward([1.0]), 0.4)
+
+    def test_single_linear_neuron_learns_a_negative_target(self):
+        neuron = Neuron([0.5], 0.1, "linear")
+        for _ in range(200):
+            train_step(neuron, [1.0], -0.5, 0.1)
+        self.assertAlmostEqual(neuron.forward([1.0]), -0.5, places=6)
+
+    def test_single_linear_neuron_matches_numerical_slopes(self):
+        neuron = Neuron([0.4, -0.7], 0.2, "linear")
+        weight_slopes, bias_slope = numerical_slopes(neuron, [1.5, -0.5], -2.0)
+        train_step(neuron, [1.5, -0.5], -2.0, 0.05)
+        for i, slope in enumerate(weight_slopes):
+            self.assertAlmostEqual(neuron.weights[i], [0.4, -0.7][i] - 0.05 * slope, places=6)
+        self.assertAlmostEqual(neuron.bias, 0.2 - 0.05 * bias_slope, places=6)
+
+    def test_network_with_linear_outputs_matches_numerical_slopes(self):
+        # Sigmoid hidden layer, linear output layer: both slopes are used in
+        # one backward pass.
+        network = Network([
+            Layer([Neuron([0.5, -0.3], 0.1), Neuron([-0.7, 0.8], -0.2), Neuron([0.2, 0.4], 0.05)]),
+            Layer([Neuron([0.6, -0.4, 0.9], 0.3, "linear"), Neuron([-0.5, 0.7, 0.1], -0.1, "linear")]),
+        ])
+        inputs, targets, learning_rate = [1.0, -0.5], [-1.2, 2.5], 0.05
+        before = snapshot(network)
+        slopes = network_slopes(network, inputs, targets)
+        train_network_step(network, inputs, targets, learning_rate)
+        after = snapshot(network)
+        for layer_index in range(len(before)):
+            for neuron_index in range(len(before[layer_index])):
+                with self.subTest(layer=layer_index, neuron=neuron_index):
+                    old_weights, old_bias = before[layer_index][neuron_index]
+                    new_weights, new_bias = after[layer_index][neuron_index]
+                    weight_slopes, bias_slope = slopes[layer_index][neuron_index]
+                    for i in range(len(old_weights)):
+                        self.assertAlmostEqual(new_weights[i], old_weights[i] - learning_rate * weight_slopes[i], places=6)
+                    self.assertAlmostEqual(new_bias, old_bias - learning_rate * bias_slope, places=6)
+
+    def test_network_learns_targets_outside_zero_to_one(self):
+        network = Network([
+            Layer([Neuron([0.3, -0.2], 0.1), Neuron([0.5, 0.4], -0.1)]),
+            Layer([Neuron([0.2, 0.3], 0.0, "linear"), Neuron([-0.1, 0.2], 0.0, "linear")]),
+        ])
+        for _ in range(1000):
+            train_network_step(network, [1.0, 0.5], [-0.3, 1.8], 0.1)
+        first, second = network.forward([1.0, 0.5])
+        self.assertAlmostEqual(first, -0.3, places=3)
+        self.assertAlmostEqual(second, 1.8, places=3)
+
+    def test_linear_hidden_layer_uses_slope_one(self):
+        # A linear hidden layer must pass blame back with slope 1.0, not the
+        # sigmoid slope.
+        network = Network([
+            Layer([Neuron([0.4, -0.6], 0.2, "linear"), Neuron([0.3, 0.9], -0.1, "linear")]),
+            Layer([Neuron([0.5, -0.9], 0.2)]),
+        ])
+        inputs, targets, learning_rate = [0.5, 1.5], [0.25], 0.5
+        before = snapshot(network)
+        slopes = network_slopes(network, inputs, targets)
+        train_network_step(network, inputs, targets, learning_rate)
+        after = snapshot(network)
+        old_weights, old_bias = before[0][0]
+        new_weights, new_bias = after[0][0]
+        weight_slopes, bias_slope = slopes[0][0]
+        self.assertAlmostEqual(new_bias, old_bias - learning_rate * bias_slope, places=6)
 
 
 if __name__ == "__main__":

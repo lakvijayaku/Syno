@@ -183,5 +183,60 @@ class TestStateIsolation(unittest.TestCase):
         self.assertEqual(neuron.forward([1.0, 2.0]), neuron.forward([1.0, 2.0]))
 
 
+
+class TestLinearActivation(unittest.TestCase):
+    """Verifies linear neurons and the activation option."""
+
+    def test_default_activation_is_sigmoid(self):
+        neuron = Neuron([1.0], 0.0)
+        self.assertEqual(neuron.activation, "sigmoid")
+        self.assertEqual(neuron.forward([0.0]), 0.5)
+
+    def test_linear_outputs_the_weighted_sum(self):
+        neuron = Neuron([0.5, -1.0], 0.25, "linear")
+        self.assertAlmostEqual(neuron.forward([2.0, 3.0]), 0.5 * 2.0 - 1.0 * 3.0 + 0.25)
+
+    def test_linear_can_output_negative_and_large_values(self):
+        neuron = Neuron([1.0], 0.0, "linear")
+        for value in (-5.0, -0.5, 0.0, 1.5, 1000.0):
+            with self.subTest(value=value):
+                self.assertEqual(neuron.forward([value]), value)
+
+    def test_linear_does_not_overflow_on_huge_inputs(self):
+        neuron = Neuron([1.0], 0.0, "linear")
+        self.assertEqual(neuron.forward([1e300]), 1e300)
+
+    def test_linear_still_checks_input_length(self):
+        with self.assertRaises(ValueError):
+            Neuron([1.0, 1.0], 0.0, "linear").forward([1.0])
+
+    def test_slope_of_linear_is_one(self):
+        neuron = Neuron([1.0], 0.0, "linear")
+        for output in (-3.0, 0.0, 0.5, 7.0):
+            with self.subTest(output=output):
+                self.assertEqual(neuron.slope(output), 1.0)
+
+    def test_slope_of_sigmoid_is_output_times_one_minus_output(self):
+        neuron = Neuron([1.0], 0.0)
+        for output in (0.1, 0.5, 0.9):
+            with self.subTest(output=output):
+                self.assertAlmostEqual(neuron.slope(output), output * (1 - output))
+
+    def test_sigmoid_slope_matches_numerical_slope(self):
+        # Nudge the weighted sum and measure how fast the output changes.
+        neuron = Neuron([1.0], 0.0)
+        step = 1e-6
+        for z in (-2.0, 0.0, 1.5):
+            with self.subTest(z=z):
+                measured = (neuron.forward([z + step]) - neuron.forward([z - step])) / (2 * step)
+                self.assertAlmostEqual(neuron.slope(neuron.forward([z])), measured, places=6)
+
+    def test_unknown_activation_raises_value_error(self):
+        for activation in ("relu", "Sigmoid", "", "tanh"):
+            with self.subTest(activation=activation):
+                with self.assertRaises(ValueError):
+                    Neuron([1.0], 0.0, activation)
+
+
 if __name__ == "__main__":
     unittest.main()
