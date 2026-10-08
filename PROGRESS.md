@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Working on **step 5: Drives**.
+Working on **step 6: Logging and plots**.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -15,10 +15,13 @@ Working on **step 5: Drives**.
 | **2f** | Train on XOR | ✅ Done |
 | **3** | Habitat (grid world) | ✅ Done |
 | **4** | Dopamine as reward prediction error | ✅ Done |
-| **5** | Drives | ⏳ Next |
+| **5** | Drives | ✅ Done |
+| **6** | Logging and plots | ⏳ Next |
 
 ### Log
 #### 2026-10-07
+- **Step 5e complete:** `NoveltySystem` with habituation and recovery, and `experiments/curiosity.py`, covered by 21 tests. Curiosity let SYNO learn with 5% random exploration instead of 30%, reaching an average energy of 0.86 to 0.91. Step 5 (Drives) is complete.
+- Glossary statuses updated for the components built so far.
 - **Step 5d complete:** `experiments/hunger.py`, where SYNO keeps itself fed with reward coming only from its body, covered by 7 tests. Average energy over a life rose from 0.23 to 0.82, and SYNO eats whenever hungry, including when half-full.
 - **Step 5c complete:** linear activation for neurons, with training using each neuron's own slope, covered by 15 new unit tests.
 - **Step 5b complete:** drive and `homeostatic_reward`, so reward comes from reducing hunger, covered by 9 unit tests.
