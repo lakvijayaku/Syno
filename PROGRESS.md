@@ -19,6 +19,7 @@ Working on **step 5: Drives**.
 
 ### Log
 #### 2026-10-07
+- **Step 5b complete:** drive and `homeostatic_reward`, so reward comes from reducing hunger, covered by 9 unit tests.
 - **Step 5a complete:** `HomeostaticCore` with energy, digestion, and stomach capacity, covered by 20 unit tests.
 - **Step 4d complete:** `experiments/forage.py`, where SYNO learns to find and eat food from its own RPE, covered by 9 tests. On a 3x3 grid, the average steps to eat fell from 38.7 to 6.1. Step 4 (Dopamine) is complete.
 - **Step 4c complete:** `learn` Q-learning update driven by the RPE, covered by 15 unit tests.

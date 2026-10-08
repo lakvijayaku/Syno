@@ -9,6 +9,9 @@ DIGESTION_RATE = 0.05
 BASE_BURN = 0.01
 MOVE_BURN = 0.01
 STOMACH_CAPACITY = 1.0
+# Squaring the deficit makes the same amount of food worth more to a hungrier
+# SYNO (alliesthesia).
+DRIVE_EXPONENT = 2
 
 class HomeostaticCore:
     """
@@ -79,3 +82,26 @@ class HomeostaticCore:
         :return: 0.0 when fully satisfied, up to 1.0 when energy is empty.
         """
         return 1.0 - self.energy
+
+    def drive(self) -> float:
+        """
+        Measures how strongly SYNO's body pushes it back toward its set-point.
+
+        :return: The deficit raised to DRIVE_EXPONENT, from 0.0 to 1.0.
+        """
+        return self.deficit() ** DRIVE_EXPONENT
+
+def homeostatic_reward(drive_before: float, drive_after: float) -> float:
+    """
+    Calculates reward as the reduction in drive over a step, following
+    homeostatic reinforcement learning (Keramati & Gutkin, 2014).
+
+    Reward is positive when a step brings SYNO closer to its set-point and
+    negative when it moves SYNO further away. No behavior is rewarded
+    directly.
+
+    :param drive_before: The drive at the start of the step.
+    :param drive_after: The drive at the end of the step.
+    :return: The reward for the step.
+    """
+    return drive_before - drive_after

@@ -3,8 +3,9 @@ Unit tests for syno.body.homeostasis.
 
 These tests are intentionally stricter than the Homeostatic Core's own
 safeguards. They verify the step 5a worked example, every physical rule of
-the body (digestion, burning, clamping, and stomach capacity), and that
-invalid values fail loudly.
+the body (digestion, burning, clamping, and stomach capacity), the drive and
+the reward it produces, including alliesthesia, and that invalid values fail
+loudly.
 
 Run from the repository root with:
     python3 -m unittest discover tests -v
@@ -15,9 +16,11 @@ import unittest
 from syno.body.homeostasis import (
     BASE_BURN,
     DIGESTION_RATE,
+    DRIVE_EXPONENT,
     MOVE_BURN,
     STOMACH_CAPACITY,
     HomeostaticCore,
+    homeostatic_reward,
 )
 
 
@@ -163,6 +166,80 @@ class TestHomeostaticCoreValidation(unittest.TestCase):
         for energy, stomach in [(0.0, 0.0), (1.0, 1.0)]:
             with self.subTest(energy=energy, stomach=stomach):
                 HomeostaticCore(energy, stomach)
+
+
+
+class TestHomeostaticDrive(unittest.TestCase):
+    """Verifies the drive and the reward it produces."""
+
+    def test_drive_is_the_squared_deficit(self):
+        self.assertEqual(DRIVE_EXPONENT, 2)
+        for energy in (0.0, 0.3, 0.75, 1.0):
+            with self.subTest(energy=energy):
+                body = HomeostaticCore(energy, 0.0)
+                self.assertAlmostEqual(body.drive(), (1.0 - energy) ** 2)
+
+    def test_drive_is_zero_at_the_set_point(self):
+        self.assertEqual(HomeostaticCore(1.0, 0.0).drive(), 0.0)
+
+    def test_reward_is_the_reduction_in_drive(self):
+        self.assertAlmostEqual(homeostatic_reward(0.5, 0.3), 0.2)
+        self.assertAlmostEqual(homeostatic_reward(0.3, 0.5), -0.2)
+        self.assertEqual(homeostatic_reward(0.4, 0.4), 0.0)
+
+    def test_step_5b_examples(self):
+        expected = {0.2: 0.0624, 0.8: 0.0144}
+        for energy, reward in expected.items():
+            with self.subTest(energy=energy):
+                body = HomeostaticCore(energy, 0.5)
+                before = body.drive()
+                body.tick(False)
+                self.assertAlmostEqual(homeostatic_reward(before, body.drive()), reward)
+
+    def test_alliesthesia_same_food_is_worth_more_when_hungry(self):
+        # The same digestion gives each body the same energy gain, but the
+        # hungrier body must receive a larger reward.
+        rewards = []
+        for energy in (0.1, 0.3, 0.5, 0.7, 0.9):
+            body = HomeostaticCore(energy, 0.5)
+            before = body.drive()
+            body.tick(False)
+            rewards.append(homeostatic_reward(before, body.drive()))
+        for hungrier, fuller in zip(rewards, rewards[1:]):
+            self.assertGreater(hungrier, fuller)
+
+    def test_hunger_without_food_is_punishing(self):
+        body = HomeostaticCore(0.3, 0.0)
+        before = body.drive()
+        body.tick(True)
+        self.assertAlmostEqual(homeostatic_reward(before, body.drive()), -0.0284)
+
+    def test_hunger_hurts_more_when_hungrier(self):
+        penalties = []
+        for energy in (0.2, 0.5, 0.8):
+            body = HomeostaticCore(energy, 0.0)
+            before = body.drive()
+            body.tick(False)
+            penalties.append(homeostatic_reward(before, body.drive()))
+        self.assertLess(penalties[0], penalties[1])
+        self.assertLess(penalties[1], penalties[2])
+
+    def test_moving_costs_reward(self):
+        resting, moving = HomeostaticCore(0.5, 0.0), HomeostaticCore(0.5, 0.0)
+        rest_before, move_before = resting.drive(), moving.drive()
+        resting.tick(False)
+        moving.tick(True)
+        self.assertLess(
+            homeostatic_reward(move_before, moving.drive()),
+            homeostatic_reward(rest_before, resting.drive()),
+        )
+
+    def test_full_body_gets_no_reward_from_more_digestion(self):
+        # Energy is already at the set-point, so digestion cannot help.
+        body = HomeostaticCore(1.0, 1.0)
+        before = body.drive()
+        body.tick(False)
+        self.assertEqual(homeostatic_reward(before, body.drive()), 0.0)
 
 
 if __name__ == "__main__":
