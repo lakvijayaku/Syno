@@ -9,7 +9,7 @@ This document defines how SYNO's behavior is measured. "Human-like" is not direc
 | **E2** | State-Dependent Eating | The probability of eating rises with energy deficit. | [`biology.md`](biology.md), State-Dependent Reward | Not reproduced: across 5 seeds, a trained SYNO standing on food prefers to eat at every energy from 0.0 to 0.9, and only at full energy does the rate fall (to 0.73). The rate does not rise gradually with deficit (`experiments/signatures.py`) |
 | **E3** | Partial-Fullness Eating | A partially full SYNO eats nearby food but ignores distant food. | [`biology.md`](biology.md), State-Dependent Reward | Not measured |
 | **E4** | RPE Transfer | With training, the DS response shifts from eating to seeing food. | [`biology.md`](biology.md), Reward Prediction Error | Verified for the RPE formula only, not yet in behavior |
-| **E5** | Reward Omission | When expected food is missing, the DS produces a negative RPE. | [`biology.md`](biology.md), Reward Prediction Error | Verified for the RPE formula only, not yet in behavior |
+| **E5** | Reward Omission | When expected food is missing, the DS produces a negative RPE. | [`biology.md`](biology.md), Reward Prediction Error | Reproduced: across 5 seeds, when food SYNO is standing on vanishes just before it eats, its RPE is −0.874, against −0.083 when the meal arrives (`experiments/signatures.py`) |
 | **E6** | Habituation | Exploration of a familiar area declines over time and recovers after absence. | [`biology.md`](biology.md), Novelty and Habituation | Verified for the Novelty System only, not yet in behavior |
 
 ### Method

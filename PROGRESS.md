@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Steps 1 to 9 are complete. Step 10 (Evaluation signatures) is in progress: E2 is measured.
+Steps 1 to 9 are complete. Step 10 (Evaluation signatures) is in progress: E2 and E5 are measured.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -24,6 +24,7 @@ Steps 1 to 9 are complete. Step 10 (Evaluation signatures) is in progress: E2 is
 
 ### Log
 #### 2026-10-08
+- **Step 10b complete:** `eating_rpe` measures E5, reward omission, covered by 7 new tests. When food SYNO expects vanishes just before it eats, its RPE averages −0.874 across 5 seeds, against −0.083 when the meal arrives. E5 is recorded as reproduced.
 - **Step 10a complete:** `experiments/signatures.py` trains SYNO with 5 seeds and measures E2, state-dependent eating, covered by 15 tests. SYNO prefers to eat at every energy from 0.0 to 0.9 and in 73% of cases at full energy, so its eating does not rise gradually with deficit. E2 is recorded as not reproduced.
 - Documentation brought up to the current state: README (status, running SYNO), architecture (packages, diagram), glossary (AS status, new terms), biology, and PROGRESS (step 10).
 - **Step 9b complete:** `experiments/arousal.py`, where an arousal hormone fed by surprise sets the learning rate, covered by 10 tests. After moving to a larger world, SYNO recovered faster (average energy 0.65 rather than 0.46 over the next 250 lives) but performed about the same in the long run. A stress hormone that raised exploration was tested and rejected. `spawn_food` now works on any grid size. Step 9 (Hormones and emotions) is complete, and with it the roadmap.

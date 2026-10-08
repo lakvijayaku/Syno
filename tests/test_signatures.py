@@ -1,9 +1,10 @@
 """
 Experiment tests for experiments/signatures.py.
 
-The fast tests probe eating_rate with hand-built networks whose preferences
-are known exactly, and check that train is reproducible. The slow test trains
-SYNO with all 5 seeds (about 2 minutes) and reproduces the recorded E2 table.
+The fast tests probe eating_rate and eating_rpe with hand-built networks whose
+predictions are known exactly, and check that train is reproducible. The slow
+test trains SYNO with all 5 seeds (about 2 minutes) and reproduces the
+recorded E2 and E5 results.
 It is skipped by default and runs only when SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
@@ -16,11 +17,13 @@ import contextlib
 import io
 import os
 import unittest
+from unittest import mock
 
 import experiments.signatures as signatures
 from syno.brain.layer import Layer
 from syno.brain.network import Network
 from syno.brain.neuron import Neuron
+from syno.body.homeostasis import HomeostaticCore, homeostatic_reward
 
 INPUTS = (2 * signatures.SENSE_RADIUS + 1) ** 2 + 2
 CENTER = ((2 * signatures.SENSE_RADIUS + 1) ** 2) // 2
@@ -108,6 +111,64 @@ class TestEatingRate(unittest.TestCase):
             self.assertEqual(signatures.eating_rate(network, 0.5), 1.0)
 
 
+def step_reward(eats: bool) -> float:
+    """The scaled reward for one step at energy 0.5, with or without a meal."""
+    body = HomeostaticCore(0.5, 0.0)
+    before = body.drive()
+    if eats:
+        body.eat(signatures.FOOD_AMOUNT)
+    body.tick(False)
+    return signatures.REWARD_SCALE * homeostatic_reward(before, body.drive())
+
+
+class TestEatingRpe(unittest.TestCase):
+    """Verifies eating_rpe against networks with known predictions."""
+
+    def test_zero_network_rpe_is_the_meal_reward(self):
+        # With every prediction 0, the RPE is just the reward.
+        network = probe_network({}, 0.0)
+        self.assertAlmostEqual(signatures.eating_rpe(network, True), step_reward(True))
+
+    def test_zero_network_rpe_without_food(self):
+        network = probe_network({}, 0.0)
+        self.assertAlmostEqual(signatures.eating_rpe(network, False), step_reward(False))
+
+    def test_omission_is_worse_than_delivery(self):
+        network = probe_network({}, 0.0)
+        self.assertLess(signatures.eating_rpe(network, False), signatures.eating_rpe(network, True))
+
+    def test_constant_prediction(self):
+        # Eat always predicts 2.0, so the RPE is reward + 0.9 * 2.0 - 2.0.
+        network = probe_network({}, 2.0)
+        expected = step_reward(False) + signatures.DISCOUNT * 2.0 - 2.0
+        self.assertAlmostEqual(signatures.eating_rpe(network, False), expected)
+
+    def test_expectation_is_read_while_food_is_visible(self):
+        # Eat predicts 1.0 only while food is under SYNO. If the prediction
+        # were read after the food vanished, it would be 0 and the dip lost.
+        network = probe_network({CENTER: 1.0}, 0.0)
+        self.assertAlmostEqual(signatures.eating_rpe(network, False), step_reward(False) - 1.0)
+
+    def test_new_food_appears_only_after_a_meal(self):
+        # As in live, food respawns after every successful meal, and never
+        # when the meal is missing.
+        network = probe_network({}, 0.0)
+        with mock.patch.object(signatures, "spawn_food") as spawn:
+            signatures.eating_rpe(network, True)
+            self.assertEqual(spawn.call_count, signatures.GRID_SIZE ** 2)
+            spawn.reset_mock()
+            signatures.eating_rpe(network, False)
+            self.assertEqual(spawn.call_count, 0)
+
+    def test_does_not_change_the_network(self):
+        network = probe_network({CENTER: 1.0}, 0.5)
+        state = [0.0] * INPUTS
+        before = network.forward(state)
+        signatures.eating_rpe(network, True)
+        signatures.eating_rpe(network, False)
+        self.assertEqual(network.forward(state), before)
+
+
 class TestTrain(unittest.TestCase):
     """Verifies that train builds and trains a reproducible network."""
 
@@ -144,9 +205,9 @@ class TestTrain(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("SYNO_SLOW_TESTS"), "slow: set SYNO_SLOW_TESTS=1")
 class TestSignaturesRun(unittest.TestCase):
-    """Reproduces the recorded E2 result."""
+    """Reproduces the recorded E2 and E5 results."""
 
-    def test_e2_table(self):
+    def test_results(self):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             signatures.main()
@@ -154,6 +215,12 @@ class TestSignaturesRun(unittest.TestCase):
         for level in signatures.ENERGY_LEVELS:
             rate = "0.73" if level == 1.0 else "1.00"
             expected.append(f"Energy {level:.1f} | Eats: {rate}")
+        expected += [
+            "",
+            "E5: Reward omission (5 seeds)",
+            "Food delivered | RPE: -0.083",
+            "Food omitted   | RPE: -0.874",
+        ]
         self.assertEqual(output.getvalue().splitlines(), expected)
 
 
