@@ -35,7 +35,7 @@ The locus coeruleus–norepinephrine system adjusts whether an animal focuses on
 ### Memory Replay
 During rest and sleep, the hippocampus replays sequences of recent experience, which helps consolidate them into long-term memory [9].
 
-**In SYNO:** The **MS** holds SYNO's most recent experiences and forgets the oldest when full. Experiences are recalled at random rather than in order.
+**In SYNO:** The **MS** holds SYNO's most recent experiences and forgets the oldest when full. After every step, SYNO re-learns from 2 experiences recalled at random. With replay, SYNO reached an average energy of about 0.86 roughly three times sooner, and its worst dip after learning was smaller (0.76 rather than 0.64), though not eliminated.
 
 ### Simplifications
 - Hormones are single numbers, not concentrations that diffuse through tissue.

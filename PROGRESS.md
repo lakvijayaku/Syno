@@ -21,6 +21,7 @@ Working on **step 7: Memory**.
 
 ### Log
 #### 2026-10-07
+- **Step 7b complete:** `experiments/replay.py`, where SYNO replays 2 random memories after every step, covered by 7 tests. Average energy reached about 0.86 roughly three times sooner than without replay, and stayed between 0.90 and 0.93.
 - **Step 7a complete:** `MemoryStore` holds recent experiences and forgets the oldest, covered by 11 unit tests.
 - **Step 6c complete:** `moving_average`, and the curiosity experiment now saves every life to `runs/curiosity.csv` and a chart to `runs/curiosity.svg`, covered by 9 unit tests. Step 6 (Logging and plots) is complete.
 - **Step 6b complete:** `line_chart` draws data as an SVG chart, covered by 12 unit tests.

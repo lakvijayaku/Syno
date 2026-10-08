@@ -42,6 +42,7 @@ Each tick follows the same sequence:
 4. Reward is computed as the reduction in drive (the squared energy deficit), scaled, plus a novelty bonus from the **NS**.
 5. The **DS** compares the reward with the DN's prediction to produce the RPE.
 6. The **DN** updates its weights for the action taken, using the RPE.
+7. The step is stored in the **MS**, and SYNO re-learns from a few past steps recalled at random (memory replay).
 
 ### Hard-Coded vs. Emergent
 | Hard-Coded (Physiology) | Emergent (Behavior) |
