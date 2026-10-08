@@ -12,7 +12,7 @@ SYNO consists of the **Habitat (HB)**, which is the external world, a body, the 
 |---|---|
 | `syno/world/` | The Habitat: the grid, movement, eating, and senses |
 | `syno/body/` | The Homeostatic Core: energy, stomach, drive, and reward |
-| `syno/brain/` | Neurons, layers, networks, training, the Dopamine System, action selection, and the Novelty System |
+| `syno/brain/` | Neurons, layers, networks, training, the Dopamine System, action selection, the Novelty System, and the Memory Store |
 | `syno/tools/` | Recording data from runs, smoothing it, and drawing it as charts |
 
 ```

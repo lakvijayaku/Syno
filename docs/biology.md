@@ -32,6 +32,11 @@ The locus coeruleus–norepinephrine system adjusts whether an animal focuses on
 
 **In SYNO:** The **AS** is not modeled. Exploration comes from the **NS** plus a small random exploration rate. Without any randomness, SYNO did not learn.
 
+### Memory Replay
+During rest and sleep, the hippocampus replays sequences of recent experience, which helps consolidate them into long-term memory [9].
+
+**In SYNO:** The **MS** holds SYNO's most recent experiences and forgets the oldest when full. Experiences are recalled at random rather than in order.
+
 ### Simplifications
 - Hormones are single numbers, not concentrations that diffuse through tissue.
 - The hypothalamus, VTA, and nucleus accumbens are not modeled as separate brain regions.
@@ -47,3 +52,4 @@ The locus coeruleus–norepinephrine system adjusts whether an animal focuses on
 6. Keramati, M., & Gutkin, B. (2014). Homeostatic reinforcement learning for integrating reward collection and physiological stability. *eLife*, 3, e04811.
 7. Thompson, R. F., & Spencer, W. A. (1966). Habituation: A model phenomenon for the study of neuronal substrates of behavior. *Psychological Review*, 73(1), 16–43.
 8. Aston-Jones, G., & Cohen, J. D. (2005). An integrative theory of locus coeruleus–norepinephrine function: Adaptive gain and optimal performance. *Annual Review of Neuroscience*, 28, 403–450.
+9. Wilson, M. A., & McNaughton, B. L. (1994). Reactivation of hippocampal ensemble memories during sleep. *Science*, 265(5172), 676–679.
