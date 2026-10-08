@@ -18,6 +18,7 @@ Working on **step 4: Dopamine as reward prediction error**.
 
 ### Log
 #### 2026-10-07
+- **Step 4c complete:** `learn` Q-learning update driven by the RPE, covered by 15 unit tests.
 - **Step 4b complete:** `choose_action` epsilon-greedy policy, covered by 11 unit tests.
 - **Step 4a complete:** `reward_prediction_error`, the Dopamine System, covered by 14 unit tests.
 - **Step 3d complete:** senses report a window around SYNO as numbers, covered by 13 unit tests. Step 3 (Habitat) is complete.
