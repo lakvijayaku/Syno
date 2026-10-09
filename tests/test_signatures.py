@@ -1,10 +1,11 @@
 """
 Experiment tests for experiments/signatures.py.
 
-The fast tests probe eating_rate, eating_rpe and cue_rpe with hand-built
-networks whose predictions are known exactly, and check that new_brain and
-train are reproducible. The slow test trains SYNO with all 5 seeds (about 2
-minutes) and reproduces the recorded E1, E2, E4 and E5 results. It is skipped by default and runs only when SYNO_SLOW_TESTS is set:
+The fast tests probe eating_rate, approach_rate, eating_rpe and cue_rpe with
+hand-built networks whose predictions are known exactly, and check that
+new_brain and train are reproducible. The slow test trains SYNO with all 5
+seeds (about 2 minutes) and reproduces the recorded E1 to E5 results. It is
+skipped by default and runs only when SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
 
@@ -149,6 +150,96 @@ def step_reward(eats: bool, moved: bool = False) -> float:
     return signatures.REWARD_SCALE * homeostatic_reward(before, body.drive())
 
 
+def move_network(action_name: str) -> Network:
+    """Builds a one-layer linear network that always prefers one action."""
+    preferred = signatures.ACTION_NAMES.index(action_name)
+    neurons = [Neuron([0.0] * INPUTS, 1.0 if action == preferred else 0.0, "linear")
+               for action in range(len(signatures.ACTION_NAMES))]
+    return Network([Layer(neurons)])
+
+
+def up_when(up_weights: dict[int, float], up_bias: float) -> Network:
+    """
+    Builds a one-layer linear network that prefers up when its weighted
+    inputs plus up_bias are above 0.0, and otherwise prefers eat.
+    """
+    up = signatures.ACTION_NAMES.index("up")
+    neurons = []
+    for action in range(len(signatures.ACTION_NAMES)):
+        weights = [0.0] * INPUTS
+        bias = -1.0
+        if action == up:
+            for index, weight in up_weights.items():
+                weights[index] = weight
+            bias = up_bias
+        elif action == EAT:
+            bias = 0.0
+        neurons.append(Neuron(weights, bias, "linear"))
+    return Network([Layer(neurons)])
+
+
+class TestApproachRate(unittest.TestCase):
+    """Verifies approach_rate against networks with known preferences."""
+
+    def test_never_approaches_while_eating(self):
+        network = move_network("eat")
+        for far in (False, True):
+            self.assertEqual(signatures.approach_rate(network, 0.5, far), 0.0)
+
+    def test_always_up_near(self):
+        # Of the 24 adjacent pairs, food is directly above SYNO in 6.
+        network = move_network("up")
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 6 / 24)
+
+    def test_always_up_far(self):
+        # Of the 20 pairs at least 3 steps apart, food is above SYNO in 10.
+        network = move_network("up")
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 10 / 20)
+
+    def test_always_right_far(self):
+        network = move_network("right")
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 10 / 20)
+
+    def test_moving_away_never_counts(self):
+        # Food is 1 step away, and SYNO always goes down. It approaches only
+        # food directly below it, in 6 of the 24 pairs, never the other 18.
+        network = move_network("down")
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 6 / 24)
+
+    def test_sees_the_food(self):
+        # Up wins only when food is directly above SYNO in its view.
+        above = CENTER - (2 * signatures.SENSE_RADIUS + 1)
+        network = up_when({above: 1.0}, -0.5)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 6 / 24)
+
+    def test_sideways_moves_go_the_right_way(self):
+        # Right wins only when food is directly right of SYNO in its view, so
+        # it approaches in all 6 such pairs. Moving the wrong way would never
+        # approach.
+        right = signatures.ACTION_NAMES.index("right")
+        neurons = []
+        for action in range(len(signatures.ACTION_NAMES)):
+            weights = [0.0] * INPUTS
+            bias = 0.0 if action == EAT else -1.0
+            if action == right:
+                weights[CENTER + 1] = 1.0
+                bias = -0.5
+            neurons.append(Neuron(weights, bias, "linear"))
+        network = Network([Layer(neurons)])
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 6 / 24)
+
+    def test_uses_the_given_energy(self):
+        # Up wins only when the deficit is above 0.45.
+        network = up_when({DEFICIT: 1.0}, -0.45)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.2, True), 10 / 20)
+        self.assertEqual(signatures.approach_rate(network, 0.8, True), 0.0)
+
+    def test_stomach_is_empty(self):
+        # Up wins only when the stomach input is 0.
+        network = up_when({STOMACH: -1.0}, 0.001)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 10 / 20)
+
+
 class TestEatingRpe(unittest.TestCase):
     """Verifies eating_rpe against networks with known predictions."""
 
@@ -286,7 +377,7 @@ class TestTrain(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("SYNO_SLOW_TESTS"), "slow: set SYNO_SLOW_TESTS=1")
 class TestSignaturesRun(unittest.TestCase):
-    """Reproduces the recorded E1, E2, E4 and E5 results."""
+    """Reproduces the recorded E1 to E5 results."""
 
     def test_results(self):
         output = io.StringIO()
@@ -299,6 +390,14 @@ class TestSignaturesRun(unittest.TestCase):
         for level in signatures.ENERGY_LEVELS:
             rate = "0.73" if level == 1.0 else "1.00"
             expected.append(f"Energy {level:.1f} | Eats: {rate}")
+        expected += [
+            "",
+            "E3: Partial-fullness eating (5 seeds)",
+            "Energy 0.2 | Near: 0.90 | Far: 0.81",
+            "Energy 0.5 | Near: 0.91 | Far: 0.88",
+            "Energy 0.8 | Near: 0.92 | Far: 0.92",
+            "Energy 1.0 | Near: 0.81 | Far: 0.93",
+        ]
         expected += [
             "",
             "E4: RPE transfer (5 seeds)",

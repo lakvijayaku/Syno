@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Steps 1 to 9 are complete. Step 10 (Evaluation signatures) is in progress: E1, E2, E4, and E5 are measured, and E6 is not measurable with the current design.
+All 10 roadmap steps are complete. Every evaluation signature has been measured: E1 and E5 are reproduced, E4 in part, E2 and E3 are not, and E6 is not measurable with the current design.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -20,10 +20,11 @@ Steps 1 to 9 are complete. Step 10 (Evaluation signatures) is in progress: E1, E
 | **7** | Memory | ✅ Done |
 | **8** | Neuron growth | ✅ Done |
 | **9** | Hormones and emotions | ✅ Done |
-| **10** | Evaluation signatures | 🔄 In progress |
+| **10** | Evaluation signatures | ✅ Done |
 
 ### Log
 #### 2026-10-08
+- **Step 10f complete:** `approach_rate` measures E3, partial-fullness eating, covered by 9 new tests. A nearly full SYNO moves toward distant food as often as toward adjacent food (0.92 for both), so E3 is recorded as not reproduced. Step 10 (Evaluation signatures) is complete, and with it the roadmap.
 - **Step 10e complete:** `eating_rate` takes a stomach fill and measures E1, satiation, covered by 5 new tests. A half-hungry SYNO prefers to eat at every stomach fill up to 0.4, then less often (0.96, 0.91, and 0.71 at full). E1 is recorded as weakly reproduced.
 - **Step 10d complete:** E6, habituation, is recorded as not measurable with the current design, because SYNO cannot sense how familiar a square is and the 3x3 grid has no unfamiliar area to return to.
 - **Step 10c complete:** `cue_rpe` measures E4, RPE transfer, at 4 points in training, using `new_brain` and a `train` that can be called in parts, covered by 11 new or rewritten tests. The RPE when eating falls from 2.443 to −0.083, but the RPE when food appears never becomes positive, because food on the 3x3 grid is always in view. E4 is recorded as partly reproduced.

@@ -8,7 +8,7 @@ import random
 from experiments.xor import make_layer
 from syno.brain.network import Network
 from syno.brain.memory import MemoryStore
-from syno.world.habitat import Habitat
+from syno.world.habitat import Habitat, ACTIONS
 from syno.body.homeostasis import HomeostaticCore, homeostatic_reward
 from syno.brain.dopamine import reward_prediction_error
 from experiments.hunger import ACTION_NAMES, GRID_SIZE, HIDDEN_NEURONS, SENSE_RADIUS, senses, DISCOUNT, FOOD_AMOUNT, REWARD_SCALE, spawn_food
@@ -31,6 +31,10 @@ ENERGY_LEVELS = [i / 10 for i in range(11)]
 # full (1.0), as if partway through a meal.
 STOMACH_LEVELS = [i / 5 for i in range(6)]
 SATIATION_ENERGY = 0.5
+
+# For E3, SYNO is tested from hungry (0.2) to full (1.0), with food either
+# next to it or at least 3 steps away.
+APPROACH_ENERGIES = [0.2, 0.5, 0.8, 1.0]
 
 
 def new_brain(seed: int) -> tuple[Network, MemoryStore]:
@@ -89,6 +93,46 @@ def eating_rate(network: Network, energy: float, stomach: float = 0.0) -> float:
             if values.index(max(values)) == ACTION_NAMES.index("eat"):
                 count += 1
     return count / squares
+
+
+def approach_rate(network: Network, energy: float, far: bool) -> float:
+    """
+    Measures how often SYNO moves toward food it can see (E3).
+
+    Every pairing of SYNO's square and a food square at the chosen distance
+    is tested, with an empty stomach and the given energy. A move counts if
+    it brings SYNO closer to the food, so either route to diagonal food
+    counts. Only SYNO's greedy choice is counted.
+
+    :param network: The trained Decision Network.
+    :param energy: SYNO's energy, from 0.0 to 1.0.
+    :param far: True for food at least 3 steps away, False for food 1 step away.
+    :return: The fraction of pairings where SYNO's preferred move approaches the food.
+    """
+    pairs = []
+    for ay in range(GRID_SIZE):
+        for ax in range(GRID_SIZE):
+            for fy in range(GRID_SIZE):
+                for fx in range(GRID_SIZE):
+                    distance = abs(ax - fx) + abs(ay - fy)
+                    if (far and distance >= 3) or (not far and distance == 1):
+                        pairs.append(((ax, ay), (fx, fy)))
+
+    # Distance is counted in steps (Manhattan distance), since SYNO cannot
+    # move diagonally.
+    count = 0
+    for agent, food in pairs:
+        habitat = Habitat(GRID_SIZE, GRID_SIZE, agent, [food])
+        body = HomeostaticCore(energy, 0.0)
+        values = network.forward(senses(habitat, body))
+        name = ACTION_NAMES[values.index(max(values))]
+        if name in ACTIONS:
+            dx, dy = ACTIONS[name]
+            distance = abs(agent[0] - food[0]) + abs(agent[1] - food[1])
+            next_distance = abs(agent[0] + dx - food[0]) + abs(agent[1] + dy - food[1])
+            if next_distance < distance:
+                count += 1
+    return count / len(pairs)
 
 
 def eating_rpe(network: Network, food_present: bool) -> float:
@@ -168,6 +212,8 @@ def main():
     """
     level_totals = {level: 0.0 for level in ENERGY_LEVELS}
     stomach_totals = {stomach: 0.0 for stomach in STOMACH_LEVELS}
+    near_totals = {energy: 0.0 for energy in APPROACH_ENERGIES}
+    far_totals = {energy: 0.0 for energy in APPROACH_ENERGIES}
     food_totals = {checkpoint: 0.0 for checkpoint in CHECKPOINTS}
     cue_totals = {checkpoint: 0.0 for checkpoint in CHECKPOINTS}
     delivered_total = 0.0
@@ -189,6 +235,9 @@ def main():
             level_totals[level] += eating_rate(network, level)
         for stomach in STOMACH_LEVELS:
             stomach_totals[stomach] += eating_rate(network, SATIATION_ENERGY, stomach)
+        for energy in APPROACH_ENERGIES:
+            near_totals[energy] += approach_rate(network, energy, False)
+            far_totals[energy] += approach_rate(network, energy, True)
         # New food appears at random after a meal, so the same seed is used
         # for every network to keep the result reproducible.
         random.seed(0)
@@ -203,6 +252,12 @@ def main():
     for level in ENERGY_LEVELS:
         avg_rate = level_totals[level] / SEEDS
         print(f"Energy {level:.1f} | Eats: {avg_rate:.2f}")
+    print()
+    print(f"E3: Partial-fullness eating ({SEEDS} seeds)")
+    for energy in APPROACH_ENERGIES:
+        near_rate = near_totals[energy] / SEEDS
+        far_rate = far_totals[energy] / SEEDS
+        print(f"Energy {energy:.1f} | Near: {near_rate:.2f} | Far: {far_rate:.2f}")
     print()
     print(f"E4: RPE transfer ({SEEDS} seeds)")
     for checkpoint in CHECKPOINTS:

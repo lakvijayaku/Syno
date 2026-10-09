@@ -20,7 +20,7 @@ Dopamine drives "wanting," the motivation to pursue a reward, which is separate 
 ### State-Dependent Reward
 The same stimulus is more rewarding when the body needs it more, a principle called alliesthesia [5]. Homeostatic reinforcement learning formalizes this by defining reward as a reduction in physiological deficit [6].
 
-**In SYNO:** Reward is the reduction in drive, where drive is the squared energy deficit. Squaring makes the same food worth more to a hungrier SYNO: digestion that is worth 0.014 when nearly full is worth 0.062 when hungry. In experiments, a trained SYNO chooses to eat whenever it is hungry, including when partially full. However, it also prefers to eat at almost any energy below full, so its willingness to eat does not rise gradually with hunger as an animal's does (signature E2 in [`evaluation.md`](evaluation.md)).
+**In SYNO:** Reward is the reduction in drive, where drive is the squared energy deficit. Squaring makes the same food worth more to a hungrier SYNO: digestion that is worth 0.014 when nearly full is worth 0.062 when hungry. In experiments, a trained SYNO chooses to eat whenever it is hungry, including when partially full. However, it also prefers to eat at almost any energy below full, so its willingness to eat does not rise gradually with hunger as an animal's does (signature E2 in [`evaluation.md`](evaluation.md)), and a nearly full SYNO pursues distant food as readily as nearby food (signature E3).
 
 ### Novelty and Habituation
 Novel stimuli elicit a response that weakens with repeated exposure [7].
