@@ -21,16 +21,21 @@ from experiments.consolidation import live
 TRAINING_LIVES = 1500
 SEEDS = 5
 
+# The points in training, in lives, at which E4 is measured.
+CHECKPOINTS = [0, 50, 200, TRAINING_LIVES]
+
 # The energy levels SYNO is tested at, from empty (0.0) to full (1.0).
 ENERGY_LEVELS = [i / 10 for i in range(11)]
 
 
-def train(seed: int) -> Network:
+def new_brain(seed: int) -> tuple[Network, MemoryStore]:
     """
-    Trains a new SYNO from scratch, exactly as in the consolidation experiment.
+    Creates an untrained SYNO, set up exactly as in the consolidation
+    experiment.
 
-    :param seed: The random seed, so the same seed gives the same network.
-    :return: The trained Decision Network.
+    :param seed: The random seed, so the same seed gives the same brain and
+        the same training afterwards.
+    :return: The Decision Network and an empty Memory Store.
     """
     random.seed(seed)
     inputs = (2 * SENSE_RADIUS + 1) ** 2 + 2
@@ -39,9 +44,21 @@ def train(seed: int) -> Network:
         make_layer(len(ACTION_NAMES), HIDDEN_NEURONS, "linear")
     ])
     memory = MemoryStore(MEMORY_CAPACITY)
-    for _ in range(TRAINING_LIVES):
+    return network, memory
+
+
+def train(network: Network, memory: MemoryStore, lives: int) -> None:
+    """
+    Trains SYNO for the given number of lives. Calling it several times in a
+    row trains exactly as one longer call would, so SYNO can be measured part
+    of the way through training.
+
+    :param network: The Decision Network.
+    :param memory: The Memory Store, shared across lives.
+    :param lives: How many lives to train for.
+    """
+    for _ in range(lives):
         live(network, memory)
-    return network
 
 
 def eating_rate(network: Network, energy: float) -> float:
@@ -102,6 +119,42 @@ def eating_rpe(network: Network, food_present: bool) -> float:
     return total / squares
 
 
+def cue_rpe(network: Network) -> float:
+    """
+    Measures SYNO's RPE when food appears in view (E4).
+
+    SYNO is placed in every square of an empty grid, half-full of energy, and
+    takes its preferred action. Food then appears, so the next state contains
+    food that SYNO did not see when it chose.
+
+    :param network: The trained Decision Network.
+    :return: SYNO's average RPE over every square.
+    """
+    total = 0.0
+    squares = GRID_SIZE * GRID_SIZE
+    for y in range(GRID_SIZE):
+        for x in range(GRID_SIZE):
+            habitat = Habitat(GRID_SIZE, GRID_SIZE, (x, y), [])
+            body = HomeostaticCore(0.5, 0.0)
+            values = network.forward(senses(habitat, body))
+            action = values.index(max(values))
+            expected = values[action]
+            name = ACTION_NAMES[action]
+            drive_before = body.drive()
+            moved = False
+            if name == "eat":
+                habitat.eat()
+            else:
+                moved = habitat.move(name)
+            body.tick(moved)
+            reward = REWARD_SCALE * homeostatic_reward(drive_before, body.drive())
+            # Food appears only after SYNO has acted, so seeing it is news.
+            spawn_food(habitat)
+            next_expected = max(network.forward(senses(habitat, body)))
+            total += reward_prediction_error(reward, expected, next_expected, DISCOUNT, False)
+    return total / squares
+
+
 def main():
     """
     Trains SYNO with SEEDS different seeds, measures every signature on each
@@ -109,10 +162,23 @@ def main():
     """
     print(f"E2: State-dependent eating ({SEEDS} seeds)")
     level_totals = {level: 0.0 for level in ENERGY_LEVELS}
+    food_totals = {checkpoint: 0.0 for checkpoint in CHECKPOINTS}
+    cue_totals = {checkpoint: 0.0 for checkpoint in CHECKPOINTS}
     delivered_total = 0.0
     omitted_total = 0.0
     for seed in range(SEEDS):
-        network = train(seed)
+        network, memory = new_brain(seed)
+        trained = 0
+        for checkpoint in CHECKPOINTS:
+            train(network, memory, checkpoint - trained)
+            trained = checkpoint
+            # Measuring draws random numbers, so the random state is saved
+            # and restored to leave the rest of training unchanged.
+            saved = random.getstate()
+            random.seed(0)
+            food_totals[checkpoint] += eating_rpe(network, True)
+            cue_totals[checkpoint] += cue_rpe(network)
+            random.setstate(saved)
         for level in ENERGY_LEVELS:
             level_totals[level] += eating_rate(network, level)
         # New food appears at random after a meal, so the same seed is used
@@ -123,6 +189,12 @@ def main():
     for level in ENERGY_LEVELS:
         avg_rate = level_totals[level] / SEEDS
         print(f"Energy {level:.1f} | Eats: {avg_rate:.2f}")
+    print()
+    print(f"E4: RPE transfer ({SEEDS} seeds)")
+    for checkpoint in CHECKPOINTS:
+        food_rpe = food_totals[checkpoint] / SEEDS
+        cue_rpe_avg = cue_totals[checkpoint] / SEEDS
+        print(f"Lives {checkpoint:4d} | Food RPE: {food_rpe:.3f} | Cue RPE: {cue_rpe_avg:.3f}")
     print()
     print(f"E5: Reward omission ({SEEDS} seeds)")
     print(f"Food delivered | RPE: {delivered_total / SEEDS:.3f}")

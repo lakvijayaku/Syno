@@ -1,11 +1,10 @@
 """
 Experiment tests for experiments/signatures.py.
 
-The fast tests probe eating_rate and eating_rpe with hand-built networks whose
-predictions are known exactly, and check that train is reproducible. The slow
-test trains SYNO with all 5 seeds (about 2 minutes) and reproduces the
-recorded E2 and E5 results.
-It is skipped by default and runs only when SYNO_SLOW_TESTS is set:
+The fast tests probe eating_rate, eating_rpe and cue_rpe with hand-built
+networks whose predictions are known exactly, and check that new_brain and
+train are reproducible. The slow test trains SYNO with all 5 seeds (about 2
+minutes) and reproduces the recorded E2, E4 and E5 results. It is skipped by default and runs only when SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
 
@@ -20,6 +19,7 @@ import unittest
 from unittest import mock
 
 import experiments.signatures as signatures
+from experiments.hunger import LIFE_STEPS
 from syno.brain.layer import Layer
 from syno.brain.network import Network
 from syno.brain.neuron import Neuron
@@ -111,13 +111,13 @@ class TestEatingRate(unittest.TestCase):
             self.assertEqual(signatures.eating_rate(network, 0.5), 1.0)
 
 
-def step_reward(eats: bool) -> float:
+def step_reward(eats: bool, moved: bool = False) -> float:
     """The scaled reward for one step at energy 0.5, with or without a meal."""
     body = HomeostaticCore(0.5, 0.0)
     before = body.drive()
     if eats:
         body.eat(signatures.FOOD_AMOUNT)
-    body.tick(False)
+    body.tick(moved)
     return signatures.REWARD_SCALE * homeostatic_reward(before, body.drive())
 
 
@@ -169,43 +169,96 @@ class TestEatingRpe(unittest.TestCase):
         self.assertEqual(network.forward(state), before)
 
 
+class TestCueRpe(unittest.TestCase):
+    """Verifies cue_rpe against networks with known predictions."""
+
+    def test_constant_prediction(self):
+        # Eat always predicts 2.0 and is chosen, but there is no food to eat,
+        # so the RPE is the reward for an empty step + 0.9 * 2.0 - 2.0.
+        network = probe_network({}, 2.0)
+        expected = step_reward(False) + signatures.DISCOUNT * 2.0 - 2.0
+        self.assertAlmostEqual(signatures.cue_rpe(network), expected)
+
+    def test_food_appears_after_syno_acts(self):
+        # New food is placed under SYNO. Eat predicts 0.1 on an empty square
+        # and 1.1 once food is under SYNO, so seeing the food is a surprise.
+        def food_under_syno(habitat):
+            habitat.food.append(habitat.agent)
+
+        network = probe_network({CENTER: 1.0}, 0.1)
+        with mock.patch.object(signatures, "spawn_food", side_effect=food_under_syno) as spawn:
+            rpe = signatures.cue_rpe(network)
+        self.assertEqual(spawn.call_count, signatures.GRID_SIZE ** 2)
+        expected = step_reward(False) + signatures.DISCOUNT * 1.1 - 0.1
+        self.assertAlmostEqual(rpe, expected)
+
+    def test_moving_costs_extra_energy(self):
+        # Up always predicts 2.0 and is chosen. SYNO moves from the 6 squares
+        # below the top row, and walks into the wall from the other 3.
+        up = signatures.ACTION_NAMES.index("up")
+        neurons = [Neuron([0.0] * INPUTS, 2.0 if action == up else 0.0, "linear")
+                   for action in range(len(signatures.ACTION_NAMES))]
+        network = Network([Layer(neurons)])
+        reward = (6 * step_reward(False, True) + 3 * step_reward(False)) / 9
+        expected = reward + signatures.DISCOUNT * 2.0 - 2.0
+        self.assertAlmostEqual(signatures.cue_rpe(network), expected)
+
+    def test_does_not_change_the_network(self):
+        network = probe_network({CENTER: 1.0}, 0.5)
+        state = [0.0] * INPUTS
+        before = network.forward(state)
+        signatures.cue_rpe(network)
+        self.assertEqual(network.forward(state), before)
+
+
 class TestTrain(unittest.TestCase):
-    """Verifies that train builds and trains a reproducible network."""
+    """Verifies that new_brain and train give a reproducible network."""
 
-    def setUp(self):
-        self.saved = signatures.TRAINING_LIVES
-        signatures.TRAINING_LIVES = 3
+    STATE = [0.0] * INPUTS
 
-    def tearDown(self):
-        signatures.TRAINING_LIVES = self.saved
+    def trained(self, seed: int, *lives: int) -> list[float]:
+        """Trains a new brain in one or more parts and returns its output."""
+        network, memory = signatures.new_brain(seed)
+        for part in lives:
+            signatures.train(network, memory, part)
+        return network.forward(self.STATE)
 
     def test_network_shape(self):
-        network = signatures.train(0)
+        network, memory = signatures.new_brain(0)
         self.assertEqual(len(network.layers), 2)
         self.assertEqual(len(network.layers[0].neurons), signatures.HIDDEN_NEURONS)
         self.assertEqual(len(network.layers[0].neurons[0].weights), INPUTS)
         self.assertEqual(len(network.layers[1].neurons), len(signatures.ACTION_NAMES))
         self.assertEqual(network.layers[1].neurons[0].activation, "linear")
+        self.assertEqual(len(memory), 0)
+        self.assertEqual(memory.capacity, signatures.MEMORY_CAPACITY)
 
     def test_same_seed_same_network(self):
-        state = [0.0] * INPUTS
-        self.assertEqual(signatures.train(4).forward(state), signatures.train(4).forward(state))
+        self.assertEqual(self.trained(4, 3), self.trained(4, 3))
 
     def test_different_seeds_differ(self):
-        state = [0.0] * INPUTS
-        self.assertNotEqual(signatures.train(0).forward(state), signatures.train(1).forward(state))
+        self.assertNotEqual(self.trained(0, 3), self.trained(1, 3))
 
     def test_training_changes_the_network(self):
-        state = [0.0] * INPUTS
-        signatures.TRAINING_LIVES = 0
-        untrained = signatures.train(0).forward(state)
-        signatures.TRAINING_LIVES = 3
-        self.assertNotEqual(untrained, signatures.train(0).forward(state))
+        self.assertNotEqual(self.trained(0, 0), self.trained(0, 3))
+
+    def test_training_in_parts_matches_one_call(self):
+        self.assertEqual(self.trained(2, 1, 2), self.trained(2, 3))
+
+    def test_training_fills_memory(self):
+        network, memory = signatures.new_brain(0)
+        signatures.train(network, memory, 1)
+        self.assertEqual(len(memory), LIFE_STEPS)
+
+    def test_checkpoints_end_at_full_training(self):
+        self.assertEqual(signatures.CHECKPOINTS[0], 0)
+        self.assertEqual(signatures.CHECKPOINTS[-1], signatures.TRAINING_LIVES)
+        self.assertEqual(signatures.CHECKPOINTS, sorted(set(signatures.CHECKPOINTS)))
 
 
 @unittest.skipUnless(os.environ.get("SYNO_SLOW_TESTS"), "slow: set SYNO_SLOW_TESTS=1")
 class TestSignaturesRun(unittest.TestCase):
-    """Reproduces the recorded E2 and E5 results."""
+    """Reproduces the recorded E2, E4 and E5 results."""
 
     def test_results(self):
         output = io.StringIO()
@@ -216,6 +269,12 @@ class TestSignaturesRun(unittest.TestCase):
             rate = "0.73" if level == 1.0 else "1.00"
             expected.append(f"Energy {level:.1f} | Eats: {rate}")
         expected += [
+            "",
+            "E4: RPE transfer (5 seeds)",
+            "Lives    0 | Food RPE: 2.443 | Cue RPE: -0.193",
+            "Lives   50 | Food RPE: 0.185 | Cue RPE: -0.190",
+            "Lives  200 | Food RPE: 0.173 | Cue RPE: -0.208",
+            "Lives 1500 | Food RPE: -0.083 | Cue RPE: -0.063",
             "",
             "E5: Reward omission (5 seeds)",
             "Food delivered | RPE: -0.083",
