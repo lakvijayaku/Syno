@@ -1,5 +1,5 @@
 # ── SYNO · syno/body/homeostasis.py ─────────────────────
-# The Homeostatic Core: SYNO's energy and stomach
+# The Homeostatic Core: SYNO's energy, stomach, and water
 # Laksheth Vijayakumar · 2026-10-07 · GPL-3.0
 # ────────────────────────────────────────────────────────
 
@@ -12,6 +12,10 @@ STOMACH_CAPACITY = 1.0
 # Squaring the deficit makes the same amount of food worth more to a hungrier
 # SYNO (alliesthesia).
 DRIVE_EXPONENT = 2
+
+# Water is lost every step, by breathing and sweating, whether or not SYNO
+# moves. Used only by HydratedCore.
+WATER_BURN = 0.01
 
 class HomeostaticCore:
     """
@@ -105,3 +109,78 @@ def homeostatic_reward(drive_before: float, drive_after: float) -> float:
     :return: The reward for the step.
     """
     return drive_before - drive_after
+
+
+class HydratedCore(HomeostaticCore):
+    """
+    SYNO's body with a second need: water, which drains every step and is
+    refilled by drinking.
+
+    Energy, the stomach, and digestion work exactly as in HomeostaticCore.
+    Water goes straight into the body when drunk, without a stomach. SYNO
+    dies when either energy or water runs out.
+    """
+
+    def __init__(self, energy: float, stomach: float, water: float):
+        """
+        Initializes the body.
+
+        :param energy: Starting energy, from 0.0 to 1.0.
+        :param stomach: Starting stomach fill, from 0.0 to 1.0.
+        :param water: Starting water, from 0.0 to 1.0.
+        :raises ValueError: If any value is outside 0.0 to 1.0.
+        """
+        super().__init__(energy, stomach)
+        if not 0.0 <= water <= 1.0:
+            raise ValueError("Water must be between 0.0 and 1.0")
+        self.water = water
+
+    def drink(self, amount: float) -> float:
+        """
+        Adds water to the body, up to full.
+
+        :param amount: How much water SYNO tries to drink.
+        :return: How much water was accepted, which may be less than amount.
+        :raises ValueError: If amount is negative.
+        """
+        if amount < 0.0:
+            raise ValueError("amount must not be negative")
+        accepted = min(amount, 1.0 - self.water)
+        self.water += accepted
+        return accepted
+
+    def tick(self, moved: bool) -> None:
+        """
+        Advances the body by one step: everything HomeostaticCore does, then
+        water loss.
+
+        :param moved: True if SYNO moved this step, which burns extra energy.
+        """
+        super().tick(moved)
+        self.water = max(0.0, self.water - WATER_BURN)
+
+    def water_deficit(self) -> float:
+        """
+        Measures how far SYNO's water is below its set-point.
+
+        :return: 0.0 when fully watered, up to 1.0 when water is empty.
+        """
+        return 1.0 - self.water
+
+    def drive(self) -> float:
+        """
+        Measures the combined push of both needs. Each deficit is squared, so
+        whichever need is larger dominates (Keramati & Gutkin, 2014).
+
+        :return: The squared energy deficit plus the squared water deficit,
+            from 0.0 to 2.0.
+        """
+        return self.deficit() ** DRIVE_EXPONENT + self.water_deficit() ** DRIVE_EXPONENT
+
+    def is_dead(self) -> bool:
+        """
+        Checks whether SYNO has run out of energy or water.
+
+        :return: True if either has reached 0.0.
+        """
+        return self.energy <= 0.0 or self.water <= 0.0

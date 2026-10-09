@@ -5,7 +5,8 @@ These tests are intentionally stricter than the Homeostatic Core's own
 safeguards. They verify the step 5a worked example, every physical rule of
 the body (digestion, burning, clamping, and stomach capacity), the drive and
 the reward it produces, including alliesthesia, and that invalid values fail
-loudly.
+loudly. HydratedCore is checked to add water without changing anything about
+energy, the stomach, or HomeostaticCore itself.
 
 Run from the repository root with:
     python3 -m unittest discover tests -v
@@ -19,7 +20,9 @@ from syno.body.homeostasis import (
     DRIVE_EXPONENT,
     MOVE_BURN,
     STOMACH_CAPACITY,
+    WATER_BURN,
     HomeostaticCore,
+    HydratedCore,
     homeostatic_reward,
 )
 
@@ -240,6 +243,185 @@ class TestHomeostaticDrive(unittest.TestCase):
         before = body.drive()
         body.tick(False)
         self.assertEqual(homeostatic_reward(before, body.drive()), 0.0)
+
+
+class TestHydratedCoreWorkedExample(unittest.TestCase):
+    """Verifies the step 13a worked example."""
+
+    def test_worked_example(self):
+        body = HydratedCore(0.5, 0.0, 0.5)
+        self.assertEqual(body.drive(), 0.5)
+        self.assertEqual(body.drink(0.3), 0.3)
+        self.assertEqual(body.water, 0.8)
+        self.assertEqual(body.drink(0.3), 0.19999999999999996)
+        self.assertEqual(body.water, 1.0)
+        body.tick(False)
+        self.assertEqual(body.energy, 0.49)
+        self.assertEqual(body.water, 0.99)
+        self.assertEqual(body.drive(), 0.2602)
+
+
+class TestHydratedCoreSetup(unittest.TestCase):
+    """Verifies that HydratedCore is a HomeostaticCore with water."""
+
+    def test_is_a_homeostatic_core(self):
+        self.assertIsInstance(HydratedCore(0.5, 0.0, 0.5), HomeostaticCore)
+
+    def test_water_burn(self):
+        self.assertEqual(WATER_BURN, 0.01)
+
+    def test_stores_all_three_values(self):
+        body = HydratedCore(0.4, 0.2, 0.7)
+        self.assertEqual((body.energy, body.stomach, body.water), (0.4, 0.2, 0.7))
+
+    def test_bounds_are_inclusive(self):
+        HydratedCore(0.5, 0.0, 0.0)
+        HydratedCore(0.5, 0.0, 1.0)
+
+    def test_rejects_water_out_of_range(self):
+        for water in (-0.01, 1.01):
+            with self.subTest(water=water):
+                with self.assertRaises(ValueError):
+                    HydratedCore(0.5, 0.0, water)
+
+    def test_still_checks_energy_and_stomach(self):
+        with self.assertRaises(ValueError):
+            HydratedCore(1.5, 0.0, 0.5)
+        with self.assertRaises(ValueError):
+            HydratedCore(0.5, -0.1, 0.5)
+
+    def test_parent_has_no_water(self):
+        self.assertFalse(hasattr(HomeostaticCore(0.5, 0.0), "water"))
+
+
+class TestHydratedCoreDrink(unittest.TestCase):
+    """Verifies drinking."""
+
+    def test_drink_adds_water(self):
+        body = HydratedCore(0.5, 0.0, 0.2)
+        self.assertEqual(body.drink(0.3), 0.3)
+        self.assertAlmostEqual(body.water, 0.5)
+
+    def test_drink_stops_at_full(self):
+        body = HydratedCore(0.5, 0.0, 0.9)
+        self.assertAlmostEqual(body.drink(0.3), 0.1)
+        self.assertEqual(body.water, 1.0)
+
+    def test_drink_when_full_accepts_nothing(self):
+        body = HydratedCore(0.5, 0.0, 1.0)
+        self.assertEqual(body.drink(0.3), 0.0)
+        self.assertEqual(body.water, 1.0)
+
+    def test_drink_zero(self):
+        body = HydratedCore(0.5, 0.0, 0.5)
+        self.assertEqual(body.drink(0.0), 0.0)
+        self.assertEqual(body.water, 0.5)
+
+    def test_drink_rejects_negative(self):
+        body = HydratedCore(0.5, 0.0, 0.5)
+        with self.assertRaises(ValueError):
+            body.drink(-0.1)
+        self.assertEqual(body.water, 0.5)
+
+    def test_drink_does_not_touch_energy_or_stomach(self):
+        body = HydratedCore(0.5, 0.2, 0.5)
+        body.drink(0.3)
+        self.assertEqual((body.energy, body.stomach), (0.5, 0.2))
+
+
+class TestHydratedCoreTick(unittest.TestCase):
+    """Verifies that a tick loses water and otherwise matches HomeostaticCore."""
+
+    def test_water_drains_each_tick(self):
+        body = HydratedCore(0.5, 0.0, 0.5)
+        body.tick(False)
+        self.assertAlmostEqual(body.water, 0.5 - WATER_BURN)
+
+    def test_moving_costs_no_extra_water(self):
+        still = HydratedCore(0.5, 0.0, 0.5)
+        moving = HydratedCore(0.5, 0.0, 0.5)
+        still.tick(False)
+        moving.tick(True)
+        self.assertEqual(still.water, moving.water)
+
+    def test_water_never_goes_below_zero(self):
+        body = HydratedCore(0.5, 0.0, 0.005)
+        body.tick(False)
+        self.assertEqual(body.water, 0.0)
+
+    def test_energy_and_stomach_match_homeostatic_core(self):
+        for moved in (False, True):
+            with self.subTest(moved=moved):
+                plain = HomeostaticCore(0.6, 0.3)
+                hydrated = HydratedCore(0.6, 0.3, 0.5)
+                for _ in range(5):
+                    plain.tick(moved)
+                    hydrated.tick(moved)
+                self.assertEqual(hydrated.energy, plain.energy)
+                self.assertEqual(hydrated.stomach, plain.stomach)
+
+    def test_eat_matches_homeostatic_core(self):
+        plain = HomeostaticCore(0.5, 0.8)
+        hydrated = HydratedCore(0.5, 0.8, 0.5)
+        self.assertEqual(hydrated.eat(0.3), plain.eat(0.3))
+        self.assertEqual(hydrated.water, 0.5)
+
+
+class TestHydratedCoreDrive(unittest.TestCase):
+    """Verifies the two-need drive."""
+
+    def test_water_deficit(self):
+        self.assertAlmostEqual(HydratedCore(0.5, 0.0, 0.3).water_deficit(), 0.7)
+        self.assertEqual(HydratedCore(0.5, 0.0, 1.0).water_deficit(), 0.0)
+
+    def test_drive_adds_both_squared_deficits(self):
+        body = HydratedCore(0.8, 0.0, 0.2)
+        self.assertAlmostEqual(body.drive(), 0.2 ** 2 + 0.8 ** 2)
+
+    def test_drive_is_zero_when_both_needs_are_met(self):
+        self.assertEqual(HydratedCore(1.0, 0.0, 1.0).drive(), 0.0)
+
+    def test_drive_is_two_when_both_are_empty(self):
+        self.assertEqual(HydratedCore(0.0, 0.0, 0.0).drive(), 2.0)
+
+    def test_larger_need_dominates(self):
+        thirsty = HydratedCore(0.8, 0.0, 0.2)
+        self.assertGreater(thirsty.water_deficit() ** 2, 10 * thirsty.deficit() ** 2)
+
+    def test_drinking_when_thirsty_is_rewarded_more(self):
+        # Alliesthesia for water: the same drink is worth more when thirstier.
+        thirsty = HydratedCore(1.0, 0.0, 0.2)
+        slightly = HydratedCore(1.0, 0.0, 0.8)
+        rewards = []
+        for body in (thirsty, slightly):
+            before = body.drive()
+            body.drink(0.1)
+            rewards.append(homeostatic_reward(before, body.drive()))
+        self.assertGreater(rewards[0], rewards[1])
+
+    def test_parent_drive_ignores_water(self):
+        self.assertAlmostEqual(HomeostaticCore(0.8, 0.0).drive(), 0.2 ** 2)
+
+
+class TestHydratedCoreDeath(unittest.TestCase):
+    """Verifies when SYNO dies."""
+
+    def test_alive_with_both(self):
+        self.assertFalse(HydratedCore(0.01, 0.0, 0.01).is_dead())
+
+    def test_dies_without_water(self):
+        self.assertTrue(HydratedCore(0.5, 0.0, 0.0).is_dead())
+
+    def test_dies_without_energy(self):
+        self.assertTrue(HydratedCore(0.0, 0.0, 0.5).is_dead())
+
+    def test_dies_of_thirst_over_time(self):
+        body = HydratedCore(1.0, 1.0, 0.03)
+        steps = 0
+        while not body.is_dead() and steps < 10:
+            body.tick(False)
+            steps += 1
+        self.assertEqual(steps, 3)
 
 
 if __name__ == "__main__":
