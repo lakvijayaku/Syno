@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-All 11 roadmap steps are complete. In the scarce world, E4 and E5 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, for a humanness score of 42%.
+All 11 roadmap steps are complete. In the scarce world, E4 and E5 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 22% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -24,6 +24,9 @@ All 11 roadmap steps are complete. In the scarce world, E4 and E5 are reproduced
 | **11** | A harder world | ✅ Done |
 
 ### Log
+#### 2026-10-09
+- **Documentation:** `docs/humanness.md` now scores SYNO against 104 human capabilities rather than the 6 measured signatures. SYNO has 17, has 10 in part, and lacks 77; the 4 that cannot be tested even in animals are left out, giving a score of 22%.
+
 #### 2026-10-08
 - **Step 11b complete:** `experiments/signatures.py` measures SYNO trained in the scarce world, and every probe now tests every position, so measuring uses no random numbers, covered by 46 tests. E4 is now fully reproduced: the RPE when food comes into view rises from −0.173 to +0.174. E5's dip deepened to −1.305, and E1 tapers more gradually. The humanness score rose from 33% to 42%. Step 11 (A harder world) is complete.
 - **Step 11a complete:** `experiments/scarcity.py`, where SYNO forages on a 5x5 grid, larger than its view, and eaten food takes 10 steps to regrow, covered by 13 tests. Average energy rose from 0.30 to 0.66 over 3000 lives. Every world tried took about the same time per life, so the larger world needs no Rust.

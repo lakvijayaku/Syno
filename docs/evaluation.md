@@ -13,7 +13,7 @@ This document defines how SYNO's behavior is measured. "Human-like" is not direc
 | **E6** | Habituation | Exploration of a familiar area declines over time and recovers after absence. | [`biology.md`](biology.md), Novelty and Habituation | Not measurable with the current design: the Novelty System habituates and recovers, but familiarity is not an input to the DN, so SYNO cannot act on it, and SYNO's 5x5 world is crossed within a few steps, so there is no unfamiliar area to return to |
 
 ### Score
-The results are combined into a single score in [`humanness.md`](humanness.md).
+These results feed the capability scores in [`humanness.md`](humanness.md), which covers every capability of a human mind and body, not only the measured signatures.
 
 ### Method
 Signatures are measured with recorded data from experiment runs. A signature passes only when the result is reproducible across multiple runs with different random seeds. Signatures are measured in `experiments/signatures.py`, which trains SYNO in the scarce world (`experiments/scarcity.py`) with several seeds and probes the trained network in hand-made situations, counting only its preferred action. Run it with `python3 -m experiments.signatures`.
