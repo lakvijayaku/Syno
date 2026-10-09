@@ -4,8 +4,9 @@ Experiment tests for experiments/signatures.py.
 The fast tests probe eating_rate, approach_rate, eating_rpe and cue_rpe with
 hand-built networks whose predictions are known exactly, and check that
 new_brain and train are reproducible. The slow test trains SYNO with all 5
-seeds (about 2 minutes) and reproduces the recorded E1 to E5 results. It is
-skipped by default and runs only when SYNO_SLOW_TESTS is set:
+seeds in the scarce world (about 4 minutes) and reproduces the recorded E1 to
+E5 results. It is skipped by default and runs only when SYNO_SLOW_TESTS is
+set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
 
@@ -19,6 +20,7 @@ import os
 import unittest
 from unittest import mock
 
+import experiments.scarcity as scarcity
 import experiments.signatures as signatures
 from experiments.hunger import LIFE_STEPS
 from syno.brain.layer import Layer
@@ -71,8 +73,10 @@ class TestSignaturesSetup(unittest.TestCase):
     def test_satiation_is_tested_half_hungry(self):
         self.assertEqual(signatures.SATIATION_ENERGY, 0.5)
 
-    def test_trains_long_enough(self):
-        self.assertGreaterEqual(signatures.TRAINING_LIVES, 1000)
+    def test_trains_in_the_scarce_world(self):
+        self.assertEqual(signatures.GRID_SIZE, 5)
+        self.assertIs(signatures.live, scarcity.live)
+        self.assertEqual(signatures.TRAINING_LIVES, scarcity.LIVES)
 
 
 class TestEatingRate(unittest.TestCase):
@@ -109,10 +113,10 @@ class TestEatingRate(unittest.TestCase):
 
     def test_counts_each_square_separately(self):
         # Eat wins only where a wall is directly above SYNO (the top row), so
-        # 3 of the 9 squares eat.
+        # 5 of the 25 squares eat.
         above = CENTER - (2 * signatures.SENSE_RADIUS + 1)
         network = probe_network({above: -1.0}, -0.5)
-        self.assertAlmostEqual(signatures.eating_rate(network, 0.5), 3 / 9)
+        self.assertAlmostEqual(signatures.eating_rate(network, 0.5), 5 / 25)
 
     def test_stomach_defaults_to_empty(self):
         # Eat wins only if the stomach input is 0.
@@ -181,40 +185,48 @@ def up_when(up_weights: dict[int, float], up_bias: float) -> Network:
 class TestApproachRate(unittest.TestCase):
     """Verifies approach_rate against networks with known preferences."""
 
+    def test_far_food_is_always_in_view(self):
+        # Of the 396 pairs at least 3 steps apart, only 132 have the food
+        # within SYNO's view. Food out of view is never tested.
+        network = move_network("up")
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 66 / 132)
+        network = move_network("left")
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 66 / 132)
+
     def test_never_approaches_while_eating(self):
         network = move_network("eat")
         for far in (False, True):
             self.assertEqual(signatures.approach_rate(network, 0.5, far), 0.0)
 
     def test_always_up_near(self):
-        # Of the 24 adjacent pairs, food is directly above SYNO in 6.
+        # Of the 80 adjacent pairs, food is directly above SYNO in 20.
         network = move_network("up")
-        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 6 / 24)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 20 / 80)
 
     def test_always_up_far(self):
-        # Of the 20 pairs at least 3 steps apart, food is above SYNO in 10.
+        # Of the 132 visible pairs at least 3 steps apart, food is above SYNO in 66.
         network = move_network("up")
-        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 10 / 20)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 66 / 132)
 
     def test_always_right_far(self):
         network = move_network("right")
-        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 10 / 20)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 66 / 132)
 
     def test_moving_away_never_counts(self):
         # Food is 1 step away, and SYNO always goes down. It approaches only
-        # food directly below it, in 6 of the 24 pairs, never the other 18.
+        # food directly below it, in 20 of the 80 pairs, never the other 60.
         network = move_network("down")
-        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 6 / 24)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 20 / 80)
 
     def test_sees_the_food(self):
         # Up wins only when food is directly above SYNO in its view.
         above = CENTER - (2 * signatures.SENSE_RADIUS + 1)
         network = up_when({above: 1.0}, -0.5)
-        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 6 / 24)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 20 / 80)
 
     def test_sideways_moves_go_the_right_way(self):
         # Right wins only when food is directly right of SYNO in its view, so
-        # it approaches in all 6 such pairs. Moving the wrong way would never
+        # it approaches in all 20 such pairs. Moving the wrong way would never
         # approach.
         right = signatures.ACTION_NAMES.index("right")
         neurons = []
@@ -226,18 +238,18 @@ class TestApproachRate(unittest.TestCase):
                 bias = -0.5
             neurons.append(Neuron(weights, bias, "linear"))
         network = Network([Layer(neurons)])
-        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 6 / 24)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, False), 20 / 80)
 
     def test_uses_the_given_energy(self):
         # Up wins only when the deficit is above 0.45.
         network = up_when({DEFICIT: 1.0}, -0.45)
-        self.assertAlmostEqual(signatures.approach_rate(network, 0.2, True), 10 / 20)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.2, True), 66 / 132)
         self.assertEqual(signatures.approach_rate(network, 0.8, True), 0.0)
 
     def test_stomach_is_empty(self):
         # Up wins only when the stomach input is 0.
         network = up_when({STOMACH: -1.0}, 0.001)
-        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 10 / 20)
+        self.assertAlmostEqual(signatures.approach_rate(network, 0.5, True), 66 / 132)
 
 
 class TestEatingRpe(unittest.TestCase):
@@ -268,16 +280,10 @@ class TestEatingRpe(unittest.TestCase):
         network = probe_network({CENTER: 1.0}, 0.0)
         self.assertAlmostEqual(signatures.eating_rpe(network, False), step_reward(False) - 1.0)
 
-    def test_new_food_appears_only_after_a_meal(self):
-        # As in live, food respawns after every successful meal, and never
-        # when the meal is missing.
-        network = probe_network({}, 0.0)
-        with mock.patch.object(signatures, "spawn_food") as spawn:
-            signatures.eating_rpe(network, True)
-            self.assertEqual(spawn.call_count, signatures.GRID_SIZE ** 2)
-            spawn.reset_mock()
-            signatures.eating_rpe(network, False)
-            self.assertEqual(spawn.call_count, 0)
+    def test_no_food_appears_after_a_meal(self):
+        # In the scarce world, eaten food regrows only after REGROW_DELAY
+        # steps, so the probe must never add food, and has no way to.
+        self.assertFalse(hasattr(signatures, "spawn_food"))
 
     def test_does_not_change_the_network(self):
         network = probe_network({CENTER: 1.0}, 0.5)
@@ -298,28 +304,84 @@ class TestCueRpe(unittest.TestCase):
         expected = step_reward(False) + signatures.DISCOUNT * 2.0 - 2.0
         self.assertAlmostEqual(signatures.cue_rpe(network), expected)
 
-    def test_food_appears_after_syno_acts(self):
-        # New food is placed under SYNO. Eat predicts 0.1 on an empty square
-        # and 1.1 once food is under SYNO, so seeing the food is a surprise.
-        def food_under_syno(habitat):
-            habitat.food.append(habitat.agent)
+    def test_food_appears_in_every_visible_square(self):
+        # Food appears in turn on every square SYNO can see, except its own:
+        # 336 squares across the 25 starting positions, one RPE each.
+        network = probe_network({}, 2.0)
+        with mock.patch.object(signatures, "reward_prediction_error",
+                               wraps=signatures.reward_prediction_error) as rpe:
+            signatures.cue_rpe(network)
+        self.assertEqual(rpe.call_count, 336)
 
+    def test_view_is_taken_after_syno_moves(self):
+        # Up predicts 2.0, plus 1.0 when food is 2 squares above SYNO. SYNO
+        # moves up, so food appears around its new square, and only food 2
+        # squares above the new square raises the next prediction.
+        width = 2 * signatures.SENSE_RADIUS + 1
+        two_above = CENTER - 2 * width
+        up = signatures.ACTION_NAMES.index("up")
+        neurons = []
+        for action in range(len(signatures.ACTION_NAMES)):
+            weights = [0.0] * INPUTS
+            if action == up:
+                weights[two_above] = 1.0
+            neurons.append(Neuron(weights, 2.0 if action == up else 0.0, "linear"))
+        network = Network([Layer(neurons)])
+        size = signatures.GRID_SIZE
+        radius = signatures.SENSE_RADIUS
+        total = 0.0
+        count = 0
+        for y in range(size):
+            for x in range(size):
+                # Before moving, a wall 2 squares above lowers up to 1.0.
+                expected = 2.0 - (1.0 if y < 2 else 0.0)
+                moved = y > 0
+                after = (x, y - 1) if moved else (x, y)
+                reward = step_reward(False, moved)
+                for fy in range(size):
+                    for fx in range(size):
+                        if abs(fx - after[0]) <= radius and abs(fy - after[1]) <= radius \
+                                and (fx, fy) != after:
+                            wall = after[1] < 2
+                            food = (fx, fy) == (after[0], after[1] - 2)
+                            next_value = 2.0 - (1.0 if wall else 0.0) + (1.0 if food else 0.0)
+                            total += reward + signatures.DISCOUNT * next_value - expected
+                            count += 1
+        self.assertAlmostEqual(signatures.cue_rpe(network), total / count)
+
+    def test_food_never_appears_under_syno(self):
+        # Eat predicts 0.1, plus 1.0 when food is under SYNO. Food under SYNO
+        # would be eaten, not seen, so it is never one of the tested squares.
         network = probe_network({CENTER: 1.0}, 0.1)
-        with mock.patch.object(signatures, "spawn_food", side_effect=food_under_syno) as spawn:
-            rpe = signatures.cue_rpe(network)
-        self.assertEqual(spawn.call_count, signatures.GRID_SIZE ** 2)
-        expected = step_reward(False) + signatures.DISCOUNT * 1.1 - 0.1
-        self.assertAlmostEqual(rpe, expected)
+        expected = step_reward(False) + signatures.DISCOUNT * 0.1 - 0.1
+        self.assertAlmostEqual(signatures.cue_rpe(network), expected)
 
     def test_moving_costs_extra_energy(self):
-        # Up always predicts 2.0 and is chosen. SYNO moves from the 6 squares
-        # below the top row, and walks into the wall from the other 3.
+        # Up always predicts 2.0 and is chosen. SYNO moves from the 20 squares
+        # below the top row, and walks into the wall from the other 5. Each
+        # position counts once for every square in view after the step.
         up = signatures.ACTION_NAMES.index("up")
         neurons = [Neuron([0.0] * INPUTS, 2.0 if action == up else 0.0, "linear")
                    for action in range(len(signatures.ACTION_NAMES))]
         network = Network([Layer(neurons)])
-        reward = (6 * step_reward(False, True) + 3 * step_reward(False)) / 9
-        expected = reward + signatures.DISCOUNT * 2.0 - 2.0
+        size = signatures.GRID_SIZE
+        radius = signatures.SENSE_RADIUS
+        total = 0.0
+        count = 0
+        for y in range(size):
+            for x in range(size):
+                moved = y > 0
+                after = (x, y - 1) if moved else (x, y)
+                in_view = sum(
+                    1
+                    for fy in range(size)
+                    for fx in range(size)
+                    if abs(fx - after[0]) <= radius and abs(fy - after[1]) <= radius
+                    and (fx, fy) != after
+                )
+                total += in_view * step_reward(False, moved)
+                count += in_view
+        expected = total / count + signatures.DISCOUNT * 2.0 - 2.0
         self.assertAlmostEqual(signatures.cue_rpe(network), expected)
 
     def test_does_not_change_the_network(self):
@@ -383,33 +445,43 @@ class TestSignaturesRun(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             signatures.main()
-        expected = ["E1: Satiation (5 seeds, energy 0.5)"]
-        for stomach, rate in zip(signatures.STOMACH_LEVELS, ("1.00", "1.00", "1.00", "0.96", "0.91", "0.71")):
-            expected.append(f"Stomach {stomach:.1f} | Eats: {rate}")
-        expected += ["", "E2: State-dependent eating (5 seeds)"]
-        for level in signatures.ENERGY_LEVELS:
-            rate = "0.73" if level == 1.0 else "1.00"
-            expected.append(f"Energy {level:.1f} | Eats: {rate}")
-        expected += [
-            "",
-            "E3: Partial-fullness eating (5 seeds)",
-            "Energy 0.2 | Near: 0.90 | Far: 0.81",
-            "Energy 0.5 | Near: 0.91 | Far: 0.88",
-            "Energy 0.8 | Near: 0.92 | Far: 0.92",
-            "Energy 1.0 | Near: 0.81 | Far: 0.93",
-        ]
-        expected += [
-            "",
-            "E4: RPE transfer (5 seeds)",
-            "Lives    0 | Food RPE: 2.443 | Cue RPE: -0.193",
-            "Lives   50 | Food RPE: 0.185 | Cue RPE: -0.190",
-            "Lives  200 | Food RPE: 0.173 | Cue RPE: -0.208",
-            "Lives 1500 | Food RPE: -0.083 | Cue RPE: -0.063",
-            "",
-            "E5: Reward omission (5 seeds)",
-            "Food delivered | RPE: -0.083",
-            "Food omitted   | RPE: -0.874",
-        ]
+        expected = """E1: Satiation (5 seeds, energy 0.5)
+Stomach 0.0 | Eats: 0.98
+Stomach 0.2 | Eats: 0.98
+Stomach 0.4 | Eats: 0.94
+Stomach 0.6 | Eats: 0.92
+Stomach 0.8 | Eats: 0.86
+Stomach 1.0 | Eats: 0.70
+
+E2: State-dependent eating (5 seeds)
+Energy 0.0 | Eats: 0.98
+Energy 0.1 | Eats: 0.99
+Energy 0.2 | Eats: 0.99
+Energy 0.3 | Eats: 0.99
+Energy 0.4 | Eats: 0.99
+Energy 0.5 | Eats: 0.98
+Energy 0.6 | Eats: 0.97
+Energy 0.7 | Eats: 0.95
+Energy 0.8 | Eats: 0.94
+Energy 0.9 | Eats: 0.91
+Energy 1.0 | Eats: 0.91
+
+E3: Partial-fullness eating (5 seeds)
+Energy 0.2 | Near: 0.96 | Far: 0.92
+Energy 0.5 | Near: 0.96 | Far: 0.92
+Energy 0.8 | Near: 0.92 | Far: 0.90
+Energy 1.0 | Near: 0.89 | Far: 0.87
+
+E4: RPE transfer (5 seeds)
+Lives    0 | Food RPE: 2.415 | Cue RPE: -0.173
+Lives   50 | Food RPE: 0.420 | Cue RPE: -0.193
+Lives  200 | Food RPE: -0.079 | Cue RPE: -0.175
+Lives 1000 | Food RPE: -0.045 | Cue RPE: 0.167
+Lives 3000 | Food RPE: -0.022 | Cue RPE: 0.174
+
+E5: Reward omission (5 seeds)
+Food delivered | RPE: -0.022
+Food omitted   | RPE: -1.305""".splitlines()
         self.assertEqual(output.getvalue().splitlines(), expected)
 
 

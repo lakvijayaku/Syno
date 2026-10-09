@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Steps 1 to 10 are complete. Step 11 (A harder world) is in progress. Every evaluation signature has been measured: E1 and E5 are reproduced, E4 in part, E2 and E3 are not, and E6 is not measurable with the current design.
+All 11 roadmap steps are complete. In the scarce world, E4 and E5 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, for a humanness score of 42%.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -21,10 +21,11 @@ Steps 1 to 10 are complete. Step 11 (A harder world) is in progress. Every evalu
 | **8** | Neuron growth | ✅ Done |
 | **9** | Hormones and emotions | ✅ Done |
 | **10** | Evaluation signatures | ✅ Done |
-| **11** | A harder world | 🔄 In progress |
+| **11** | A harder world | ✅ Done |
 
 ### Log
 #### 2026-10-08
+- **Step 11b complete:** `experiments/signatures.py` measures SYNO trained in the scarce world, and every probe now tests every position, so measuring uses no random numbers, covered by 46 tests. E4 is now fully reproduced: the RPE when food comes into view rises from −0.173 to +0.174. E5's dip deepened to −1.305, and E1 tapers more gradually. The humanness score rose from 33% to 42%. Step 11 (A harder world) is complete.
 - **Step 11a complete:** `experiments/scarcity.py`, where SYNO forages on a 5x5 grid, larger than its view, and eaten food takes 10 steps to regrow, covered by 13 tests. Average energy rose from 0.30 to 0.66 over 3000 lives. Every world tried took about the same time per life, so the larger world needs no Rust.
 - **Documentation:** `docs/humanness.md` scores SYNO at 33% (2 of 6 points) from the measured signatures, and lists what earns the score and what holds it back.
 - **Step 10f complete:** `approach_rate` measures E3, partial-fullness eating, covered by 9 new tests. A nearly full SYNO moves toward distant food as often as toward adjacent food (0.92 for both), so E3 is recorded as not reproduced. Step 10 (Evaluation signatures) is complete, and with it the roadmap.

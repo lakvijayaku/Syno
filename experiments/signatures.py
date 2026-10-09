@@ -11,18 +11,19 @@ from syno.brain.memory import MemoryStore
 from syno.world.habitat import Habitat, ACTIONS
 from syno.body.homeostasis import HomeostaticCore, homeostatic_reward
 from syno.brain.dopamine import reward_prediction_error
-from experiments.hunger import ACTION_NAMES, GRID_SIZE, HIDDEN_NEURONS, SENSE_RADIUS, senses, DISCOUNT, FOOD_AMOUNT, REWARD_SCALE, spawn_food
+from experiments.hunger import ACTION_NAMES, HIDDEN_NEURONS, SENSE_RADIUS, senses, DISCOUNT, FOOD_AMOUNT, REWARD_SCALE
 from experiments.replay import MEMORY_CAPACITY
-from experiments.consolidation import live
+from experiments.scarcity import GRID_SIZE, LIVES, live
 
-# Each signature is measured on SYNO trained with surprise-weighted replay,
-# the best learner so far, and averaged over several seeds, so a result is
-# never the luck of one run. 1500 lives is enough to master the 3x3 world.
-TRAINING_LIVES = 1500
+# Each signature is measured on SYNO trained in the scarce world, where food
+# can be out of sight and takes time to regrow, and averaged over several
+# seeds, so a result is never the luck of one run. Every probe tests every
+# position, so measuring uses no random numbers and never changes training.
+TRAINING_LIVES = LIVES
 SEEDS = 5
 
 # The points in training, in lives, at which E4 is measured.
-CHECKPOINTS = [0, 50, 200, TRAINING_LIVES]
+CHECKPOINTS = [0, 50, 200, 1000, TRAINING_LIVES]
 
 # The energy levels SYNO is tested at, from empty (0.0) to full (1.0).
 ENERGY_LEVELS = [i / 10 for i in range(11)]
@@ -99,8 +100,8 @@ def approach_rate(network: Network, energy: float, far: bool) -> float:
     """
     Measures how often SYNO moves toward food it can see (E3).
 
-    Every pairing of SYNO's square and a food square at the chosen distance
-    is tested, with an empty stomach and the given energy. A move counts if
+    Every pairing of SYNO's square and a food square at the chosen distance,
+    within SYNO's view, is tested, with an empty stomach and the given energy. A move counts if
     it brings SYNO closer to the food, so either route to diagonal food
     counts. Only SYNO's greedy choice is counted.
 
@@ -115,7 +116,7 @@ def approach_rate(network: Network, energy: float, far: bool) -> float:
             for fy in range(GRID_SIZE):
                 for fx in range(GRID_SIZE):
                     distance = abs(ax - fx) + abs(ay - fy)
-                    if (far and distance >= 3) or (not far and distance == 1):
+                    if ((far and distance >= 3) or (not far and distance == 1)) and abs(ax - fx) <= SENSE_RADIUS and abs(ay - fy) <= SENSE_RADIUS:
                         pairs.append(((ax, ay), (fx, fy)))
 
     # Distance is counted in steps (Manhattan distance), since SYNO cannot
@@ -142,7 +143,8 @@ def eating_rpe(network: Network, food_present: bool) -> float:
     SYNO is placed on food in every square, half-full of energy, and eats.
     When food_present is False, the food vanishes after SYNO has seen it, so
     the meal it expected never comes. The step is otherwise identical to a
-    step of live, including new food appearing after a meal.
+    step of live. As in the scarce world, no new food appears straight after
+    a meal.
 
     :param network: The trained Decision Network.
     :param food_present: False to remove the food just before SYNO eats.
@@ -161,7 +163,6 @@ def eating_rpe(network: Network, food_present: bool) -> float:
             drive_before = body.drive()
             if habitat.eat():
                 body.eat(FOOD_AMOUNT)
-                spawn_food(habitat)
             body.tick(False)
             reward = REWARD_SCALE * homeostatic_reward(drive_before, body.drive())
             next_expected = max(network.forward(senses(habitat, body)))
@@ -174,14 +175,15 @@ def cue_rpe(network: Network) -> float:
     Measures SYNO's RPE when food appears in view (E4).
 
     SYNO is placed in every square of an empty grid, half-full of energy, and
-    takes its preferred action. Food then appears, so the next state contains
-    food that SYNO did not see when it chose.
+    takes its preferred action. Food then appears, in turn, on every square
+    SYNO can see from where it ended up, except its own, so the next state
+    contains food that SYNO did not see when it chose.
 
     :param network: The trained Decision Network.
-    :return: SYNO's average RPE over every square.
+    :return: SYNO's average RPE over every starting square and food square.
     """
     total = 0.0
-    squares = GRID_SIZE * GRID_SIZE
+    count = 0
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
             habitat = Habitat(GRID_SIZE, GRID_SIZE, (x, y), [])
@@ -199,10 +201,15 @@ def cue_rpe(network: Network) -> float:
             body.tick(moved)
             reward = REWARD_SCALE * homeostatic_reward(drive_before, body.drive())
             # Food appears only after SYNO has acted, so seeing it is news.
-            spawn_food(habitat)
-            next_expected = max(network.forward(senses(habitat, body)))
-            total += reward_prediction_error(reward, expected, next_expected, DISCOUNT, False)
-    return total / squares
+            ax, ay = habitat.agent
+            for fy in range(GRID_SIZE):
+                for fx in range(GRID_SIZE):
+                    if abs(fx - ax) <= SENSE_RADIUS and abs(fy - ay) <= SENSE_RADIUS and (fx, fy) != habitat.agent:
+                        habitat.food = [(fx, fy)]
+                        next_expected = max(network.forward(senses(habitat, body)))
+                        total += reward_prediction_error(reward, expected, next_expected, DISCOUNT, False)
+                        count += 1
+    return total / count
 
 
 def main():
@@ -224,13 +231,8 @@ def main():
         for checkpoint in CHECKPOINTS:
             train(network, memory, checkpoint - trained)
             trained = checkpoint
-            # Measuring draws random numbers, so the random state is saved
-            # and restored to leave the rest of training unchanged.
-            saved = random.getstate()
-            random.seed(0)
             food_totals[checkpoint] += eating_rpe(network, True)
             cue_totals[checkpoint] += cue_rpe(network)
-            random.setstate(saved)
         for level in ENERGY_LEVELS:
             level_totals[level] += eating_rate(network, level)
         for stomach in STOMACH_LEVELS:
@@ -238,9 +240,6 @@ def main():
         for energy in APPROACH_ENERGIES:
             near_totals[energy] += approach_rate(network, energy, False)
             far_totals[energy] += approach_rate(network, energy, True)
-        # New food appears at random after a meal, so the same seed is used
-        # for every network to keep the result reproducible.
-        random.seed(0)
         delivered_total += eating_rpe(network, True)
         omitted_total += eating_rpe(network, False)
     print(f"E1: Satiation ({SEEDS} seeds, energy {SATIATION_ENERGY})")
