@@ -35,7 +35,7 @@ SYNO consists of the **Habitat (HB)**, which is the external world, a body, the 
 └────────────────────────────────────────────────────┘
 ```
 
-The **Value Estimator (VE)** is currently built into the **DN**: each DN output predicts the value of one action (Q-learning). The **Signal Emitters (SE)** are not yet separate: the HC's energy deficit and stomach fill are sensed directly.
+The **Value Estimator (VE)** is currently built into the **DN**: each DN output predicts the value of one action (Q-learning). The **Signal Emitters (SE)** are not separate: the HC's energy deficit and stomach fill are sensed directly.
 
 ### The Simulation Loop
 Each tick follows the same sequence:

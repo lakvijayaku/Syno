@@ -4,7 +4,7 @@ Experiment tests for experiments/signatures.py.
 The fast tests probe eating_rate, eating_rpe and cue_rpe with hand-built
 networks whose predictions are known exactly, and check that new_brain and
 train are reproducible. The slow test trains SYNO with all 5 seeds (about 2
-minutes) and reproduces the recorded E2, E4 and E5 results. It is skipped by default and runs only when SYNO_SLOW_TESTS is set:
+minutes) and reproduces the recorded E1, E2, E4 and E5 results. It is skipped by default and runs only when SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
 
@@ -62,6 +62,14 @@ class TestSignaturesSetup(unittest.TestCase):
     def test_uses_several_seeds(self):
         self.assertGreaterEqual(signatures.SEEDS, 3)
 
+    def test_stomach_levels_span_empty_to_full(self):
+        self.assertEqual(signatures.STOMACH_LEVELS[0], 0.0)
+        self.assertEqual(signatures.STOMACH_LEVELS[-1], 1.0)
+        self.assertEqual(len(signatures.STOMACH_LEVELS), 6)
+
+    def test_satiation_is_tested_half_hungry(self):
+        self.assertEqual(signatures.SATIATION_ENERGY, 0.5)
+
     def test_trains_long_enough(self):
         self.assertGreaterEqual(signatures.TRAINING_LIVES, 1000)
 
@@ -104,6 +112,26 @@ class TestEatingRate(unittest.TestCase):
         above = CENTER - (2 * signatures.SENSE_RADIUS + 1)
         network = probe_network({above: -1.0}, -0.5)
         self.assertAlmostEqual(signatures.eating_rate(network, 0.5), 3 / 9)
+
+    def test_stomach_defaults_to_empty(self):
+        # Eat wins only if the stomach input is 0.
+        network = probe_network({STOMACH: -1.0}, 0.001)
+        self.assertEqual(signatures.eating_rate(network, 0.5), 1.0)
+        self.assertEqual(signatures.eating_rate(network, 0.5, 0.0), 1.0)
+
+    def test_eats_only_when_stomach_is_nearly_empty(self):
+        # Eat's value is 0.5 - stomach, so eating is preferred below 0.5.
+        network = probe_network({STOMACH: -1.0}, 0.5)
+        for stomach in (0.0, 0.2, 0.4):
+            self.assertEqual(signatures.eating_rate(network, 0.5, stomach), 1.0)
+        for stomach in (0.6, 0.8, 1.0):
+            self.assertEqual(signatures.eating_rate(network, 0.5, stomach), 0.0)
+
+    def test_stomach_does_not_change_energy(self):
+        # Eat's value is deficit - 0.45, so the stomach must not affect it.
+        network = probe_network({DEFICIT: 1.0}, -0.45)
+        self.assertEqual(signatures.eating_rate(network, 0.2, 1.0), 1.0)
+        self.assertEqual(signatures.eating_rate(network, 0.8, 0.0), 0.0)
 
     def test_does_not_explore(self):
         network = probe_network({}, 0.001)
@@ -258,13 +286,16 @@ class TestTrain(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("SYNO_SLOW_TESTS"), "slow: set SYNO_SLOW_TESTS=1")
 class TestSignaturesRun(unittest.TestCase):
-    """Reproduces the recorded E2, E4 and E5 results."""
+    """Reproduces the recorded E1, E2, E4 and E5 results."""
 
     def test_results(self):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             signatures.main()
-        expected = ["E2: State-dependent eating (5 seeds)"]
+        expected = ["E1: Satiation (5 seeds, energy 0.5)"]
+        for stomach, rate in zip(signatures.STOMACH_LEVELS, ("1.00", "1.00", "1.00", "0.96", "0.91", "0.71")):
+            expected.append(f"Stomach {stomach:.1f} | Eats: {rate}")
+        expected += ["", "E2: State-dependent eating (5 seeds)"]
         for level in signatures.ENERGY_LEVELS:
             rate = "0.73" if level == 1.0 else "1.00"
             expected.append(f"Energy {level:.1f} | Eats: {rate}")

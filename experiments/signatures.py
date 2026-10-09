@@ -27,6 +27,11 @@ CHECKPOINTS = [0, 50, 200, TRAINING_LIVES]
 # The energy levels SYNO is tested at, from empty (0.0) to full (1.0).
 ENERGY_LEVELS = [i / 10 for i in range(11)]
 
+# For E1, SYNO is tested half-hungry at stomach fills from empty (0.0) to
+# full (1.0), as if partway through a meal.
+STOMACH_LEVELS = [i / 5 for i in range(6)]
+SATIATION_ENERGY = 0.5
+
 
 def new_brain(seed: int) -> tuple[Network, MemoryStore]:
     """
@@ -61,16 +66,17 @@ def train(network: Network, memory: MemoryStore, lives: int) -> None:
         live(network, memory)
 
 
-def eating_rate(network: Network, energy: float) -> float:
+def eating_rate(network: Network, energy: float, stomach: float = 0.0) -> float:
     """
-    Measures how often SYNO prefers to eat when standing on food (E2).
+    Measures how often SYNO prefers to eat when standing on food (E1, E2).
 
-    SYNO is placed on food in every square of the grid, with an empty stomach
-    and the given energy. Only its greedy choice is counted, so random
+    SYNO is placed on food in every square of the grid, with the given energy
+    and stomach fill. Only its greedy choice is counted, so random
     exploration does not affect the result.
 
     :param network: The trained Decision Network.
     :param energy: SYNO's energy, from 0.0 to 1.0.
+    :param stomach: SYNO's stomach fill, from 0.0 (empty) to 1.0 (full).
     :return: The fraction of squares where eating is SYNO's preferred action.
     """
     count = 0
@@ -78,7 +84,7 @@ def eating_rate(network: Network, energy: float) -> float:
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
             habitat = Habitat(GRID_SIZE, GRID_SIZE, (x, y), [(x, y)])
-            body = HomeostaticCore(energy, 0.0)
+            body = HomeostaticCore(energy, stomach)
             values = network.forward(senses(habitat, body))
             if values.index(max(values)) == ACTION_NAMES.index("eat"):
                 count += 1
@@ -160,8 +166,8 @@ def main():
     Trains SYNO with SEEDS different seeds, measures every signature on each
     network, and prints the results averaged over the seeds.
     """
-    print(f"E2: State-dependent eating ({SEEDS} seeds)")
     level_totals = {level: 0.0 for level in ENERGY_LEVELS}
+    stomach_totals = {stomach: 0.0 for stomach in STOMACH_LEVELS}
     food_totals = {checkpoint: 0.0 for checkpoint in CHECKPOINTS}
     cue_totals = {checkpoint: 0.0 for checkpoint in CHECKPOINTS}
     delivered_total = 0.0
@@ -181,11 +187,19 @@ def main():
             random.setstate(saved)
         for level in ENERGY_LEVELS:
             level_totals[level] += eating_rate(network, level)
+        for stomach in STOMACH_LEVELS:
+            stomach_totals[stomach] += eating_rate(network, SATIATION_ENERGY, stomach)
         # New food appears at random after a meal, so the same seed is used
         # for every network to keep the result reproducible.
         random.seed(0)
         delivered_total += eating_rpe(network, True)
         omitted_total += eating_rpe(network, False)
+    print(f"E1: Satiation ({SEEDS} seeds, energy {SATIATION_ENERGY})")
+    for stomach in STOMACH_LEVELS:
+        avg_rate = stomach_totals[stomach] / SEEDS
+        print(f"Stomach {stomach:.1f} | Eats: {avg_rate:.2f}")
+    print()
+    print(f"E2: State-dependent eating ({SEEDS} seeds)")
     for level in ENERGY_LEVELS:
         avg_rate = level_totals[level] / SEEDS
         print(f"Energy {level:.1f} | Eats: {avg_rate:.2f}")
