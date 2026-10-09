@@ -3,7 +3,8 @@ Unit tests for syno.world.habitat.
 
 These tests are intentionally stricter than the Habitat's own safeguards. They
 verify the coordinate system, every boundary of the grid, input validation,
-rendering, and that the habitat does not share outside data.
+rendering, that the habitat does not share outside data, and that water can
+be drunk and sensed without changing worlds that have none.
 
 Run from the repository root with:
     python3 -m unittest discover tests -v
@@ -346,6 +347,99 @@ class TestHabitatSense(unittest.TestCase):
         habitat.sense(2)
         self.assertEqual(habitat.agent, (1, 1))
         self.assertEqual(habitat.food, [(0, 0)])
+
+
+class TestHabitatWater(unittest.TestCase):
+    """Verifies water: storing, drawing, drinking, and sensing it."""
+
+    def test_step_13b_example(self):
+        habitat = Habitat(3, 3, (1, 1), [(0, 0)], [(2, 1)])
+        self.assertEqual(habitat.render(), "F..\n.SW\n...")
+        self.assertFalse(habitat.drink())
+        habitat.move("right")
+        self.assertTrue(habitat.drink())
+        self.assertEqual(habitat.water, [(2, 1)])
+        self.assertEqual(habitat.sense_water(1), [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])
+
+    def test_no_water_by_default(self):
+        self.assertEqual(Habitat(3, 3, (1, 1), []).water, [])
+
+    def test_default_is_not_shared(self):
+        first = Habitat(3, 3, (1, 1), [])
+        first.water.append((0, 0))
+        self.assertEqual(Habitat(3, 3, (1, 1), []).water, [])
+
+    def test_water_list_is_copied(self):
+        water = [(0, 0)]
+        habitat = Habitat(3, 3, (1, 1), [], water)
+        water.append((2, 2))
+        self.assertEqual(habitat.water, [(0, 0)])
+
+    def test_rejects_water_off_the_grid(self):
+        for position in ((-1, 0), (3, 0), (0, 3), (0, -1)):
+            with self.subTest(position=position):
+                with self.assertRaises(ValueError):
+                    Habitat(3, 3, (1, 1), [], [position])
+
+    def test_accepts_water_on_every_edge(self):
+        Habitat(3, 3, (1, 1), [], [(0, 0), (2, 0), (0, 2), (2, 2)])
+
+    def test_render_shows_syno_over_water(self):
+        self.assertEqual(Habitat(2, 1, (0, 0), [], [(0, 0)]).render(), "S.")
+
+    def test_render_without_water_is_unchanged(self):
+        self.assertEqual(Habitat(2, 2, (0, 0), [(1, 1)]).render(), "S.\n.F")
+
+    def test_drinking_never_uses_up_water(self):
+        habitat = Habitat(3, 3, (1, 1), [], [(1, 1)])
+        for _ in range(5):
+            self.assertTrue(habitat.drink())
+        self.assertEqual(habitat.water, [(1, 1)])
+
+    def test_drink_without_water_does_nothing(self):
+        habitat = Habitat(3, 3, (1, 1), [(1, 1)])
+        self.assertFalse(habitat.drink())
+        self.assertEqual(habitat.food, [(1, 1)])
+
+    def test_food_is_not_water(self):
+        habitat = Habitat(3, 3, (1, 1), [(1, 1)], [(0, 0)])
+        self.assertFalse(habitat.drink())
+        self.assertEqual(habitat.sense_water(0), [0.0])
+
+    def test_water_is_not_food(self):
+        habitat = Habitat(3, 3, (1, 1), [], [(1, 1)])
+        self.assertFalse(habitat.eat())
+        self.assertEqual(habitat.sense(0), [0.0])
+
+    def test_sense_water_window_size(self):
+        habitat = Habitat(5, 5, (2, 2), [])
+        for radius in (0, 1, 2):
+            with self.subTest(radius=radius):
+                self.assertEqual(len(habitat.sense_water(radius)), (2 * radius + 1) ** 2)
+
+    def test_sense_water_order_matches_sense(self):
+        # Water at the top-left of the window comes first, and at the
+        # bottom-right last, as food does in sense.
+        habitat = Habitat(3, 3, (1, 1), [(0, 0), (2, 2)], [(0, 0), (2, 2)])
+        water = habitat.sense_water(1)
+        food = habitat.sense(1)
+        self.assertEqual(water, food)
+        self.assertEqual(water[0], 1.0)
+        self.assertEqual(water[-1], 1.0)
+
+    def test_sense_water_reads_walls_as_zero(self):
+        habitat = Habitat(1, 1, (0, 0), [])
+        self.assertEqual(habitat.sense_water(1), [0.0] * 9)
+
+    def test_sense_water_follows_syno(self):
+        habitat = Habitat(3, 1, (0, 0), [], [(2, 0)])
+        self.assertEqual(habitat.sense_water(1), [0.0] * 9)
+        habitat.move("right")
+        self.assertEqual(habitat.sense_water(1)[5], 1.0)
+
+    def test_sense_water_rejects_negative_radius(self):
+        with self.assertRaises(ValueError):
+            Habitat(3, 3, (1, 1), []).sense_water(-1)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ SYNO consists of the **Habitat (HB)**, which is the external world, a body, the 
 
 | Package | Contains |
 |---|---|
-| `syno/world/` | The Habitat: the grid, movement, eating, and senses |
+| `syno/world/` | The Habitat: the grid, movement, eating, drinking, and senses |
 | `syno/body/` | The Homeostatic Core (energy, stomach, water, drive, and reward) and hormones |
 | `syno/brain/` | Neurons, layers, networks, training, the Dopamine System, action selection, the Novelty System, the Memory Store, and the Growth Engine |
 | `syno/tools/` | Recording data from runs, smoothing it, and drawing it as charts |
@@ -19,7 +19,7 @@ SYNO consists of the **Habitat (HB)**, which is the external world, a body, the 
 
 ```
 ┌──────────────────────── HB ────────────────────────┐
-│  food and open space, bounded by walls             │
+│  food, water, and open space, bounded by walls     │
 └──────────┬──────────────────────────────▲──────────┘
      senses│                              │action
 ┌──────────▼─────────────── AM ───────────┴──────────┐
