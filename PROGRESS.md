@@ -24,6 +24,7 @@ All 10 roadmap steps are complete. Every evaluation signature has been measured:
 
 ### Log
 #### 2026-10-08
+- **Documentation:** `docs/humanness.md` scores SYNO at 33% (2 of 6 points) from the measured signatures, and lists what earns the score and what holds it back.
 - **Step 10f complete:** `approach_rate` measures E3, partial-fullness eating, covered by 9 new tests. A nearly full SYNO moves toward distant food as often as toward adjacent food (0.92 for both), so E3 is recorded as not reproduced. Step 10 (Evaluation signatures) is complete, and with it the roadmap.
 - **Step 10e complete:** `eating_rate` takes a stomach fill and measures E1, satiation, covered by 5 new tests. A half-hungry SYNO prefers to eat at every stomach fill up to 0.4, then less often (0.96, 0.91, and 0.71 at full). E1 is recorded as weakly reproduced.
 - **Step 10d complete:** E6, habituation, is recorded as not measurable with the current design, because SYNO cannot sense how familiar a square is and the 3x3 grid has no unfamiliar area to return to.
