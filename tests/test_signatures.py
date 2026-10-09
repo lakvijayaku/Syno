@@ -4,7 +4,7 @@ Experiment tests for experiments/signatures.py.
 The fast tests probe eating_rate, approach_rate, eating_rpe and cue_rpe with
 hand-built networks whose predictions are known exactly, and check that
 new_brain and train are reproducible. The slow test trains SYNO with all 5
-seeds in the scarce world (about 4 minutes) and reproduces the recorded E1 to
+seeds in the scarce world, in parallel (about 90 seconds) and reproduces the recorded E1 to
 E5 results. It is skipped by default and runs only when SYNO_SLOW_TESTS is
 set:
 
@@ -62,8 +62,12 @@ class TestSignaturesSetup(unittest.TestCase):
         for low, high in zip(signatures.ENERGY_LEVELS, signatures.ENERGY_LEVELS[1:]):
             self.assertAlmostEqual(high - low, 0.1)
 
-    def test_uses_several_seeds(self):
-        self.assertGreaterEqual(signatures.SEEDS, 3)
+    def test_uses_ten_seeds(self):
+        self.assertEqual(signatures.SEEDS, 10)
+
+    def test_clear_effect_thresholds(self):
+        self.assertEqual(signatures.CLEAR_EFFECT, 0.1)
+        self.assertEqual(signatures.CLEAR_DIP, 0.5)
 
     def test_stomach_levels_span_empty_to_full(self):
         self.assertEqual(signatures.STOMACH_LEVELS[0], 0.0)
@@ -437,6 +441,66 @@ class TestTrain(unittest.TestCase):
         self.assertEqual(signatures.CHECKPOINTS, sorted(set(signatures.CHECKPOINTS)))
 
 
+class TestSpread(unittest.TestCase):
+    """Verifies how results from several seeds are described."""
+
+    def test_average_lowest_and_highest(self):
+        self.assertEqual(signatures.spread([0.5, 1.0, 0.0], 2), "0.50 [0.00, 1.00]")
+
+    def test_digits(self):
+        self.assertEqual(signatures.spread([-0.0274, 0.1], 3), "0.036 [-0.027, 0.100]")
+
+    def test_single_value(self):
+        self.assertEqual(signatures.spread([0.25], 2), "0.25 [0.25, 0.25]")
+
+    def test_order_does_not_matter_for_range(self):
+        self.assertEqual(signatures.spread([1.0, 0.0], 1), signatures.spread([0.0, 1.0], 1))
+
+
+class TestMeasure(unittest.TestCase):
+    """Verifies that measure trains one SYNO and measures every signature."""
+
+    def setUp(self):
+        self.saved = signatures.CHECKPOINTS
+        signatures.CHECKPOINTS = [0, 1, 2]
+
+    def tearDown(self):
+        signatures.CHECKPOINTS = self.saved
+
+    def test_result_shapes(self):
+        results = signatures.measure(0)
+        self.assertEqual(len(results["food"]), 3)
+        self.assertEqual(len(results["cue"]), 3)
+        self.assertEqual(len(results["e1"]), len(signatures.STOMACH_LEVELS))
+        self.assertEqual(len(results["e2"]), len(signatures.ENERGY_LEVELS))
+        self.assertEqual(len(results["near"]), len(signatures.APPROACH_ENERGIES))
+        self.assertEqual(len(results["far"]), len(signatures.APPROACH_ENERGIES))
+        self.assertEqual(len(results["e5"]), 2)
+
+    def test_matches_the_probes_on_the_same_network(self):
+        results = signatures.measure(3)
+        network, memory = signatures.new_brain(3)
+        signatures.train(network, memory, 2)
+        self.assertEqual(results["e2"], [signatures.eating_rate(network, e) for e in signatures.ENERGY_LEVELS])
+        self.assertEqual(results["e1"], [signatures.eating_rate(network, signatures.SATIATION_ENERGY, s)
+                                         for s in signatures.STOMACH_LEVELS])
+        self.assertEqual(results["near"], [signatures.approach_rate(network, e, False)
+                                           for e in signatures.APPROACH_ENERGIES])
+        self.assertEqual(results["far"], [signatures.approach_rate(network, e, True)
+                                          for e in signatures.APPROACH_ENERGIES])
+        self.assertEqual(results["e5"], [signatures.eating_rpe(network, True), signatures.eating_rpe(network, False)])
+        self.assertEqual(results["food"][-1], results["e5"][0])
+        self.assertEqual(results["cue"][-1], signatures.cue_rpe(network))
+
+    def test_first_checkpoint_is_untrained(self):
+        results = signatures.measure(3)
+        network, _ = signatures.new_brain(3)
+        self.assertEqual(results["food"][0], signatures.eating_rpe(network, True))
+
+    def test_seeds_differ(self):
+        self.assertNotEqual(signatures.measure(0)["e5"], signatures.measure(1)["e5"])
+
+
 @unittest.skipUnless(os.environ.get("SYNO_SLOW_TESTS"), "slow: set SYNO_SLOW_TESTS=1")
 class TestSignaturesRun(unittest.TestCase):
     """Reproduces the recorded E1 to E5 results."""
@@ -445,43 +509,48 @@ class TestSignaturesRun(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             signatures.main()
-        expected = """E1: Satiation (5 seeds, energy 0.5)
-Stomach 0.0 | Eats: 0.98
-Stomach 0.2 | Eats: 0.98
-Stomach 0.4 | Eats: 0.94
-Stomach 0.6 | Eats: 0.92
-Stomach 0.8 | Eats: 0.86
-Stomach 1.0 | Eats: 0.70
+        expected = """E1: Satiation (10 seeds, energy 0.5)
+Stomach 0.0 | Eats: 0.98 [0.88, 1.00]
+Stomach 0.2 | Eats: 0.99 [0.96, 1.00]
+Stomach 0.4 | Eats: 0.94 [0.76, 1.00]
+Stomach 0.6 | Eats: 0.86 [0.20, 1.00]
+Stomach 0.8 | Eats: 0.75 [0.00, 1.00]
+Stomach 1.0 | Eats: 0.62 [0.00, 1.00]
+Seeds: 7/10
 
-E2: State-dependent eating (5 seeds)
-Energy 0.0 | Eats: 0.98
-Energy 0.1 | Eats: 0.99
-Energy 0.2 | Eats: 0.99
-Energy 0.3 | Eats: 0.99
-Energy 0.4 | Eats: 0.99
-Energy 0.5 | Eats: 0.98
-Energy 0.6 | Eats: 0.97
-Energy 0.7 | Eats: 0.95
-Energy 0.8 | Eats: 0.94
-Energy 0.9 | Eats: 0.91
-Energy 1.0 | Eats: 0.91
+E2: State-dependent eating (10 seeds)
+Energy 0.0 | Eats: 0.99 [0.92, 1.00]
+Energy 0.1 | Eats: 0.99 [0.96, 1.00]
+Energy 0.2 | Eats: 0.99 [0.96, 1.00]
+Energy 0.3 | Eats: 1.00 [0.96, 1.00]
+Energy 0.4 | Eats: 1.00 [0.96, 1.00]
+Energy 0.5 | Eats: 0.98 [0.88, 1.00]
+Energy 0.6 | Eats: 0.98 [0.88, 1.00]
+Energy 0.7 | Eats: 0.97 [0.84, 1.00]
+Energy 0.8 | Eats: 0.95 [0.76, 1.00]
+Energy 0.9 | Eats: 0.92 [0.64, 1.00]
+Energy 1.0 | Eats: 0.89 [0.44, 1.00]
+Seeds: 2/10
 
-E3: Partial-fullness eating (5 seeds)
-Energy 0.2 | Near: 0.96 | Far: 0.92
-Energy 0.5 | Near: 0.96 | Far: 0.92
-Energy 0.8 | Near: 0.92 | Far: 0.90
-Energy 1.0 | Near: 0.89 | Far: 0.87
+E3: Partial-fullness eating (10 seeds)
+Energy 0.2 | Near: 0.95 [0.89, 1.00] | Far: 0.92 [0.82, 0.98]
+Energy 0.5 | Near: 0.96 [0.90, 1.00] | Far: 0.92 [0.87, 0.98]
+Energy 0.8 | Near: 0.93 [0.75, 1.00] | Far: 0.91 [0.80, 0.97]
+Energy 1.0 | Near: 0.90 [0.75, 0.99] | Far: 0.88 [0.78, 0.97]
+Seeds: 1/10
 
-E4: RPE transfer (5 seeds)
-Lives    0 | Food RPE: 2.415 | Cue RPE: -0.173
-Lives   50 | Food RPE: 0.420 | Cue RPE: -0.193
-Lives  200 | Food RPE: -0.079 | Cue RPE: -0.175
-Lives 1000 | Food RPE: -0.045 | Cue RPE: 0.167
-Lives 3000 | Food RPE: -0.022 | Cue RPE: 0.174
+E4: RPE transfer (10 seeds)
+Lives    0 | Food RPE: 2.335 [0.740, 3.153] | Cue RPE: -0.278 [-0.625, 0.049]
+Lives   50 | Food RPE: 0.350 [0.143, 0.593] | Cue RPE: -0.189 [-0.287, -0.130]
+Lives  200 | Food RPE: -0.138 [-0.315, 0.146] | Cue RPE: -0.207 [-0.331, -0.095]
+Lives 1000 | Food RPE: -0.057 [-0.135, 0.066] | Cue RPE: 0.142 [0.070, 0.221]
+Lives 3000 | Food RPE: -0.027 [-0.098, 0.036] | Cue RPE: 0.183 [0.098, 0.359]
+Seeds: 10/10
 
-E5: Reward omission (5 seeds)
-Food delivered | RPE: -0.022
-Food omitted   | RPE: -1.305""".splitlines()
+E5: Reward omission (10 seeds)
+Food delivered | RPE: -0.027 [-0.098, 0.036]
+Food omitted   | RPE: -1.337 [-1.625, -1.197]
+Seeds: 10/10""".splitlines()
         self.assertEqual(output.getvalue().splitlines(), expected)
 
 

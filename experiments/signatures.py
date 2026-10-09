@@ -4,6 +4,7 @@
 # ────────────────────────────────────────────────────────
 
 import random
+from multiprocessing import Pool
 
 from experiments.xor import make_layer
 from syno.brain.network import Network
@@ -20,7 +21,14 @@ from experiments.scarcity import GRID_SIZE, LIVES, live
 # seeds, so a result is never the luck of one run. Every probe tests every
 # position, so measuring uses no random numbers and never changes training.
 TRAINING_LIVES = LIVES
-SEEDS = 5
+SEEDS = 10
+
+# A seed shows a signature only when its own effect is clearly larger than
+# chance: a rate that changes by at least CLEAR_EFFECT, or an RPE that dips by
+# at least CLEAR_DIP. Seeds are counted, not averaged, because different
+# seeds can learn very different habits.
+CLEAR_EFFECT = 0.1
+CLEAR_DIP = 0.5
 
 # The points in training, in lives, at which E4 is measured.
 CHECKPOINTS = [0, 50, 200, 1000, TRAINING_LIVES]
@@ -212,61 +220,92 @@ def cue_rpe(network: Network) -> float:
     return total / count
 
 
+def measure(seed: int) -> dict:
+    """
+    Trains one SYNO and measures every signature on it.
+
+    Each seed runs in its own process, so the results are returned rather
+    than added to shared totals.
+
+    :param seed: The random seed for this SYNO.
+    :return: The results by signature: "food" and "cue" (E4, one value per
+        checkpoint), "e1", "e2", "near" and "far" (E3), and "e5".
+    """
+    network, memory = new_brain(seed)
+    results = {"food": [], "cue": []}
+    trained = 0
+    for checkpoint in CHECKPOINTS:
+        train(network, memory, checkpoint - trained)
+        trained = checkpoint
+        results["food"].append(eating_rpe(network, True))
+        results["cue"].append(cue_rpe(network))
+    results["e1"] = [eating_rate(network, SATIATION_ENERGY, s) for s in STOMACH_LEVELS]
+    results["e2"] = [eating_rate(network, e) for e in ENERGY_LEVELS]
+    results["near"] = [approach_rate(network, e, False) for e in APPROACH_ENERGIES]
+    results["far"] = [approach_rate(network, e, True) for e in APPROACH_ENERGIES]
+    results["e5"] = [eating_rpe(network, True), eating_rpe(network, False)]
+    return results
+
+
+def spread(values: list[float], digits: int) -> str:
+    """
+    Describes results from several seeds as their average, lowest, and highest.
+
+    :param values: One result per seed.
+    :param digits: How many decimal places to show.
+    :return: Text such as "0.98 [0.88, 1.00]".
+    """
+    return f"{sum(values) / len(values):.{digits}f} [{min(values):.{digits}f}, {max(values):.{digits}f}]"
+
+
 def main():
     """
-    Trains SYNO with SEEDS different seeds, measures every signature on each
-    network, and prints the results averaged over the seeds.
+    Trains SYNO with SEEDS different seeds in parallel, measures every
+    signature on each network, and prints each result as its average and
+    range over the seeds, followed by how many seeds show the signature.
     """
-    level_totals = {level: 0.0 for level in ENERGY_LEVELS}
-    stomach_totals = {stomach: 0.0 for stomach in STOMACH_LEVELS}
-    near_totals = {energy: 0.0 for energy in APPROACH_ENERGIES}
-    far_totals = {energy: 0.0 for energy in APPROACH_ENERGIES}
-    food_totals = {checkpoint: 0.0 for checkpoint in CHECKPOINTS}
-    cue_totals = {checkpoint: 0.0 for checkpoint in CHECKPOINTS}
-    delivered_total = 0.0
-    omitted_total = 0.0
-    for seed in range(SEEDS):
-        network, memory = new_brain(seed)
-        trained = 0
-        for checkpoint in CHECKPOINTS:
-            train(network, memory, checkpoint - trained)
-            trained = checkpoint
-            food_totals[checkpoint] += eating_rpe(network, True)
-            cue_totals[checkpoint] += cue_rpe(network)
-        for level in ENERGY_LEVELS:
-            level_totals[level] += eating_rate(network, level)
-        for stomach in STOMACH_LEVELS:
-            stomach_totals[stomach] += eating_rate(network, SATIATION_ENERGY, stomach)
-        for energy in APPROACH_ENERGIES:
-            near_totals[energy] += approach_rate(network, energy, False)
-            far_totals[energy] += approach_rate(network, energy, True)
-        delivered_total += eating_rpe(network, True)
-        omitted_total += eating_rpe(network, False)
+    # One process per CPU core. pool.map returns the results in seed order,
+    # so the output is the same as measuring the seeds one after another.
+    with Pool() as pool:
+        results = pool.map(measure, range(SEEDS))
+
     print(f"E1: Satiation ({SEEDS} seeds, energy {SATIATION_ENERGY})")
-    for stomach in STOMACH_LEVELS:
-        avg_rate = stomach_totals[stomach] / SEEDS
-        print(f"Stomach {stomach:.1f} | Eats: {avg_rate:.2f}")
+    for i, stomach in enumerate(STOMACH_LEVELS):
+        avg_rate = spread([r["e1"][i] for r in results], 2)
+        print(f"Stomach {stomach:.1f} | Eats: {avg_rate}")
+    n = sum(r["e1"][-1] <= r["e1"][0] - CLEAR_EFFECT for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
     print()
     print(f"E2: State-dependent eating ({SEEDS} seeds)")
-    for level in ENERGY_LEVELS:
-        avg_rate = level_totals[level] / SEEDS
-        print(f"Energy {level:.1f} | Eats: {avg_rate:.2f}")
+    for i, level in enumerate(ENERGY_LEVELS):
+        avg_rate = spread([r["e2"][i] for r in results], 2)
+        print(f"Energy {level:.1f} | Eats: {avg_rate}")
+    n = sum(r["e2"][-1] <= r["e2"][0] - CLEAR_EFFECT for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
     print()
     print(f"E3: Partial-fullness eating ({SEEDS} seeds)")
-    for energy in APPROACH_ENERGIES:
-        near_rate = near_totals[energy] / SEEDS
-        far_rate = far_totals[energy] / SEEDS
-        print(f"Energy {energy:.1f} | Near: {near_rate:.2f} | Far: {far_rate:.2f}")
+    for i, energy in enumerate(APPROACH_ENERGIES):
+        near_rate = spread([r["near"][i] for r in results], 2)
+        far_rate = spread([r["far"][i] for r in results], 2)
+        print(f"Energy {energy:.1f} | Near: {near_rate} | Far: {far_rate}")
+    n = sum(r["far"][2] <= r["near"][2] - CLEAR_EFFECT for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
     print()
     print(f"E4: RPE transfer ({SEEDS} seeds)")
-    for checkpoint in CHECKPOINTS:
-        food_rpe = food_totals[checkpoint] / SEEDS
-        cue_rpe_avg = cue_totals[checkpoint] / SEEDS
-        print(f"Lives {checkpoint:4d} | Food RPE: {food_rpe:.3f} | Cue RPE: {cue_rpe_avg:.3f}")
+    for i, checkpoint in enumerate(CHECKPOINTS):
+        food_rpe = spread([r["food"][i] for r in results], 3)
+        cue_rpe_avg = spread([r["cue"][i] for r in results], 3)
+        print(f"Lives {checkpoint:4d} | Food RPE: {food_rpe} | Cue RPE: {cue_rpe_avg}")
+    n = sum(r["cue"][-1] > 0 and r["food"][-1] < r["food"][0] for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
     print()
     print(f"E5: Reward omission ({SEEDS} seeds)")
-    print(f"Food delivered | RPE: {delivered_total / SEEDS:.3f}")
-    print(f"Food omitted   | RPE: {omitted_total / SEEDS:.3f}")
+    delivered_rpe = spread([r["e5"][0] for r in results], 3)
+    omitted_rpe = spread([r["e5"][1] for r in results], 3)
+    print(f"Food delivered | RPE: {delivered_rpe}")
+    print(f"Food omitted   | RPE: {omitted_rpe}")
+    n = sum(r["e5"][1] <= r["e5"][0] - CLEAR_DIP for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
 
 
 if __name__ == "__main__":

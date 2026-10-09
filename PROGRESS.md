@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-All 11 roadmap steps are complete. In the scarce world, E4 and E5 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 22% of the human capabilities listed in `docs/humanness.md`.
+All 12 roadmap steps are complete. Measured over 10 seeds in the scarce world, E4 and E5 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 22% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -22,9 +22,11 @@ All 11 roadmap steps are complete. In the scarce world, E4 and E5 are reproduced
 | **9** | Hormones and emotions | ✅ Done |
 | **10** | Evaluation signatures | ✅ Done |
 | **11** | A harder world | ✅ Done |
+| **12** | Trustworthy measurement | ✅ Done |
 
 ### Log
 #### 2026-10-09
+- **Step 12 complete:** `experiments/signatures.py` measures 10 seeds in parallel (about 90 seconds), reports each result's range, and counts how many seeds show each signature, covered by 55 tests. A signature is reproduced when 8 or more seeds show it: E4 and E5 (10 of 10), E1 weakly (7 of 10), E2 (2 of 10) and E3 (1 of 10) not. Every status, and the 22% score, is unchanged.
 - **Documentation:** `docs/humanness.md` now scores SYNO against 104 human capabilities rather than the 6 measured signatures. SYNO has 17, has 10 in part, and lacks 77; the 4 that cannot be tested even in animals are left out, giving a score of 22%.
 
 #### 2026-10-08
