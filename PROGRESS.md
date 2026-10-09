@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-All 10 roadmap steps are complete. Every evaluation signature has been measured: E1 and E5 are reproduced, E4 in part, E2 and E3 are not, and E6 is not measurable with the current design.
+Steps 1 to 10 are complete. Step 11 (A harder world) is in progress. Every evaluation signature has been measured: E1 and E5 are reproduced, E4 in part, E2 and E3 are not, and E6 is not measurable with the current design.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -21,9 +21,11 @@ All 10 roadmap steps are complete. Every evaluation signature has been measured:
 | **8** | Neuron growth | ✅ Done |
 | **9** | Hormones and emotions | ✅ Done |
 | **10** | Evaluation signatures | ✅ Done |
+| **11** | A harder world | 🔄 In progress |
 
 ### Log
 #### 2026-10-08
+- **Step 11a complete:** `experiments/scarcity.py`, where SYNO forages on a 5x5 grid, larger than its view, and eaten food takes 10 steps to regrow, covered by 13 tests. Average energy rose from 0.30 to 0.66 over 3000 lives. Every world tried took about the same time per life, so the larger world needs no Rust.
 - **Documentation:** `docs/humanness.md` scores SYNO at 33% (2 of 6 points) from the measured signatures, and lists what earns the score and what holds it back.
 - **Step 10f complete:** `approach_rate` measures E3, partial-fullness eating, covered by 9 new tests. A nearly full SYNO moves toward distant food as often as toward adjacent food (0.92 for both), so E3 is recorded as not reproduced. Step 10 (Evaluation signatures) is complete, and with it the roadmap.
 - **Step 10e complete:** `eating_rate` takes a stomach fill and measures E1, satiation, covered by 5 new tests. A half-hungry SYNO prefers to eat at every stomach fill up to 0.4, then less often (0.96, 0.91, and 0.71 at full). E1 is recorded as weakly reproduced.
