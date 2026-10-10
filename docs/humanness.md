@@ -2,8 +2,8 @@
 
 This document scores how close SYNO is to having every capability of a human mind and body. It lists 104 capabilities, from regulating energy to language and consciousness, and records which ones SYNO has. Behavioral signatures that have been formally measured are listed in [`evaluation.md`](evaluation.md).
 
-### Score: 22%
-SYNO earns **22 of 100 points** across the capabilities that a synthetic organism can achieve.
+### Score: 24%
+SYNO earns **24 of 100 points** across the capabilities that a synthetic organism can achieve.
 
 | Status | Meaning | Points |
 |---|---|---|
@@ -11,7 +11,7 @@ SYNO earns **22 of 100 points** across the capabilities that a synthetic organis
 | ◐ | SYNO has it partly or weakly | 0.5 |
 | ❌ | SYNO does not have it | 0 |
 
-SYNO has 17 capabilities (✅) and 10 in part (◐), and lacks 77 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
+SYNO has 19 capabilities (✅) and 10 in part (◐), and lacks 75 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
 
 ### Columns
 - **Shared With:** how widely the capability is found in nature, from *All animals* through *Mammals*, *Some animals* (such as primates and corvids), and *Mostly human* to *Uniquely human*.
@@ -23,7 +23,7 @@ SYNO has 17 capabilities (✅) and 10 in part (◐), and lacks 77 (❌). Of the 
 | Energy regulation (hunger) | ✅ | All animals | Yes |
 | Satiety | ◐ weak (E1) | All animals | Yes |
 | Hunger and satiety hormones | ❌ | All animals | Yes |
-| Thirst and fluid balance | ❌ | All animals | Yes |
+| Thirst and fluid balance | ✅ learns to drink to stay alive | All animals | Yes |
 | Temperature regulation | ❌ | Mammals | Yes |
 | Long-term energy storage | ❌ | Mammals | Yes |
 | Fatigue and rest | ❌ | All animals | Yes |
@@ -31,7 +31,7 @@ SYNO has 17 capabilities (✅) and 10 in part (◐), and lacks 77 (❌). Of the 
 | Pain signals | ❌ | All animals | Yes |
 | Injury and healing | ❌ | All animals | Partly |
 | Aging over a lifespan | ❌ | All animals | Yes |
-| Death from neglected needs | ❌ lives end on a timer | All animals | Yes |
+| Death from neglected needs | ✅ dies of hunger or thirst | All animals | Yes |
 
 ### Perception
 | Capability | SYNO | Shared With | Achievable |
@@ -166,10 +166,10 @@ SYNO has 17 capabilities (✅) and 10 in part (◐), and lacks 77 (❌). Of the 
 | Evolution across generations | ❌ | All animals | Yes |
 
 ### What Earns the Score
-SYNO's capabilities are concentrated in learning and motivation, the foundation shared by all animals: reward learning driven by a dopamine-like prediction error, curiosity, memory replay, a hunger drive, and a surprise-driven arousal hormone. In measured behavior, its dopamine response moves from eating to the sight of food (E4) and dips when expected food is missing (E5).
+SYNO's capabilities are concentrated in learning and motivation, the foundation shared by all animals: reward learning driven by a dopamine-like prediction error, curiosity, memory replay, hunger and thirst, death when either is neglected, and a surprise-driven arousal hormone. In measured behavior, its dopamine response moves from eating to the sight of food (E4) and dips when expected food is missing (E5).
 
 ### What Holds It Back
-- **One need:** SYNO's body has only hunger, so it never has to choose between needs, and hunger barely changes its choices (E2, E3).
+- **Hunger barely changes its choices:** a hungry and a nearly full SYNO choose almost the same when food is the only need at stake (E2, E3).
 - **No working memory:** SYNO acts only on what it senses now, which rules out planning, imagination, and recalling specific events.
 - **No other agents:** SYNO lives alone, so every social and language capability is out of reach.
 - **Simple senses:** SYNO sees only food and walls in a small window.

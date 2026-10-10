@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Steps 1 to 12 are complete. Step 13 (Thirst) is in progress. Measured over 10 seeds in the scarce world, E4 and E5 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 22% of the human capabilities listed in `docs/humanness.md`.
+Steps 1 to 12 are complete. Step 13 (Thirst) is in progress. Measured over 10 seeds in the scarce world, E4 and E5 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 24% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -27,6 +27,7 @@ Steps 1 to 12 are complete. Step 13 (Thirst) is in progress. Measured over 10 se
 
 ### Log
 #### 2026-10-09
+- **Step 13c complete:** `experiments/thirst.py`, where SYNO must keep itself fed and watered on the 5x5 grid with one pond, and dies if either runs out, covered by 17 tests. With 16 hidden neurons, its average lifespan rose from 45.7 to 87.5 of 100 steps over 3000 lives. Thirst and death from neglected needs are now SYNO capabilities, raising the humanness score from 22% to 24%.
 - **Step 13b complete:** the Habitat can hold water, which SYNO can drink without using it up and see with `sense_water`, covered by 17 new unit tests. Worlds without water are unchanged.
 - **Step 13a complete:** `HydratedCore`, a body with water as a second need, covered by 30 unit tests. Water drains every step and is refilled by drinking, the drive adds both squared deficits, and SYNO dies when energy or water runs out. `HomeostaticCore` is unchanged, so earlier experiments are unaffected.
 - **Step 12 complete:** `experiments/signatures.py` measures 10 seeds in parallel (about 90 seconds), reports each result's range, and counts how many seeds show each signature, covered by 55 tests. A signature is reproduced when 8 or more seeds show it: E4 and E5 (10 of 10), E1 weakly (7 of 10), E2 (2 of 10) and E3 (1 of 10) not. Every status, and the 22% score, is unchanged.
