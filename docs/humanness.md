@@ -96,7 +96,7 @@ SYNO has 20 capabilities (✅) and 9 in part (◐), and lacks 75 (❌). Of the 1
 | Fear and threat avoidance | ❌ | All animals | Yes |
 | Stress response | ❌ | All animals | Yes |
 | Boredom | ◐ novelty habituates | Mammals | Yes |
-| Frustration | ◐ the RPE dip (E5) | Mammals | Yes |
+| Frustration | ◐ the dip in reward prediction error (E5) | Mammals | Yes |
 | Mood | ❌ | Mammals | Yes |
 | Anxiety | ❌ | Mammals | Partly |
 | Emotional expression | ❌ | Mammals | Yes |

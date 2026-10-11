@@ -5,17 +5,17 @@ This document maps each SYNO component to the biological mechanism it is modeled
 ### Homeostatic Regulation
 The hypothalamus regulates food intake by integrating signals about the body's energy state [1]. Ghrelin, released by the stomach, rises when it is empty and increases hunger. Satiety hormones such as CCK and GLP-1 rise during a meal and reduce hunger gradually rather than instantly. Leptin, released by fat tissue, signals long-term energy stores.
 
-**In SYNO:** The **HC** holds energy and stomach fill, and digests food into energy gradually. SYNO senses its energy deficit and stomach fill directly; separate hunger and satiety signals (**SE**) are not modeled. Even so, in 7 of 10 seeds a trained SYNO's preference to eat tapers as its stomach fills, so a weak satiety effect emerges from learning alone (signature E1 in [`evaluation.md`](evaluation.md)). `HydratedCore` adds water as a second need: it drains every step, drinking refills it, and the drive is the sum of both squared deficits, so whichever need is larger dominates [6]. SYNO dies when either runs out. In a world with one pond and regrowing food, SYNO learns to keep both needs met: its average lifespan rose from 46 to 88 of 100 steps. With food one step one way and water one step the other, a thirsty SYNO goes for water and a hungry one for food, in 9 of 10 seeds (signature E7).
+**In SYNO:** The **Homeostatic Core (HC)** holds energy and stomach fill, and digests food into energy gradually. SYNO senses its energy deficit and stomach fill directly; separate hunger and satiety signals, the **Signal Emitters (SE)**, are not modeled. Even so, in 7 of 10 seeds a trained SYNO's preference to eat tapers as its stomach fills, so a weak satiety effect emerges from learning alone (signature E1 in [`evaluation.md`](evaluation.md)). `HydratedCore` adds water as a second need: it drains every step, drinking refills it, and the drive is the sum of both squared deficits, so whichever need is larger dominates [6]. SYNO dies when either runs out. In a world with one pond and regrowing food, SYNO learns to keep both needs met: its average lifespan rose from 46 to 88 of 100 steps. With food one step one way and water one step the other, a thirsty SYNO goes for water and a hungry one for food, in 9 of 10 seeds (signature E7).
 
 ### Reward Prediction Error
 Dopamine neurons encode the difference between received and expected reward [2]. An unexpected reward causes a burst of activity. Once a cue reliably predicts the reward, the burst shifts to the cue, and an omitted reward causes activity to fall below baseline. Dopamine also ramps upward as an animal approaches a distant reward [3].
 
-**In SYNO:** The **DN**'s outputs predict the value of each action, acting as the **VE**. The **DS** computes the RPE and uses it as the learning signal. At the formula level, the RPE reproduces the burst for unexpected reward, no response for predicted reward, a dip for omitted reward, and a burst at a predictive cue. In behavior, in a world where food can be out of sight and takes time to regrow, SYNO's response moves from eating to the sight of food as it learns: the RPE when eating falls from 2.34 to almost zero, while the RPE when food comes into view rises from −0.28 to +0.18, in every one of 10 seeds (signature E4). A trained SYNO also shows the dip: when food it expects vanishes, its RPE falls to −1.34, against −0.03 when the meal arrives (signature E5 in [`evaluation.md`](evaluation.md)).
+**In SYNO:** The outputs of the **Decision Network (DN)** predict the value of each action, acting as the **Value Estimator (VE)**. The **Dopamine System (DS)** computes the reward prediction error (RPE) and uses it as the learning signal. At the formula level, the RPE reproduces the burst for unexpected reward, no response for predicted reward, a dip for omitted reward, and a burst at a predictive cue. In behavior, in a world where food can be out of sight and takes time to regrow, SYNO's response moves from eating to the sight of food as it learns: the RPE when eating falls from 2.34 to almost zero, while the RPE when food comes into view rises from −0.28 to +0.18, in every one of 10 seeds (signature E4). A trained SYNO also shows the dip: when food it expects vanishes, its RPE falls to −1.34, against −0.03 when the meal arrives (signature E5 in [`evaluation.md`](evaluation.md)).
 
 ### Wanting vs. Liking
 Dopamine drives "wanting," the motivation to pursue a reward, which is separate from "liking," the pleasure of consuming it [4].
 
-**In SYNO:** The DS models wanting only. Liking is not modeled.
+**In SYNO:** The Dopamine System (DS) models wanting only. Liking is not modeled.
 
 ### State-Dependent Reward
 The same stimulus is more rewarding when the body needs it more, a principle called alliesthesia [5]. Homeostatic reinforcement learning formalizes this by defining reward as a reduction in physiological deficit [6].
@@ -25,31 +25,31 @@ The same stimulus is more rewarding when the body needs it more, a principle cal
 ### Novelty and Habituation
 Novel stimuli elicit a response that weakens with repeated exposure [7].
 
-**In SYNO:** The **NS** provides a novelty bonus that habituates with repetition and recovers over time. SYNO cannot sense how familiar a square is, so habituation shapes its learning but cannot be measured in its behavior (signature E6 in [`evaluation.md`](evaluation.md)).
+**In SYNO:** The **Novelty System (NS)** provides a novelty bonus that habituates with repetition and recovers over time. SYNO cannot sense how familiar a square is, so habituation shapes its learning but cannot be measured in its behavior (signature E6 in [`evaluation.md`](evaluation.md)).
 
 ### Exploration and Exploitation
 The locus coeruleus–norepinephrine system adjusts whether an animal focuses on a known reward or disengages to explore [8].
 
-**In SYNO:** The **AS** is not modeled. Exploration comes from the **NS** plus a small random exploration rate. The novelty bonus let the random rate fall from 30% to 5%, but without any randomness, SYNO did not learn.
+**In SYNO:** The **Arousal System (AS)** is not modeled. Exploration comes from the **Novelty System (NS)** plus a small random exploration rate. The novelty bonus let the random rate fall from 30% to 5%, but without any randomness, SYNO did not learn.
 
 ### Memory Replay
 During rest and sleep, the hippocampus replays sequences of recent experience, which helps consolidate them into long-term memory [9]. Replay is not uniform: experiences linked to reward are replayed more often [10], and replay patterns match a model that favors the memories most useful to learn from [11].
 
-**In SYNO:** The **MS** holds SYNO's most recent experiences and forgets the oldest when full. After every step, SYNO re-learns from 2 recalled experiences. Recalling at random, SYNO reached an average energy of about 0.86 roughly three times sooner, and its worst dip after learning was smaller (0.76 rather than 0.64). Recalling in proportion to surprise, measured as the size of each memory's RPE, SYNO learned faster still, and its worst dip after learning rose to 0.86.
+**In SYNO:** The **Memory Store (MS)** holds SYNO's most recent experiences and forgets the oldest when full. After every step, SYNO re-learns from 2 recalled experiences. Recalling at random, SYNO reached an average energy of about 0.86 roughly three times sooner, and its worst dip after learning was smaller (0.76 rather than 0.64). Recalling in proportion to surprise, measured as the size of each memory's reward prediction error (RPE), SYNO learned faster still, and its worst dip after learning rose to 0.86.
 
 ### Neurogenesis
 New neurons continue to be born in parts of the adult brain, including the human hippocampus [12], and must integrate into existing circuits without disrupting them.
 
-**In SYNO:** The **GE** adds a neuron to a hidden layer of the **DN**. The new neuron's outgoing connections start at zero, so the DN's output is unchanged at first, and the connections are then learned. A network too small to learn XOR solved it after growing two neurons. In the habitat, SYNO starts with one hidden neuron and grows one whenever its average surprise stops falling. It took off once it reached 5 to 6 neurons, matching the performance of the 8-neuron network that was sized by hand. Surprise also stops falling once the task is mastered, so SYNO keeps growing after learning is complete, up to a fixed limit.
+**In SYNO:** The **Growth Engine (GE)** adds a neuron to a hidden layer of the **Decision Network (DN)**. The new neuron's outgoing connections start at zero, so the DN's output is unchanged at first, and the connections are then learned. A network too small to learn XOR solved it after growing two neurons. In the habitat, SYNO starts with one hidden neuron and grows one whenever its average surprise stops falling. It took off once it reached 5 to 6 neurons, matching the performance of the 8-neuron network that was sized by hand. Surprise also stops falling once the task is mastered, so SYNO keeps growing after learning is complete, up to a fixed limit.
 
 ### Hormones and Arousal
 Hormones and neuromodulators act slowly and globally, so their levels reflect the recent past rather than the present moment. In the Pearce-Hall model of learning, attention to a situation, and so the speed of learning about it, rises after surprising outcomes and falls as outcomes become predictable [13].
 
-**In SYNO:** A hormone's level drifts a fixed fraction of the way toward its signal on every step. An arousal hormone fed by surprise (the size of the RPE) sets SYNO's learning rate. When SYNO moved from a 3x3 world to a 5x5 world, arousal raised its average energy over the next 250 lives from 0.46 to 0.65 for seed 0, and from 0.46 to 0.55 averaged over 6 seeds, with 5 of 6 seeds improving; over the longer run, SYNO performed about the same with or without it. A stress hormone fed by hunger that raised random exploration was also tested, and made SYNO worse after the move. These hormones are numbers that change how SYNO learns. They do not imply feelings.
+**In SYNO:** A hormone's level drifts a fixed fraction of the way toward its signal on every step. An arousal hormone fed by surprise (the size of the reward prediction error, or RPE) sets SYNO's learning rate. When SYNO moved from a 3x3 world to a 5x5 world, arousal raised its average energy over the next 250 lives from 0.46 to 0.65 for seed 0, and from 0.46 to 0.55 averaged over 6 seeds, with 5 of 6 seeds improving; over the longer run, SYNO performed about the same with or without it. A stress hormone fed by hunger that raised random exploration was also tested, and made SYNO worse after the move. These hormones are numbers that change how SYNO learns. They do not imply feelings.
 
 ### Simplifications
 - Hormones are single numbers, not concentrations that diffuse through tissue.
-- The hypothalamus, VTA, and nucleus accumbens are not modeled as separate brain regions.
+- The hypothalamus, ventral tegmental area (VTA), and nucleus accumbens are not modeled as separate brain regions.
 - Leptin and long-term energy storage are not modeled.
 - "Liking" and conscious experience are not modeled. SYNO's signals are numbers; they do not imply feelings.
 
