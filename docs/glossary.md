@@ -24,7 +24,7 @@ This glossary defines every named component and key term used in SYNO. Component
 - **Homeostasis:** The tendency of a body to keep internal variables near a set-point.
 - **Deficit:** The distance between an internal variable and its set-point. Larger deficit means stronger need.
 - **Reward:** In SYNO, a reduction in drive, plus a novelty bonus. Reward is never assigned directly to a behavior.
-- **Drive:** The squared energy deficit. Reward is the reduction in drive over a step.
+- **Drive:** The squared energy deficit, plus the squared water deficit for a body with water. Reward is the reduction in drive over a step.
 - **Q-Learning:** The learning method SYNO uses: each output of the DN predicts the value of one action, and only the action taken is updated by its RPE.
 - **Epsilon-Greedy:** Choosing the best-valued action, except for a random action a small fraction (epsilon) of the time.
 - **Life:** One run of an experiment, from SYNO's first step to its last.

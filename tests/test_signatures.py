@@ -1,11 +1,12 @@
 """
 Experiment tests for experiments/signatures.py.
 
-The fast tests probe eating_rate, approach_rate, eating_rpe and cue_rpe with
-hand-built networks whose predictions are known exactly, and check that
-new_brain and train are reproducible. The slow test trains SYNO with all 5
-seeds in the scarce world, in parallel (about 90 seconds) and reproduces the recorded E1 to
-E5 results. It is skipped by default and runs only when SYNO_SLOW_TESTS is
+The fast tests probe eating_rate, approach_rate, eating_rpe, cue_rpe and
+switch_rate with hand-built networks whose predictions are known exactly, and
+check that new_brain, train and measure are reproducible. The slow test
+trains SYNO with all 10 seeds, in the scarce world and in the thirst
+experiment, in parallel (about 5 minutes), and reproduces the recorded E1 to
+E7 results. It is skipped by default and runs only when SYNO_SLOW_TESTS is
 set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
@@ -17,11 +18,15 @@ Run the fast tests from the repository root with:
 import contextlib
 import io
 import os
+import random
 import unittest
 from unittest import mock
 
 import experiments.scarcity as scarcity
 import experiments.signatures as signatures
+import experiments.thirst as thirst
+from experiments.xor import make_layer
+from syno.brain.memory import MemoryStore
 from experiments.hunger import LIFE_STEPS
 from syno.brain.layer import Layer
 from syno.brain.network import Network
@@ -441,6 +446,74 @@ class TestTrain(unittest.TestCase):
         self.assertEqual(signatures.CHECKPOINTS, sorted(set(signatures.CHECKPOINTS)))
 
 
+THIRST_INPUTS = 2 * (2 * signatures.SENSE_RADIUS + 1) ** 2 + 3
+WATER_ABOVE = (2 * signatures.SENSE_RADIUS + 1) ** 2 + CENTER - (2 * signatures.SENSE_RADIUS + 1)
+THIRST_ENERGY_DEFICIT = THIRST_INPUTS - 3
+THIRST_WATER_DEFICIT = THIRST_INPUTS - 1
+
+
+def thirst_network(action_name: str, weights: dict[int, float], bias: float) -> Network:
+    """
+    Builds a one-layer linear network for the thirst experiment that prefers
+    action_name when its weighted inputs plus bias are above 0.0, and
+    otherwise prefers eat.
+    """
+    preferred = thirst.ACTION_NAMES.index(action_name)
+    eat = thirst.ACTION_NAMES.index("eat")
+    neurons = []
+    for action in range(len(thirst.ACTION_NAMES)):
+        row = [0.0] * THIRST_INPUTS
+        neuron_bias = 0.0 if action == eat else -1.0
+        if action == preferred:
+            for index, weight in weights.items():
+                row[index] = weight
+            neuron_bias = bias
+        neurons.append(Neuron(row, neuron_bias, "linear"))
+    return Network([Layer(neurons)])
+
+
+class TestSwitchRate(unittest.TestCase):
+    """
+    Verifies switch_rate against networks with known preferences. On the 5x5
+    grid there are 60 pairs with both food and pond on the grid: in 15 the
+    pond is directly above SYNO, and in another 15 the food is.
+    """
+
+    def test_never_moves_while_eating(self):
+        network = thirst_network("eat", {}, 1.0)
+        self.assertEqual(signatures.switch_rate(network, 0.5, 0.5), (0.0, 0.0))
+
+    def test_always_up(self):
+        network = thirst_network("up", {}, 1.0)
+        self.assertEqual(signatures.switch_rate(network, 0.5, 0.5), (15 / 60, 15 / 60))
+
+    def test_food_and_pond_are_on_opposite_sides(self):
+        for name in ("up", "down", "left", "right"):
+            with self.subTest(name=name):
+                to_water, to_food = signatures.switch_rate(thirst_network(name, {}, 1.0), 0.5, 0.5)
+                self.assertEqual(to_water, to_food)
+
+    def test_sees_the_pond(self):
+        # Up wins only when the pond is directly above SYNO in its view.
+        network = thirst_network("up", {WATER_ABOVE: 1.0}, -0.5)
+        self.assertEqual(signatures.switch_rate(network, 0.5, 0.5), (15 / 60, 0.0))
+
+    def test_uses_the_given_water(self):
+        # Up wins only when the water deficit is above 0.5.
+        network = thirst_network("up", {THIRST_WATER_DEFICIT: 1.0}, -0.5)
+        self.assertEqual(signatures.switch_rate(network, 0.8, 0.2), (15 / 60, 15 / 60))
+        self.assertEqual(signatures.switch_rate(network, 0.2, 0.8), (0.0, 0.0))
+
+    def test_uses_the_given_energy(self):
+        # Up wins only when the energy deficit is above 0.5.
+        network = thirst_network("up", {THIRST_ENERGY_DEFICIT: 1.0}, -0.5)
+        self.assertEqual(signatures.switch_rate(network, 0.2, 0.8), (15 / 60, 15 / 60))
+        self.assertEqual(signatures.switch_rate(network, 0.8, 0.2), (0.0, 0.0))
+
+    def test_need_levels(self):
+        self.assertEqual((signatures.NEED_HIGH, signatures.NEED_LOW), (0.8, 0.2))
+
+
 class TestSpread(unittest.TestCase):
     """Verifies how results from several seeds are described."""
 
@@ -461,11 +534,25 @@ class TestMeasure(unittest.TestCase):
     """Verifies that measure trains one SYNO and measures every signature."""
 
     def setUp(self):
-        self.saved = signatures.CHECKPOINTS
+        self.saved = signatures.CHECKPOINTS, thirst.LIVES
         signatures.CHECKPOINTS = [0, 1, 2]
+        thirst.LIVES = 2
 
     def tearDown(self):
-        signatures.CHECKPOINTS = self.saved
+        signatures.CHECKPOINTS, thirst.LIVES = self.saved
+
+    def test_need_switching_uses_a_thirst_trained_network(self):
+        results = signatures.measure(3)
+        random.seed(3)
+        network = Network([
+            make_layer(thirst.HIDDEN_NEURONS, THIRST_INPUTS),
+            make_layer(len(thirst.ACTION_NAMES), thirst.HIDDEN_NEURONS, "linear"),
+        ])
+        memory = MemoryStore(thirst.MEMORY_CAPACITY)
+        for _ in range(2):
+            thirst.live(network, memory)
+        self.assertEqual(results["thirsty"], signatures.switch_rate(network, 0.8, 0.2))
+        self.assertEqual(results["hungry"], signatures.switch_rate(network, 0.2, 0.8))
 
     def test_result_shapes(self):
         results = signatures.measure(0)
@@ -550,7 +637,12 @@ Seeds: 10/10
 E5: Reward omission (10 seeds)
 Food delivered | RPE: -0.027 [-0.098, 0.036]
 Food omitted   | RPE: -1.337 [-1.625, -1.197]
-Seeds: 10/10""".splitlines()
+Seeds: 10/10
+
+E7: Need switching (10 seeds)
+Thirsty | Water: 0.76 [0.45, 0.97] | Food: 0.11 [0.00, 0.38]
+Hungry  | Water: 0.01 [0.00, 0.02] | Food: 0.95 [0.78, 1.00]
+Seeds: 9/10""".splitlines()
         self.assertEqual(output.getvalue().splitlines(), expected)
 
 

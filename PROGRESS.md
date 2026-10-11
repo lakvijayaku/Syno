@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Steps 1 to 12 are complete. Step 13 (Thirst) is in progress. Measured over 10 seeds in the scarce world, E4 and E5 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 24% of the human capabilities listed in `docs/humanness.md`.
+All 13 roadmap steps are complete. Measured over 10 seeds in the scarce world, E4, E5, and E7 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 24.5% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -23,9 +23,12 @@ Steps 1 to 12 are complete. Step 13 (Thirst) is in progress. Measured over 10 se
 | **10** | Evaluation signatures | ✅ Done |
 | **11** | A harder world | ✅ Done |
 | **12** | Trustworthy measurement | ✅ Done |
-| **13** | Thirst | 🔄 In progress |
+| **13** | Thirst | ✅ Done |
 
 ### Log
+#### 2026-10-10
+- **Step 13d complete:** `experiments/signatures.py` measures E7, need switching, on a SYNO from each seed trained in the thirst experiment, covered by 8 new tests. With food and water on opposite sides, 9 of 10 seeds go for whichever they need more, so E7 is reproduced and need-dependent choice becomes a SYNO capability, raising the humanness score to 24.5%. Step 13 (Thirst) is complete.
+
 #### 2026-10-09
 - **Step 13c complete:** `experiments/thirst.py`, where SYNO must keep itself fed and watered on the 5x5 grid with one pond, and dies if either runs out, covered by 17 tests. With 16 hidden neurons, its average lifespan rose from 45.7 to 87.5 of 100 steps over 3000 lives. Thirst and death from neglected needs are now SYNO capabilities, raising the humanness score from 22% to 24%.
 - **Step 13b complete:** the Habitat can hold water, which SYNO can drink without using it up and see with `sense_water`, covered by 17 new unit tests. Worlds without water are unchanged.

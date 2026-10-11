@@ -6,11 +6,12 @@
 import random
 from multiprocessing import Pool
 
+import experiments.thirst as thirst
 from experiments.xor import make_layer
 from syno.brain.network import Network
 from syno.brain.memory import MemoryStore
 from syno.world.habitat import Habitat, ACTIONS
-from syno.body.homeostasis import HomeostaticCore, homeostatic_reward
+from syno.body.homeostasis import HomeostaticCore, HydratedCore, homeostatic_reward
 from syno.brain.dopamine import reward_prediction_error
 from experiments.hunger import ACTION_NAMES, HIDDEN_NEURONS, SENSE_RADIUS, senses, DISCOUNT, FOOD_AMOUNT, REWARD_SCALE
 from experiments.replay import MEMORY_CAPACITY
@@ -44,6 +45,11 @@ SATIATION_ENERGY = 0.5
 # For E3, SYNO is tested from hungry (0.2) to full (1.0), with food either
 # next to it or at least 3 steps away.
 APPROACH_ENERGIES = [0.2, 0.5, 0.8, 1.0]
+
+# For E7, one need is nearly met (NEED_HIGH) and the other is urgent
+# (NEED_LOW), in a SYNO trained in the thirst experiment.
+NEED_HIGH = 0.8
+NEED_LOW = 0.2
 
 
 def new_brain(seed: int) -> tuple[Network, MemoryStore]:
@@ -220,16 +226,59 @@ def cue_rpe(network: Network) -> float:
     return total / count
 
 
+def switch_rate(network: Network, energy: float, water: float) -> tuple[float, float]:
+    """
+    Measures which need SYNO acts on when food and water pull in opposite
+    directions (E7).
+
+    For every square and direction, food is placed one step one way and the
+    pond one step the opposite way, and SYNO's greedy move is checked. Pairs
+    where either would be off the grid are skipped.
+
+    :param network: A Decision Network trained in the thirst experiment.
+    :param energy: SYNO's energy, from 0.0 to 1.0.
+    :param water: SYNO's water, from 0.0 to 1.0.
+    :return: The fraction of pairs where SYNO moves onto the pond, and the
+        fraction where it moves onto the food.
+    """
+    to_water = 0
+    to_food = 0
+    pairs = 0
+    for y in range(thirst.GRID_SIZE):
+        for x in range(thirst.GRID_SIZE):
+            for dx, dy in ACTIONS.values():
+                food = (x + dx, y + dy)
+                pond = (x - dx, y - dy)
+                habitat = Habitat(thirst.GRID_SIZE, thirst.GRID_SIZE, (x, y), [], [])
+                if not habitat.in_bounds(food) or not habitat.in_bounds(pond):
+                    continue
+                habitat.food.append(food)
+                habitat.water.append(pond)
+                values = network.forward(thirst.senses(habitat, HydratedCore(energy, 0.0, water)))
+                name = thirst.ACTION_NAMES[values.index(max(values))]
+                pairs += 1
+                if name in ACTIONS:
+                    move_dx, move_dy = ACTIONS[name]
+                    position = (x + move_dx, y + move_dy)
+                    if position == pond:
+                        to_water += 1
+                    elif position == food:
+                        to_food += 1
+    return to_water / pairs, to_food / pairs
+
+
 def measure(seed: int) -> dict:
     """
-    Trains one SYNO and measures every signature on it.
+    Trains two SYNOs from the same seed, one in the scarce world and one in
+    the thirst experiment, and measures every signature.
 
     Each seed runs in its own process, so the results are returned rather
     than added to shared totals.
 
     :param seed: The random seed for this SYNO.
     :return: The results by signature: "food" and "cue" (E4, one value per
-        checkpoint), "e1", "e2", "near" and "far" (E3), and "e5".
+        checkpoint), "e1", "e2", "near" and "far" (E3), "e5", and "thirsty"
+        and "hungry" (E7).
     """
     network, memory = new_brain(seed)
     results = {"food": [], "cue": []}
@@ -244,6 +293,20 @@ def measure(seed: int) -> dict:
     results["near"] = [approach_rate(network, e, False) for e in APPROACH_ENERGIES]
     results["far"] = [approach_rate(network, e, True) for e in APPROACH_ENERGIES]
     results["e5"] = [eating_rpe(network, True), eating_rpe(network, False)]
+
+    # E7 needs a SYNO with two needs, trained in the thirst experiment from
+    # the same seed.
+    random.seed(seed)
+    inputs = 2 * (2 * SENSE_RADIUS + 1) ** 2 + 3
+    network = Network([
+        make_layer(thirst.HIDDEN_NEURONS, inputs),
+        make_layer(len(thirst.ACTION_NAMES), thirst.HIDDEN_NEURONS, "linear")
+    ])
+    memory = MemoryStore(MEMORY_CAPACITY)
+    for _ in range(thirst.LIVES):
+        thirst.live(network, memory)
+    results["thirsty"] = switch_rate(network, NEED_HIGH, NEED_LOW)
+    results["hungry"] = switch_rate(network, NEED_LOW, NEED_HIGH)
     return results
 
 
@@ -305,6 +368,20 @@ def main():
     print(f"Food delivered | RPE: {delivered_rpe}")
     print(f"Food omitted   | RPE: {omitted_rpe}")
     n = sum(r["e5"][1] <= r["e5"][0] - CLEAR_DIP for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
+    print()
+    print(f"E7: Need switching ({SEEDS} seeds)")
+    thirsty_water = spread([r["thirsty"][0] for r in results], 2)
+    thirsty_food = spread([r["thirsty"][1] for r in results], 2)
+    hungry_water = spread([r["hungry"][0] for r in results], 2)
+    hungry_food = spread([r["hungry"][1] for r in results], 2)
+    print(f"Thirsty | Water: {thirsty_water} | Food: {thirsty_food}")
+    print(f"Hungry  | Water: {hungry_water} | Food: {hungry_food}")
+    n = sum(
+        r["thirsty"][0] >= r["thirsty"][1] + CLEAR_EFFECT
+        and r["hungry"][1] >= r["hungry"][0] + CLEAR_EFFECT
+        for r in results
+    )
     print(f"Seeds: {n}/{SEEDS}")
 
 
