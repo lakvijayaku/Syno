@@ -35,15 +35,15 @@ SYNO consists of the **Habitat (HB)**, which is the external world, a body, the 
 └────────────────────────────────────────────────────┘
 ```
 
-The **Value Estimator (VE)** is currently built into the **DN**: each DN output predicts the value of one action (Q-learning). The **Signal Emitters (SE)** are not separate: the HC's energy deficit and stomach fill are sensed directly.
+The **Value Estimator (VE)** is currently built into the **DN**: each DN output predicts the value of one action (Q-learning). The **Signal Emitters (SE)** are not separate: the HC's energy deficit, stomach fill, and, in a body with water, water deficit are sensed directly.
 
 ### The Simulation Loop
 Each tick follows the same sequence:
 
-1. The **SI** converts the current view of the HB into input signals, and the **HC**'s energy deficit and stomach fill are added to them.
+1. The **SI** converts the current view of the HB into input signals: a window of food and walls (`sense`) and, in a world with water, a window of water (`sense_water`). The **HC**'s energy deficit and stomach fill, and its water deficit if it has water, are added to them.
 2. The **DN** predicts the value of each action. The best action is chosen, except for a small random fraction of steps.
-3. The **HB** applies the action. The **HC** updates: food is digested, energy drains, and movement costs extra energy.
-4. Reward is computed as the reduction in drive (the squared energy deficit), scaled, plus a novelty bonus from the **NS**.
+3. The **HB** applies the action, which may be a move, eating, or drinking. The **HC** updates: food is digested, energy drains, movement costs extra energy, and water drains. If energy or water reaches zero, SYNO dies and the life ends.
+4. Reward is computed as the reduction in drive (the squared energy deficit, plus the squared water deficit in a body with water), scaled, plus a novelty bonus from the **NS**.
 5. The **DS** compares the reward with the DN's prediction to produce the RPE.
 6. The **DN** updates its weights for the action taken, using the RPE.
 7. The step is stored in the **MS** with a priority equal to the size of its RPE, and SYNO re-learns from a few past steps, recalled in proportion to their priority (memory replay).
@@ -54,9 +54,10 @@ Across lives, the **GE** adds a hidden neuron to the DN whenever SYNO's average 
 | Hard-Coded (Physiology) | Emergent (Behavior) |
 |---|---|
 | Internal variables and set-points | Eating when partially full |
-| Energy drain and movement cost | Choosing whether to pursue distant food |
+| Energy and water drain, movement cost, and death | Choosing whether to pursue distant food |
 | Signal formulas (hunger, satiety, novelty) | Anticipation when food is seen |
 | Reward as drive reduction; RPE | Boredom, resting, and renewed curiosity |
+| | Choosing food or water by the larger need |
 | A small random exploration rate | |
 | When the GE adds a neuron | |
 
