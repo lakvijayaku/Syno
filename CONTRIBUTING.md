@@ -14,5 +14,8 @@ The policy is as follows:
 
 Contributors who commit unverified AI-generated content, whether code or documentation, may be banned from the project.
 
+### Documentation Rule
+Documentation must always describe the code as it is. Any commit that makes a document wrong, such as a changed number, a renamed file, or a new capability, must fix that document in the same commit. Historical log entries in `PROGRESS.md` record what was true when they were written and are not rewritten.
+
 ### How to Contribute
 At this stage, the project owner is learning neural networks and brain-inspired AI and intends to write the code personally. Code contributions are therefore not being accepted yet. The best way to contribute is to report bugs or suggest improvements by email to [`lakvijayaku@gmail.com`](mailto:lakvijayaku@gmail.com).

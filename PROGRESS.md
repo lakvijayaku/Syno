@@ -27,6 +27,7 @@ All 13 roadmap steps are complete. Measured over 10 seeds in the scarce world, E
 
 ### Log
 #### 2026-10-10
+- **Documentation:** biology and architecture describe the two-need drive, the water senses, and death; abbreviations are written in full on first use in each section; and CONTRIBUTING requires any commit that makes a document wrong to fix it in the same commit.
 - **Step 13d complete:** `experiments/signatures.py` measures E7, need switching, on a SYNO from each seed trained in the thirst experiment, covered by 8 new tests. With food and water on opposite sides, 9 of 10 seeds go for whichever they need more, so E7 is reproduced and need-dependent choice becomes a SYNO capability, raising the humanness score to 24.5%. Step 13 (Thirst) is complete.
 
 #### 2026-10-09
