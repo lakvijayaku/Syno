@@ -1,5 +1,7 @@
 ## SYNO
 
+[![tests](https://img.shields.io/github/actions/workflow/status/lakvijayaku/Syno/tests.yml?branch=master&label=tests)](https://github.com/lakvijayaku/Syno/actions/workflows/tests.yml) [![python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
+
 **Synthetic Yearning Neural Organism**
 
 ### Description
@@ -9,7 +11,7 @@ SYNO is a brain-inspired artificial organism built from scratch as a learning pr
 Phase 1 is in progress, and its 13 roadmap steps are complete. SYNO lives in a grid world, has a body with energy, a stomach, and water, and learns from its own dopamine signal, with reward coming only from reducing hunger and thirst. It explores out of curiosity, replays its most surprising memories to learn faster, grows new neurons when it stops learning, adapts faster to a changing world through a surprise-driven arousal hormone, and in experiments it learns to keep itself fed and watered without being told how, dying if either runs out. Every component is covered by unit tests. SYNO's behavior has been measured against seven biological signatures: three are reproduced, one weakly, two are not, and one cannot be measured in the current design. See [`docs/evaluation.md`](docs/evaluation.md), and [`docs/humanness.md`](docs/humanness.md) for how many of 104 human capabilities SYNO has, which scores it at 24.5%. See [`PROGRESS.md`](PROGRESS.md) for details.
 
 ### Running SYNO
-SYNO needs only Python 3.10 or later. Run the tests with `python3 -m unittest`, and an experiment with `python3 -m experiments.<name>`, for example `python3 -m experiments.consolidation`. Experiments save their data and charts to `runs/`. Slow tests that re-run whole experiments are skipped unless `SYNO_SLOW_TESTS=1` is set.
+SYNO needs only Python 3.10 or later. Run the tests with `python3 -m unittest`, and an experiment with `python3 -m experiments.<name>`, for example `python3 -m experiments.consolidation`. Experiments save their data and charts to `runs/`. Slow tests that re-run whole experiments are skipped unless `SYNO_SLOW_TESTS=1` is set. On GitHub, the fast tests run automatically on every push, on Python 3.10 and 3.13.
 
 ### Architecture
 SYNO consists of a simulated world, the Habitat, and an Artificial Mind (AM) that perceives, decides, and learns within it. Only physiology is hard-coded; all behavior must emerge from learning. See [`docs/architecture.md`](docs/architecture.md) for the full design, [`docs/biology.md`](docs/biology.md) for its biological basis, and [`docs/glossary.md`](docs/glossary.md) for component names.

@@ -1,0 +1,27 @@
+# ── SYNO · .github/workflows/tests.yml ──────────────────
+# Runs the fast tests on every push and pull request
+# Laksheth Vijayakumar · 2026-10-10 · GPL-3.0
+# ────────────────────────────────────────────────────────
+
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # The oldest Python SYNO supports, and the newest.
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      # SYNO uses only the standard library, so there is nothing to install.
+      # Slow tests are skipped, as they are by default.
+      - name: Run the tests
+        run: python -m unittest
