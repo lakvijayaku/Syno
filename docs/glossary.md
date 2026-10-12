@@ -7,10 +7,10 @@ This glossary defines every named component and key term used in SYNO. Component
 |---|---|---|---|
 | **AM** | Artificial Mind | The complete cognitive system. Owns and orchestrates every component below. | In progress |
 | **HB** | Habitat | The grid world SYNO lives in, containing food, water, and open space, bounded by walls. External to the AM. | Built: `syno/world/habitat.py` |
-| **SI** | Sensory Interface | Converts what SYNO can perceive in the HB into numeric input signals. | Built: `Habitat.sense` |
+| **SI** | Sensory Interface | Converts what SYNO can perceive in the HB into numeric input signals. | Built: `Habitat.sense` for food and walls, and `Habitat.sense_water` for water |
 | **DN** | Decision Network | The neural network that maps sensory and internal signals to an action. | Built: `syno/brain/` (one value per action) |
-| **HC** | Homeostatic Core | Holds SYNO's internal body variables (energy, stomach fill) and updates them every tick. | Built: `syno/body/homeostasis.py`. `HydratedCore` adds water, a second need, and death when energy or water runs out |
-| **SE** | Signal Emitters | Hormone-like signals computed from the HC: the hunger signal (ghrelin analog) and the satiety signal (CCK/GLP-1 analog). | Partial: deficit and stomach fill are sensed directly |
+| **HC** | Homeostatic Core | Holds SYNO's internal body variables (energy, stomach fill, and in `HydratedCore`, water) and updates them every tick. | Built: `syno/body/homeostasis.py`. `HydratedCore` adds water, a second need, and death when energy or water runs out |
+| **SE** | Signal Emitters | Hormone-like signals computed from the HC: the hunger signal (ghrelin analog) and the satiety signal (CCK/GLP-1 analog). | Not built: the energy deficit, stomach fill, and water deficit are sensed directly |
 | **VE** | Value Estimator | Predicts how much reward SYNO expects from its current situation. | Built into the DN: each output predicts the value of one action |
 | **DS** | Dopamine System | Computes the reward prediction error (actual reward minus expected reward) and broadcasts it as the learning signal. | Built: `syno/brain/dopamine.py` |
 | **NS** | Novelty System | Produces a novelty signal for unfamiliar states, which fades with repeated exposure. | Built: `syno/brain/novelty.py` |
@@ -27,7 +27,8 @@ This glossary defines every named component and key term used in SYNO. Component
 - **Drive:** The squared energy deficit, plus the squared water deficit for a body with water. Reward is the reduction in drive over a step.
 - **Q-Learning:** The learning method SYNO uses: each output of the DN predicts the value of one action, and only the action taken is updated by its RPE.
 - **Epsilon-Greedy:** Choosing the best-valued action, except for a random action a small fraction (epsilon) of the time.
-- **Life:** One run of an experiment, from SYNO's first step to its last.
+- **Life:** One episode of an experiment, from SYNO's first step until it has lived 100 steps or died. An experiment trains SYNO over thousands of lives.
+- **Lifespan:** How many steps SYNO survived in a life. A lifespan of 100 means it survived the whole life.
 - **Reward Prediction Error (RPE):** Actual reward minus expected reward. Positive when better than expected, negative when worse.
 - **Alliesthesia:** The principle that the same stimulus is more rewarding when the body needs it more.
 - **Habituation:** The gradual weakening of a response to a repeated stimulus.

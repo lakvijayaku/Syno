@@ -36,8 +36,8 @@ SYNO has 20 capabilities (✅) and 10 in part (◐), and lacks 74 (❌). Of the 
 ### Perception
 | Capability | SYNO | Shared With | Achievable |
 |---|---|---|---|
-| Sensing its own body | ✅ energy and stomach | All animals | Yes |
-| Vision | ◐ a 5x5 window of food and walls | All animals | Yes |
+| Sensing its own body | ✅ energy, stomach, and water | All animals | Yes |
+| Vision | ◐ a 5x5 window of food, water, and walls | All animals | Yes |
 | Hearing | ❌ | All animals | Yes |
 | Touch | ❌ | All animals | Yes |
 | Taste and smell | ❌ | All animals | Yes |

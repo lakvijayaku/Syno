@@ -17,7 +17,7 @@ SYNO consists of the **Habitat (HB)**, which is the external world, a body, the 
 | `experiments/` | Runnable experiments, each adding one mechanism to the one before |
 | `tests/` | Unit tests for every module and experiment |
 
-In the diagram below, SYNO's senses pass through the Sensory Interface (SI) to the Decision Network (DN), which chooses an action. Reward goes to the Dopamine System (DS), which compares it with the DN's prediction to produce the reward prediction error (RPE). The Novelty System (NS) adds to the reward, the Memory Store (MS) replays past steps, and the Endocrine Modulator (EM) sets the learning rate.
+In the diagram below, SYNO's senses pass through the Sensory Interface (SI) to the Decision Network (DN), which chooses an action. Reward goes to the Dopamine System (DS), which compares it with the DN's prediction to produce the reward prediction error (RPE). The Novelty System (NS) adds to the reward, the Memory Store (MS) replays past steps, and the Endocrine Modulator (EM) sets the learning rate. Working memory is not drawn: in the blink experiment, it adds a fading trace of what SYNO saw to the senses that reach the DN.
 
 ```
 ┌──────────────────────── HB ────────────────────────┐
@@ -50,6 +50,8 @@ Each tick follows the same sequence:
 6. The **DN** updates its weights for the action taken, using the RPE.
 7. The step is stored in the **Memory Store (MS)** with a priority equal to the size of its RPE, and SYNO re-learns from a few past steps, recalled in proportion to their priority (memory replay).
 
+In the blink experiment, SYNO's eyes are closed on some steps, and a working memory of its earlier views is added to its senses in step 1 and updated after each decision.
+
 Across lives, the **Growth Engine (GE)** adds a hidden neuron to the DN whenever SYNO's average surprise stops falling. In the arousal experiment, the arousal hormone of the **Endocrine Modulator (EM)**, fed by surprise, sets the learning rate at the start of each step.
 
 ### Hard-Coded vs. Emergent
@@ -57,11 +59,12 @@ Across lives, the **Growth Engine (GE)** adds a hidden neuron to the DN whenever
 |---|---|
 | Internal variables and set-points | Eating when partially full |
 | Energy and water drain, movement cost, and death | Choosing whether to pursue distant food |
-| Signal formulas (hunger, satiety, novelty) | Anticipation when food is seen |
+| Signal formulas (drive and novelty) | Anticipation when food is seen |
 | Reward as drive reduction; reward prediction error (RPE) | Boredom, resting, and renewed curiosity |
 | | Choosing food or water by the larger need |
-| A small random exploration rate | |
+| A small random exploration rate | Acting on food it can no longer see |
 | When the Growth Engine (GE) adds a neuron | |
+| How quickly working memory fades | |
 
 ### Development Phases
 - **Phase 1:** Pure Python, standard library only.
