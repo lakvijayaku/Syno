@@ -28,6 +28,7 @@ Steps 1 to 13 are complete. Step 14 (Working memory) is in progress. Measured ov
 
 ### Log
 #### 2026-10-11
+- **Step 14b complete:** `experiments/blink.py`, where SYNO's eyes are closed on half of all steps and it senses a working memory of what it saw before, covered by 15 tests. Its average energy rose from 0.27 to 0.49 over 3000 lives.
 - **Step 14a complete:** `WorkingMemory`, a fading trace of recent inputs that keeps a fraction of its old contents at every update, covered by 18 unit tests.
 
 #### 2026-10-10
