@@ -310,6 +310,33 @@ def delayed_rate(network: Network, seen: bool) -> float:
     return count / pairs
 
 
+def value_ramp(network: Network) -> list[float]:
+    """
+    Measures how SYNO's predicted value changes as food gets closer (E9).
+
+    For every pairing of SYNO's square and a food square in view, SYNO is
+    half-hungry with an empty stomach, and the value of its best action is
+    averaged by distance to the food. Dopamine ramps up as an animal nears a
+    reward, tracking this value.
+
+    :param network: A Decision Network trained in the scarce world.
+    :return: The average value at distances 0 to 4, in that order.
+    """
+    totals = [0.0] * 5
+    counts = [0] * 5
+    for y in range(GRID_SIZE):
+        for x in range(GRID_SIZE):
+            for fy in range(GRID_SIZE):
+                for fx in range(GRID_SIZE):
+                    if abs(fx - x) <= SENSE_RADIUS and abs(fy - y) <= SENSE_RADIUS:
+                        distance = abs(fx - x) + abs(fy - y)
+                        habitat = Habitat(GRID_SIZE, GRID_SIZE, (x, y), [(fx, fy)])
+                        body = HomeostaticCore(0.5, 0.0)
+                        totals[distance] += max(network.forward(senses(habitat, body)))
+                        counts[distance] += 1
+    return [total / count for total, count in zip(totals, counts)]
+
+
 def measure(seed: int) -> dict:
     """
     Trains three SYNOs from the same seed, in the scarce world, the thirst
@@ -321,7 +348,7 @@ def measure(seed: int) -> dict:
     :param seed: The random seed for this SYNO.
     :return: The results by signature: "food" and "cue" (E4, one value per
         checkpoint), "e1", "e2", "near" and "far" (E3), "e5", "thirsty"
-        and "hungry" (E7), and "e8".
+        and "hungry" (E7), "e8", and "e9" (one value per distance).
     """
     network, memory = new_brain(seed)
     results = {"food": [], "cue": []}
@@ -336,6 +363,7 @@ def measure(seed: int) -> dict:
     results["near"] = [approach_rate(network, e, False) for e in APPROACH_ENERGIES]
     results["far"] = [approach_rate(network, e, True) for e in APPROACH_ENERGIES]
     results["e5"] = [eating_rpe(network, True), eating_rpe(network, False)]
+    results["e9"] = value_ramp(network)
 
     # E7 needs a SYNO with two needs, trained in the thirst experiment from
     # the same seed.
@@ -447,6 +475,13 @@ def main():
     print(f"Seen     | Approaches: {seen_rate}")
     print(f"Not seen | Approaches: {not_seen_rate}")
     n = sum(r["e8"][0] >= r["e8"][1] + CLEAR_EFFECT for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
+    print()
+    print(f"E9: Dopamine ramping ({SEEDS} seeds)")
+    for d in range(4, -1, -1):
+        value = spread([r["e9"][d] for r in results], 3)
+        print(f"Distance {d} | Value: {value}")
+    n = sum(all(r["e9"][d - 1] > r["e9"][d] for d in range(1, 5)) for r in results)
     print(f"Seeds: {n}/{SEEDS}")
 
 

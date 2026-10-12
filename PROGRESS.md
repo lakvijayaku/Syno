@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-All 14 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, and E8 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 25% of the human capabilities listed in `docs/humanness.md`.
+All 15 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, and E9 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 25% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -25,8 +25,12 @@ All 14 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, and E8 ar
 | **12** | Trustworthy measurement | ✅ Done |
 | **13** | Thirst | ✅ Done |
 | **14** | Working memory | ✅ Done |
+| **15** | Dopamine ramping | ✅ Done |
 
 ### Log
+#### 2026-10-12
+- **Step 15 complete:** `experiments/signatures.py` measures E9, dopamine ramping, on the scarce-world SYNO, covered by 6 new tests. As visible food gets closer, the value SYNO predicts rises at every step, from 1.197 at 4 steps away to 2.288 on the food, in all 10 seeds, so E9 is reproduced. The humanness score stays at 25%, since dopamine as prediction error was already a SYNO capability.
+
 #### 2026-10-11
 - **Documentation:** every document checked against the code after steps 13 and 14. The README, glossary, architecture, biology, and humanness now cover water, the water senses, lifespans, and working memory throughout; the glossary's Life term and Signal Emitters status were corrected.
 - **Step 14c complete:** `experiments/signatures.py` measures E8, delayed response, on a SYNO from each seed trained in the blink experiment, covered by 7 new tests. A SYNO that saw food just before its eyes closed moves toward it in 0.75 of cases, against 0.56 when it never saw it, in 9 of 10 seeds, so E8 is reproduced. Working memory becomes a partial SYNO capability, raising the humanness score to 25%. Step 14 (Working memory) is complete.

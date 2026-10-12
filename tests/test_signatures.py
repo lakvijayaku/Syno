@@ -2,12 +2,12 @@
 Experiment tests for experiments/signatures.py.
 
 The fast tests probe eating_rate, approach_rate, eating_rpe, cue_rpe,
-switch_rate and delayed_rate with hand-built networks whose predictions are
-known exactly, and check that new_brain, train and measure are reproducible.
-The slow test trains SYNO with all 10 seeds, in the scarce world, the thirst
-experiment, and the blink experiment, in parallel (about 9 minutes), and
-reproduces the recorded E1 to E8 results. It is skipped by default and runs
-only when SYNO_SLOW_TESTS is set:
+switch_rate, delayed_rate and value_ramp with hand-built networks whose
+predictions are known exactly, and check that new_brain, train and measure
+are reproducible. The slow test trains SYNO with all 10 seeds, in the scarce
+world, the thirst experiment, and the blink experiment, in parallel (about 10
+minutes), and reproduces the recorded E1 to E9 results. It is skipped by
+default and runs only when SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
 
@@ -583,6 +583,41 @@ class TestDelayedRate(unittest.TestCase):
         made.assert_called_once_with(blink.WINDOW, blink.MEMORY_DECAY)
 
 
+class TestValueRamp(unittest.TestCase):
+    """
+    Verifies value_ramp against networks with known predictions. On the 5x5
+    grid, the pairings with food in view number 25, 80, 124, 96, and 36 at
+    distances 0 to 4.
+    """
+
+    def test_constant_value(self):
+        network = probe_network({}, 2.0)
+        self.assertEqual(signatures.value_ramp(network), [2.0] * 5)
+
+    def test_food_underneath_counts_at_distance_zero(self):
+        network = probe_network({CENTER: 1.0}, 0.5)
+        self.assertEqual(signatures.value_ramp(network), [1.5, 0.5, 0.5, 0.5, 0.5])
+
+    def test_averages_within_each_distance(self):
+        # Eat's value is 1.0 only when food is directly above SYNO, which is
+        # 20 of the 80 pairings at distance 1. A wall above lowers eat below
+        # the other actions, which stay at 0.0.
+        above = CENTER - (2 * signatures.SENSE_RADIUS + 1)
+        network = probe_network({above: 1.0}, 0.0)
+        self.assertEqual(signatures.value_ramp(network), [0.0, 20 / 80, 0.0, 0.0, 0.0])
+
+    def test_syno_is_half_hungry(self):
+        network = probe_network({DEFICIT: 1.0}, 0.0)
+        self.assertEqual(signatures.value_ramp(network), [0.5] * 5)
+
+    def test_stomach_is_empty(self):
+        network = probe_network({STOMACH: -1.0}, 0.25)
+        self.assertEqual(signatures.value_ramp(network), [0.25] * 5)
+
+    def test_returns_five_distances(self):
+        self.assertEqual(len(signatures.value_ramp(probe_network({}, 0.0))), 5)
+
+
 class TestSpread(unittest.TestCase):
     """Verifies how results from several seeds are described."""
 
@@ -660,6 +695,7 @@ class TestMeasure(unittest.TestCase):
         self.assertEqual(results["far"], [signatures.approach_rate(network, e, True)
                                           for e in signatures.APPROACH_ENERGIES])
         self.assertEqual(results["e5"], [signatures.eating_rpe(network, True), signatures.eating_rpe(network, False)])
+        self.assertEqual(results["e9"], signatures.value_ramp(network))
         self.assertEqual(results["food"][-1], results["e5"][0])
         self.assertEqual(results["cue"][-1], signatures.cue_rpe(network))
 
@@ -731,7 +767,15 @@ Seeds: 9/10
 E8: Delayed response (10 seeds)
 Seen     | Approaches: 0.75 [0.53, 0.82]
 Not seen | Approaches: 0.56 [0.44, 0.64]
-Seeds: 9/10""".splitlines()
+Seeds: 9/10
+
+E9: Dopamine ramping (10 seeds)
+Distance 4 | Value: 1.197 [0.801, 1.516]
+Distance 3 | Value: 1.481 [1.054, 1.814]
+Distance 2 | Value: 1.760 [1.387, 2.048]
+Distance 1 | Value: 2.060 [1.706, 2.390]
+Distance 0 | Value: 2.288 [2.108, 2.530]
+Seeds: 10/10""".splitlines()
         self.assertEqual(output.getvalue().splitlines(), expected)
 
 

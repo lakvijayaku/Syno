@@ -61,7 +61,7 @@ SYNO has 20 capabilities (✅) and 10 in part (◐), and lacks 74 (❌). Of the 
 | Capability | SYNO | Shared With | Achievable |
 |---|---|---|---|
 | Reward learning | ✅ Q-learning | All animals | Yes |
-| Dopamine as prediction error | ✅ (E4, E5) | All animals | Yes |
+| Dopamine as prediction error | ✅ (E4, E5, E9) | All animals | Yes |
 | Classical conditioning | ✅ (E4) | All animals | Yes |
 | Learning from consequences | ✅ | All animals | Yes |
 | Habituation | ◐ in the Novelty System, not in behavior (E6) | All animals | Yes |
@@ -166,7 +166,7 @@ SYNO has 20 capabilities (✅) and 10 in part (◐), and lacks 74 (❌). Of the 
 | Evolution across generations | ❌ | All animals | Yes |
 
 ### What Earns the Score
-SYNO's capabilities are concentrated in learning and motivation, the foundation shared by all animals: reward learning driven by a dopamine-like prediction error, curiosity, memory replay, hunger and thirst, death when either is neglected, and a surprise-driven arousal hormone. In measured behavior, its dopamine response moves from eating to the sight of food (E4) and dips when expected food is missing (E5).
+SYNO's capabilities are concentrated in learning and motivation, the foundation shared by all animals: reward learning driven by a dopamine-like prediction error, curiosity, memory replay, hunger and thirst, death when either is neglected, and a surprise-driven arousal hormone. In measured behavior, its dopamine response moves from eating to the sight of food (E4), dips when expected food is missing (E5), and ramps up as food gets closer (E9).
 
 ### What Holds It Back
 - **Hunger alone barely changes its choices:** when food is the only need at stake, a hungry and a nearly full SYNO choose almost the same (E2, E3). With two needs, it chooses by the larger one (E7).
