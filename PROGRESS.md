@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-All 13 roadmap steps are complete. Measured over 10 seeds in the scarce world, E4, E5, and E7 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 24.5% of the human capabilities listed in `docs/humanness.md`.
+Steps 1 to 13 are complete. Step 14 (Working memory) is in progress. Measured over 10 seeds in the scarce world, E4, E5, and E7 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 24.5% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -24,8 +24,12 @@ All 13 roadmap steps are complete. Measured over 10 seeds in the scarce world, E
 | **11** | A harder world | ✅ Done |
 | **12** | Trustworthy measurement | ✅ Done |
 | **13** | Thirst | ✅ Done |
+| **14** | Working memory | 🔄 In progress |
 
 ### Log
+#### 2026-10-11
+- **Step 14a complete:** `WorkingMemory`, a fading trace of recent inputs that keeps a fraction of its old contents at every update, covered by 18 unit tests.
+
 #### 2026-10-10
 - **Tooling:** a GitHub Actions workflow runs the fast tests on every push and pull request, on Python 3.10 and 3.13, and the README shows its result as a badge.
 - **Documentation:** biology and architecture describe the two-need drive, the water senses, and death; abbreviations are written in full on first use in each section; and CONTRIBUTING requires any commit that makes a document wrong to fix it in the same commit.

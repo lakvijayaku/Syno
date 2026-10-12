@@ -36,6 +36,7 @@ This glossary defines every named component and key term used in SYNO. Component
 - **Experience Replay:** Re-learning from past steps recalled from the MS, in addition to the current step.
 - **Prioritized Replay:** Experience replay that recalls each memory in proportion to its surprise, measured as the size of its RPE.
 - **Neurogenesis:** Adding new neurons to a network that is already learning. In SYNO, this is done by the GE.
+- **Working Memory:** A fading trace of recent inputs, such as what SYNO has seen, that lets it act on things it can no longer sense. Built: `syno/brain/working_memory.py`.
 - **Hormone:** A slow signal whose level moves a fixed fraction of the way toward its input on every tick, so it reflects the recent past.
 - **Arousal:** In SYNO, a hormone fed by surprise that raises the learning rate after surprising outcomes (the Pearce-Hall model).
 - **Seed:** The starting value for random numbers. The same seed reproduces the same run exactly.
