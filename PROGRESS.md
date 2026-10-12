@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Steps 1 to 13 are complete. Step 14 (Working memory) is in progress. Measured over 10 seeds in the scarce world, E4, E5, and E7 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 24.5% of the human capabilities listed in `docs/humanness.md`.
+All 14 roadmap steps are complete. Measured over 10 seeds in the scarce world, E4, E5, E7, and E8 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 25% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -24,10 +24,11 @@ Steps 1 to 13 are complete. Step 14 (Working memory) is in progress. Measured ov
 | **11** | A harder world | ✅ Done |
 | **12** | Trustworthy measurement | ✅ Done |
 | **13** | Thirst | ✅ Done |
-| **14** | Working memory | 🔄 In progress |
+| **14** | Working memory | ✅ Done |
 
 ### Log
 #### 2026-10-11
+- **Step 14c complete:** `experiments/signatures.py` measures E8, delayed response, on a SYNO from each seed trained in the blink experiment, covered by 7 new tests. A SYNO that saw food just before its eyes closed moves toward it in 0.75 of cases, against 0.56 when it never saw it, in 9 of 10 seeds, so E8 is reproduced. Working memory becomes a partial SYNO capability, raising the humanness score to 25%. Step 14 (Working memory) is complete.
 - **Step 14b complete:** `experiments/blink.py`, where SYNO's eyes are closed on half of all steps and it senses a working memory of what it saw before, covered by 15 tests. Its average energy rose from 0.27 to 0.49 over 3000 lives.
 - **Step 14a complete:** `WorkingMemory`, a fading trace of recent inputs that keeps a fraction of its old contents at every update, covered by 18 unit tests.
 

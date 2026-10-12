@@ -7,9 +7,11 @@ import random
 from multiprocessing import Pool
 
 import experiments.thirst as thirst
+import experiments.blink as blink
 from experiments.xor import make_layer
 from syno.brain.network import Network
 from syno.brain.memory import MemoryStore
+from syno.brain.working_memory import WorkingMemory
 from syno.world.habitat import Habitat, ACTIONS
 from syno.body.homeostasis import HomeostaticCore, HydratedCore, homeostatic_reward
 from syno.brain.dopamine import reward_prediction_error
@@ -267,18 +269,59 @@ def switch_rate(network: Network, energy: float, water: float) -> tuple[float, f
     return to_water / pairs, to_food / pairs
 
 
+def delayed_rate(network: Network, seen: bool) -> float:
+    """
+    Measures whether SYNO heads for food it can no longer see (E8), the
+    delayed-response task.
+
+    For every pairing of SYNO's square and a food square at least 2 steps
+    away and in view, SYNO's working memory is emptied and then given one
+    view, with the food either seen or not. Its eyes then close, and its
+    greedy move is checked. Not seeing the food gives the chance level.
+
+    :param network: A Decision Network trained in the blink experiment.
+    :param seen: True if SYNO saw the food before its eyes closed.
+    :return: The fraction of pairings where SYNO's move brings it closer to
+        the food.
+    """
+    working_memory = WorkingMemory(blink.WINDOW, blink.MEMORY_DECAY)
+    count = 0
+    pairs = 0
+    for y in range(blink.GRID_SIZE):
+        for x in range(blink.GRID_SIZE):
+            for fy in range(blink.GRID_SIZE):
+                for fx in range(blink.GRID_SIZE):
+                    distance = abs(x - fx) + abs(y - fy)
+                    if distance < 2 or abs(x - fx) > SENSE_RADIUS or abs(y - fy) > SENSE_RADIUS:
+                        continue
+                    habitat = Habitat(blink.GRID_SIZE, blink.GRID_SIZE, (x, y), [(fx, fy)])
+                    body = HomeostaticCore(0.5, 0.0)
+                    working_memory.reset()
+                    working_memory.update(blink.view(habitat, seen))
+                    state = blink.view(habitat, False) + [body.deficit(), body.stomach] + working_memory.contents
+                    values = network.forward(state)
+                    name = blink.ACTION_NAMES[values.index(max(values))]
+                    pairs += 1
+                    if name in ACTIONS:
+                        dx, dy = ACTIONS[name]
+                        next_distance = abs(x + dx - fx) + abs(y + dy - fy)
+                        if next_distance < distance:
+                            count += 1
+    return count / pairs
+
+
 def measure(seed: int) -> dict:
     """
-    Trains two SYNOs from the same seed, one in the scarce world and one in
-    the thirst experiment, and measures every signature.
+    Trains three SYNOs from the same seed, in the scarce world, the thirst
+    experiment, and the blink experiment, and measures every signature.
 
     Each seed runs in its own process, so the results are returned rather
     than added to shared totals.
 
     :param seed: The random seed for this SYNO.
     :return: The results by signature: "food" and "cue" (E4, one value per
-        checkpoint), "e1", "e2", "near" and "far" (E3), "e5", and "thirsty"
-        and "hungry" (E7).
+        checkpoint), "e1", "e2", "near" and "far" (E3), "e5", "thirsty"
+        and "hungry" (E7), and "e8".
     """
     network, memory = new_brain(seed)
     results = {"food": [], "cue": []}
@@ -307,6 +350,20 @@ def measure(seed: int) -> dict:
         thirst.live(network, memory)
     results["thirsty"] = switch_rate(network, NEED_HIGH, NEED_LOW)
     results["hungry"] = switch_rate(network, NEED_LOW, NEED_HIGH)
+
+    # E8 needs a SYNO with working memory, trained in the blink experiment
+    # from the same seed.
+    random.seed(seed)
+    inputs = 2 * blink.WINDOW + 2
+    network = Network([
+        make_layer(blink.HIDDEN_NEURONS, inputs),
+        make_layer(len(blink.ACTION_NAMES), blink.HIDDEN_NEURONS, "linear")
+    ])
+    memory = MemoryStore(MEMORY_CAPACITY)
+    working_memory = WorkingMemory(blink.WINDOW, blink.MEMORY_DECAY)
+    for _ in range(blink.LIVES):
+        blink.live(network, memory, working_memory)
+    results["e8"] = [delayed_rate(network, True), delayed_rate(network, False)]
     return results
 
 
@@ -382,6 +439,14 @@ def main():
         and r["hungry"][1] >= r["hungry"][0] + CLEAR_EFFECT
         for r in results
     )
+    print(f"Seeds: {n}/{SEEDS}")
+    print()
+    print(f"E8: Delayed response ({SEEDS} seeds)")
+    seen_rate = spread([r["e8"][0] for r in results], 2)
+    not_seen_rate = spread([r["e8"][1] for r in results], 2)
+    print(f"Seen     | Approaches: {seen_rate}")
+    print(f"Not seen | Approaches: {not_seen_rate}")
+    n = sum(r["e8"][0] >= r["e8"][1] + CLEAR_EFFECT for r in results)
     print(f"Seeds: {n}/{SEEDS}")
 
 

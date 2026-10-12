@@ -2,8 +2,8 @@
 
 This document scores how close SYNO is to having every capability of a human mind and body. It lists 104 capabilities, from regulating energy to language and consciousness, and records which ones SYNO has. Behavioral signatures that have been formally measured are listed in [`evaluation.md`](evaluation.md).
 
-### Score: 24.5%
-SYNO earns **24.5 of 100 points** across the capabilities that a synthetic organism can achieve.
+### Score: 25%
+SYNO earns **25 of 100 points** across the capabilities that a synthetic organism can achieve.
 
 | Status | Meaning | Points |
 |---|---|---|
@@ -11,7 +11,7 @@ SYNO earns **24.5 of 100 points** across the capabilities that a synthetic organ
 | ◐ | SYNO has it partly or weakly | 0.5 |
 | ❌ | SYNO does not have it | 0 |
 
-SYNO has 20 capabilities (✅) and 9 in part (◐), and lacks 75 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
+SYNO has 20 capabilities (✅) and 10 in part (◐), and lacks 74 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
 
 ### Columns
 - **Shared With:** how widely the capability is found in nature, from *All animals* through *Mammals*, *Some animals* (such as primates and corvids), and *Mostly human* to *Uniquely human*.
@@ -79,7 +79,7 @@ SYNO has 20 capabilities (✅) and 9 in part (◐), and lacks 75 (❌). Of the 1
 | Skill memory | ✅ network weights | All animals | Yes |
 | Memory replay and consolidation | ✅ surprise-weighted replay | Mammals | Yes |
 | Forgetting | ✅ Memory Store capacity | All animals | Yes |
-| Working memory | ❌ | Mammals | Yes |
+| Working memory | ◐ a fading trace that lasts a few steps (E8) | Mammals | Yes |
 | Recalling specific events | ◐ stored, not recalled by cue | Some animals | Yes |
 | Factual memory | ❌ | Some animals | Yes |
 | Consolidation during sleep | ❌ | Mammals | Yes |
@@ -170,6 +170,6 @@ SYNO's capabilities are concentrated in learning and motivation, the foundation 
 
 ### What Holds It Back
 - **Hunger alone barely changes its choices:** when food is the only need at stake, a hungry and a nearly full SYNO choose almost the same (E2, E3). With two needs, it chooses by the larger one (E7).
-- **No working memory:** SYNO acts only on what it senses now, which rules out planning, imagination, and recalling specific events.
+- **Short working memory:** SYNO remembers what it saw for only a few steps, which is not enough for planning, imagination, or recalling specific events.
 - **No other agents:** SYNO lives alone, so every social and language capability is out of reach.
 - **Simple senses:** SYNO sees only food and walls in a small window.

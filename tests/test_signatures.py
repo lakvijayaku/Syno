@@ -1,13 +1,13 @@
 """
 Experiment tests for experiments/signatures.py.
 
-The fast tests probe eating_rate, approach_rate, eating_rpe, cue_rpe and
-switch_rate with hand-built networks whose predictions are known exactly, and
-check that new_brain, train and measure are reproducible. The slow test
-trains SYNO with all 10 seeds, in the scarce world and in the thirst
-experiment, in parallel (about 5 minutes), and reproduces the recorded E1 to
-E7 results. It is skipped by default and runs only when SYNO_SLOW_TESTS is
-set:
+The fast tests probe eating_rate, approach_rate, eating_rpe, cue_rpe,
+switch_rate and delayed_rate with hand-built networks whose predictions are
+known exactly, and check that new_brain, train and measure are reproducible.
+The slow test trains SYNO with all 10 seeds, in the scarce world, the thirst
+experiment, and the blink experiment, in parallel (about 9 minutes), and
+reproduces the recorded E1 to E8 results. It is skipped by default and runs
+only when SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
 
@@ -25,6 +25,8 @@ from unittest import mock
 import experiments.scarcity as scarcity
 import experiments.signatures as signatures
 import experiments.thirst as thirst
+import experiments.blink as blink
+from syno.brain.working_memory import WorkingMemory
 from experiments.xor import make_layer
 from syno.brain.memory import MemoryStore
 from experiments.hunger import LIFE_STEPS
@@ -514,6 +516,73 @@ class TestSwitchRate(unittest.TestCase):
         self.assertEqual((signatures.NEED_HIGH, signatures.NEED_LOW), (0.8, 0.2))
 
 
+BLINK_INPUTS = 2 * blink.WINDOW + 2
+MEMORY_START = blink.WINDOW + 2
+TWO_ABOVE = CENTER - 2 * (2 * signatures.SENSE_RADIUS + 1)
+
+
+def blink_network(up_weights: dict[int, float], up_bias: float) -> Network:
+    """
+    Builds a one-layer linear network for the blink experiment that moves up
+    when its weighted inputs plus up_bias are above 0.0, and otherwise eats.
+    """
+    up = blink.ACTION_NAMES.index("up")
+    eat = blink.ACTION_NAMES.index("eat")
+    neurons = []
+    for action in range(len(blink.ACTION_NAMES)):
+        row = [0.0] * BLINK_INPUTS
+        bias = 0.0 if action == eat else -1.0
+        if action == up:
+            for index, weight in up_weights.items():
+                row[index] = weight
+            bias = up_bias
+        neurons.append(Neuron(row, bias, "linear"))
+    return Network([Layer(neurons)])
+
+
+class TestDelayedRate(unittest.TestCase):
+    """
+    Verifies delayed_rate against networks with known preferences. On the 5x5
+    grid there are 256 pairings with food at least 2 steps away and in view:
+    the food is above SYNO in 113, and exactly 2 squares above in 15.
+    """
+
+    def test_never_moves_while_eating(self):
+        network = blink_network({}, -1.0)
+        self.assertEqual(signatures.delayed_rate(network, True), 0.0)
+
+    def test_always_up(self):
+        network = blink_network({}, 1.0)
+        self.assertEqual(signatures.delayed_rate(network, True), 113 / 256)
+        self.assertEqual(signatures.delayed_rate(network, False), 113 / 256)
+
+    def test_acts_on_remembered_food(self):
+        # Up wins only when the memory holds food 2 squares above SYNO, which
+        # it does at half strength after seeing it once.
+        network = blink_network({MEMORY_START + TWO_ABOVE: 1.0}, -0.25)
+        self.assertEqual(signatures.delayed_rate(network, True), 15 / 256)
+        self.assertEqual(signatures.delayed_rate(network, False), 0.0)
+
+    def test_eyes_are_closed_when_acting(self):
+        # Up wins only when food 2 squares above is in the current view. The
+        # view at decision time is dark, so this never happens.
+        network = blink_network({TWO_ABOVE: 1.0}, -0.5)
+        self.assertEqual(signatures.delayed_rate(network, True), 0.0)
+
+    def test_memory_is_emptied_for_every_pairing(self):
+        network = blink_network({}, -1.0)
+        with mock.patch.object(signatures.WorkingMemory, "reset",
+                               autospec=True, side_effect=WorkingMemory.reset) as reset:
+            signatures.delayed_rate(network, True)
+        self.assertEqual(reset.call_count, 256)
+
+    def test_uses_the_blink_memory_settings(self):
+        network = blink_network({}, -1.0)
+        with mock.patch.object(signatures, "WorkingMemory", wraps=WorkingMemory) as made:
+            signatures.delayed_rate(network, True)
+        made.assert_called_once_with(blink.WINDOW, blink.MEMORY_DECAY)
+
+
 class TestSpread(unittest.TestCase):
     """Verifies how results from several seeds are described."""
 
@@ -534,12 +603,27 @@ class TestMeasure(unittest.TestCase):
     """Verifies that measure trains one SYNO and measures every signature."""
 
     def setUp(self):
-        self.saved = signatures.CHECKPOINTS, thirst.LIVES
+        self.saved = signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES
         signatures.CHECKPOINTS = [0, 1, 2]
         thirst.LIVES = 2
+        blink.LIVES = 2
 
     def tearDown(self):
-        signatures.CHECKPOINTS, thirst.LIVES = self.saved
+        signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES = self.saved
+
+    def test_delayed_response_uses_a_blink_trained_network(self):
+        results = signatures.measure(3)
+        random.seed(3)
+        network = Network([
+            make_layer(blink.HIDDEN_NEURONS, BLINK_INPUTS),
+            make_layer(len(blink.ACTION_NAMES), blink.HIDDEN_NEURONS, "linear"),
+        ])
+        memory = MemoryStore(blink.MEMORY_CAPACITY)
+        working_memory = WorkingMemory(blink.WINDOW, blink.MEMORY_DECAY)
+        for _ in range(2):
+            blink.live(network, memory, working_memory)
+        self.assertEqual(results["e8"], [signatures.delayed_rate(network, True),
+                                         signatures.delayed_rate(network, False)])
 
     def test_need_switching_uses_a_thirst_trained_network(self):
         results = signatures.measure(3)
@@ -642,6 +726,11 @@ Seeds: 10/10
 E7: Need switching (10 seeds)
 Thirsty | Water: 0.76 [0.45, 0.97] | Food: 0.11 [0.00, 0.38]
 Hungry  | Water: 0.01 [0.00, 0.02] | Food: 0.95 [0.78, 1.00]
+Seeds: 9/10
+
+E8: Delayed response (10 seeds)
+Seen     | Approaches: 0.75 [0.53, 0.82]
+Not seen | Approaches: 0.56 [0.44, 0.64]
 Seeds: 9/10""".splitlines()
         self.assertEqual(output.getvalue().splitlines(), expected)
 

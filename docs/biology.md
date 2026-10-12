@@ -37,6 +37,11 @@ During rest and sleep, the hippocampus replays sequences of recent experience, w
 
 **In SYNO:** The **Memory Store (MS)** holds SYNO's most recent experiences and forgets the oldest when full. After every step, SYNO re-learns from 2 recalled experiences. Recalling at random, SYNO reached an average energy of about 0.86 roughly three times sooner, and its worst dip after learning was smaller (0.76 rather than 0.64). Recalling in proportion to surprise, measured as the size of each memory's reward prediction error (RPE), SYNO learned faster still, and its worst dip after learning rose to 0.86.
 
+### Working Memory
+Some neurons in the prefrontal cortex keep firing after a stimulus disappears, holding its location for several seconds until the animal acts [14]. In the delayed-response task, an animal sees where food is hidden, waits, and then must find it, which depends on this persistent activity.
+
+**In SYNO:** Working memory is a fading trace of SYNO's view: at every step it keeps half of what it held and takes in the rest from what SYNO saw. In a world where SYNO's eyes are closed on half of all steps, a SYNO that saw food just before its eyes closed moves toward it in 0.75 of cases, against 0.56 when it never saw the food, in 9 of 10 seeds (signature E8 in [`evaluation.md`](evaluation.md)). The memory fades within a few steps, much faster than an animal's.
+
 ### Neurogenesis
 New neurons continue to be born in parts of the adult brain, including the human hippocampus [12], and must integrate into existing circuits without disrupting them.
 
@@ -67,3 +72,4 @@ Hormones and neuromodulators act slowly and globally, so their levels reflect th
 11. Mattar, M. G., & Daw, N. D. (2018). Prioritized memory access explains planning and hippocampal replay. *Nature Neuroscience*, 21(11), 1609–1617.
 12. Eriksson, P. S., Perfilieva, E., Björk-Eriksson, T., Alborn, A.-M., Nordborg, C., Peterson, D. A., & Gage, F. H. (1998). Neurogenesis in the adult human hippocampus. *Nature Medicine*, 4(11), 1313–1317.
 13. Pearce, J. M., & Hall, G. (1980). A model for Pavlovian learning: Variations in the effectiveness of conditioned but not of unconditioned stimuli. *Psychological Review*, 87(6), 532–552.
+14. Funahashi, S., Bruce, C. J., & Goldman-Rakic, P. S. (1989). Mnemonic coding of visual space in the monkey's dorsolateral prefrontal cortex. *Journal of Neurophysiology*, 61(2), 331–349.
