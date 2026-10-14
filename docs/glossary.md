@@ -9,7 +9,7 @@ This glossary defines every named component and key term used in SYNO. Component
 | **HB** | Habitat | The grid world SYNO lives in, containing food, water, and open space, bounded by walls. External to the AM. | Built: `syno/world/habitat.py` |
 | **SI** | Sensory Interface | Converts what SYNO can perceive in the HB into numeric input signals. | Built: `Habitat.sense` for food and walls, and `Habitat.sense_water` for water |
 | **DN** | Decision Network | The neural network that maps sensory and internal signals to an action. | Built: `syno/brain/` (one value per action) |
-| **HC** | Homeostatic Core | Holds SYNO's internal body variables (energy, stomach fill, and in `HydratedCore`, water) and updates them every tick. | Built: `syno/body/homeostasis.py`. `HydratedCore` adds water, a second need, and death when energy or water runs out |
+| **HC** | Homeostatic Core | Holds SYNO's internal body variables (energy, stomach fill, in `HydratedCore`, water, and in `FatiguedCore`, fatigue) and updates them every tick. | Built: `syno/body/homeostasis.py`. `HydratedCore` adds water, a second need, and death when energy or water runs out. `FatiguedCore` adds fatigue, which builds up while awake and falls during sleep, and sleep burns less energy |
 | **SE** | Signal Emitters | Hormone-like signals computed from the HC: the hunger signal (ghrelin analog) and the satiety signal (CCK/GLP-1 analog). | Not built: the energy deficit, stomach fill, and water deficit are sensed directly |
 | **VE** | Value Estimator | Predicts how much reward SYNO expects from its current situation. | Built into the DN: each output predicts the value of one action |
 | **DS** | Dopamine System | Computes the reward prediction error (actual reward minus expected reward) and broadcasts it as the learning signal. | Built: `syno/brain/dopamine.py` |
@@ -24,7 +24,7 @@ This glossary defines every named component and key term used in SYNO. Component
 - **Homeostasis:** The tendency of a body to keep internal variables near a set-point.
 - **Deficit:** The distance between an internal variable and its set-point. Larger deficit means stronger need.
 - **Reward:** In SYNO, a reduction in drive, plus a novelty bonus. Reward is never assigned directly to a behavior.
-- **Drive:** The squared energy deficit, plus the squared water deficit for a body with water. Reward is the reduction in drive over a step.
+- **Drive:** The squared energy deficit, plus the squared water deficit for a body with water, or the squared fatigue for a body that gets tired. Reward is the reduction in drive over a step.
 - **Q-Learning:** The learning method SYNO uses: each output of the DN predicts the value of one action, and only the action taken is updated by its RPE.
 - **Epsilon-Greedy:** Choosing the best-valued action, except for a random action a small fraction (epsilon) of the time.
 - **Life:** One episode of an experiment, from SYNO's first step until it has lived 100 steps or died. An experiment trains SYNO over thousands of lives.

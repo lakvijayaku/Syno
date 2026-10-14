@@ -6,7 +6,8 @@ safeguards. They verify the step 5a worked example, every physical rule of
 the body (digestion, burning, clamping, and stomach capacity), the drive and
 the reward it produces, including alliesthesia, and that invalid values fail
 loudly. HydratedCore is checked to add water without changing anything about
-energy, the stomach, or HomeostaticCore itself.
+energy, the stomach, or HomeostaticCore itself, and FatiguedCore to add
+fatigue and sleep the same way.
 
 Run from the repository root with:
     python3 -m unittest discover tests -v
@@ -18,9 +19,13 @@ from syno.body.homeostasis import (
     BASE_BURN,
     DIGESTION_RATE,
     DRIVE_EXPONENT,
+    FATIGUE_RATE,
     MOVE_BURN,
+    RECOVERY_RATE,
+    SLEEP_SAVING,
     STOMACH_CAPACITY,
     WATER_BURN,
+    FatiguedCore,
     HomeostaticCore,
     HydratedCore,
     homeostatic_reward,
@@ -422,6 +427,174 @@ class TestHydratedCoreDeath(unittest.TestCase):
             body.tick(False)
             steps += 1
         self.assertEqual(steps, 3)
+
+
+class TestFatiguedCoreConstants(unittest.TestCase):
+    """Pins the step 16a physiology constants."""
+
+    def test_values(self):
+        self.assertEqual(FATIGUE_RATE, 0.02)
+        self.assertEqual(RECOVERY_RATE, 0.05)
+        self.assertEqual(SLEEP_SAVING, 0.5)
+
+
+class TestFatiguedCoreSetup(unittest.TestCase):
+    """Verifies the starting values and that invalid ones fail loudly."""
+
+    def test_stores_values(self):
+        body = FatiguedCore(0.6, 0.3, 0.4)
+        self.assertEqual((body.energy, body.stomach, body.fatigue), (0.6, 0.3, 0.4))
+
+    def test_is_a_homeostatic_core(self):
+        self.assertIsInstance(FatiguedCore(1.0, 0.0, 0.0), HomeostaticCore)
+
+    def test_accepts_bounds(self):
+        self.assertEqual(FatiguedCore(1.0, 0.0, 0.0).fatigue, 0.0)
+        self.assertEqual(FatiguedCore(1.0, 0.0, 1.0).fatigue, 1.0)
+
+    def test_rejects_fatigue_out_of_range(self):
+        for fatigue in (-0.01, 1.01):
+            with self.assertRaises(ValueError):
+                FatiguedCore(1.0, 0.0, fatigue)
+
+    def test_still_checks_energy_and_stomach(self):
+        with self.assertRaises(ValueError):
+            FatiguedCore(1.5, 0.0, 0.0)
+        with self.assertRaises(ValueError):
+            FatiguedCore(1.0, -0.1, 0.0)
+
+
+class TestFatiguedCoreAwake(unittest.TestCase):
+    """Verifies a waking step: the parent's physics, then fatigue builds up."""
+
+    def test_fatigue_rises_while_still(self):
+        body = FatiguedCore(0.5, 0.0, 0.3)
+        body.tick(False)
+        self.assertAlmostEqual(body.fatigue, 0.3 + FATIGUE_RATE)
+
+    def test_fatigue_rises_the_same_when_moving(self):
+        body = FatiguedCore(0.5, 0.0, 0.3)
+        body.tick(True)
+        self.assertAlmostEqual(body.fatigue, 0.3 + FATIGUE_RATE)
+
+    def test_slept_defaults_to_awake(self):
+        body = FatiguedCore(0.5, 0.0, 0.3)
+        body.tick(False, False)
+        explicit = body.fatigue
+        body = FatiguedCore(0.5, 0.0, 0.3)
+        body.tick(False)
+        self.assertEqual(body.fatigue, explicit)
+
+    def test_fatigue_clamps_at_one(self):
+        body = FatiguedCore(0.5, 0.0, 0.99)
+        body.tick(False)
+        self.assertEqual(body.fatigue, 1.0)
+
+    def test_awake_energy_matches_parent(self):
+        for moved in (False, True):
+            tired = FatiguedCore(0.5, 0.2, 0.3)
+            plain = HomeostaticCore(0.5, 0.2)
+            tired.tick(moved)
+            plain.tick(moved)
+            self.assertEqual((tired.energy, tired.stomach), (plain.energy, plain.stomach))
+
+    def test_fifty_waking_steps_reach_exhaustion(self):
+        body = FatiguedCore(1.0, 1.0, 0.0)
+        for _ in range(49):
+            body.tick(False)
+        self.assertLess(body.fatigue, 1.0)
+        body.tick(False)
+        self.assertAlmostEqual(body.fatigue, 1.0)
+
+
+class TestFatiguedCoreAsleep(unittest.TestCase):
+    """Verifies a sleeping step: fatigue falls and less energy is burned."""
+
+    def test_fatigue_falls(self):
+        body = FatiguedCore(0.5, 0.0, 0.3)
+        body.tick(False, True)
+        self.assertAlmostEqual(body.fatigue, 0.3 - RECOVERY_RATE)
+
+    def test_fatigue_clamps_at_zero(self):
+        body = FatiguedCore(0.5, 0.0, 0.03)
+        body.tick(False, True)
+        self.assertEqual(body.fatigue, 0.0)
+
+    def test_sleep_halves_the_base_burn(self):
+        body = FatiguedCore(0.5, 0.0, 0.3)
+        body.tick(False, True)
+        self.assertAlmostEqual(body.energy, 0.5 - BASE_BURN * (1 - SLEEP_SAVING))
+
+    def test_sleep_burns_less_than_waking(self):
+        asleep = FatiguedCore(0.5, 0.0, 0.3)
+        awake = FatiguedCore(0.5, 0.0, 0.3)
+        asleep.tick(False, True)
+        awake.tick(False)
+        self.assertGreater(asleep.energy, awake.energy)
+
+    def test_sleep_still_digests(self):
+        body = FatiguedCore(0.5, 0.2, 0.3)
+        body.tick(False, True)
+        self.assertAlmostEqual(body.stomach, 0.2 - DIGESTION_RATE)
+        self.assertAlmostEqual(
+            body.energy, 0.5 + DIGESTION_RATE - BASE_BURN * (1 - SLEEP_SAVING))
+
+    def test_energy_never_exceeds_one(self):
+        body = FatiguedCore(1.0, 1.0, 0.3)
+        body.tick(False, True)
+        self.assertEqual(body.energy, 1.0)
+
+    def test_sleep_cannot_revive(self):
+        # The burn empties energy, so the refund must not bring SYNO back.
+        body = FatiguedCore(0.005, 0.0, 0.3)
+        body.tick(False, True)
+        self.assertEqual(body.energy, 0.0)
+
+    def test_dead_body_stays_dead(self):
+        body = FatiguedCore(0.0, 0.0, 0.3)
+        for _ in range(5):
+            body.tick(False, True)
+        self.assertEqual(body.energy, 0.0)
+
+    def test_full_recovery_takes_twenty_steps(self):
+        body = FatiguedCore(1.0, 1.0, 1.0)
+        for _ in range(19):
+            body.tick(False, True)
+        self.assertGreater(body.fatigue, 0.0)
+        body.tick(False, True)
+        self.assertAlmostEqual(body.fatigue, 0.0)
+
+
+class TestFatiguedCoreDrive(unittest.TestCase):
+    """Verifies the drive adds squared fatigue to the squared energy deficit."""
+
+    def test_rested_and_fed_is_zero(self):
+        self.assertEqual(FatiguedCore(1.0, 0.0, 0.0).drive(), 0.0)
+
+    def test_sums_both_squares(self):
+        self.assertAlmostEqual(FatiguedCore(0.7, 0.0, 0.4).drive(), 0.3 ** 2 + 0.4 ** 2)
+
+    def test_maximum_is_two(self):
+        self.assertEqual(FatiguedCore(0.0, 0.0, 1.0).drive(), 2.0)
+
+    def test_larger_need_dominates(self):
+        tired = FatiguedCore(0.9, 0.0, 0.9)
+        self.assertGreater(tired.fatigue ** 2, 50 * tired.deficit() ** 2)
+
+    def test_sleeping_when_tired_is_rewarded(self):
+        body = FatiguedCore(1.0, 1.0, 0.8)
+        before = body.drive()
+        body.tick(False, True)
+        self.assertGreater(homeostatic_reward(before, body.drive()), 0.0)
+
+    def test_staying_awake_is_punished(self):
+        body = FatiguedCore(1.0, 1.0, 0.8)
+        before = body.drive()
+        body.tick(False)
+        self.assertLess(homeostatic_reward(before, body.drive()), 0.0)
+
+    def test_parent_drive_ignores_fatigue(self):
+        self.assertAlmostEqual(HomeostaticCore(0.8, 0.0).drive(), 0.2 ** 2)
 
 
 if __name__ == "__main__":

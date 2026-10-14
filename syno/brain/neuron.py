@@ -6,6 +6,14 @@
 import math
 
 class Neuron:
+    """
+    A single artificial neuron: a weighted sum of its inputs plus a bias,
+    passed through an activation function.
+
+    It is the smallest building block of SYNO's Decision Network. Neurons
+    are grouped into a Layer, and layers into a Network.
+    """
+
     def __init__(self, weights: list[float], bias: float, activation: str = "sigmoid"):
         """
         Initializes a simple artificial neuron.

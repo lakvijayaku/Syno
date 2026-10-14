@@ -6,6 +6,11 @@
 from syno.brain.neuron import Neuron
 
 class Layer:
+    """
+    A group of neurons that all receive the same inputs. The layer's output
+    is one value per neuron.
+    """
+
     def __init__(self, neurons: list[Neuron]):
         """
         Initializes a layer of neurons.

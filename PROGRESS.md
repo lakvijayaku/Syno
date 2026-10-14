@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-All 15 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, and E9 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 25% of the human capabilities listed in `docs/humanness.md`.
+Steps 1 to 15 are complete, and step 16 is in progress. Measured over 10 seeds, E4, E5, E7, E8, and E9 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 25% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -26,8 +26,13 @@ All 15 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, and E
 | **13** | Thirst | ✅ Done |
 | **14** | Working memory | ✅ Done |
 | **15** | Dopamine ramping | ✅ Done |
+| **16** | Fatigue and sleep | 🚧 In progress |
 
 ### Log
+#### 2026-10-14
+- **Step 16a complete:** `FatiguedCore`, a body with fatigue as a second need, covered by 28 unit tests. Fatigue builds up on every waking step and falls on every sleeping step, sleep burns half the base energy, and the drive adds the squared fatigue to the squared energy deficit. `HomeostaticCore` is unchanged, so earlier experiments are unaffected.
+- **Documentation:** `CLAUDE.md` records how Claude Code tutors on SYNO, including catching up from the repo at the start of each session, the commit message style, and the checks before every commit. The README links to it, and `Neuron`, `Layer`, and `Network` gained class docstrings.
+
 #### 2026-10-12
 - **Step 15 complete:** `experiments/signatures.py` measures E9, dopamine ramping, on the scarce-world SYNO, covered by 6 new tests. As visible food gets closer, the value SYNO predicts rises at every step, from 1.197 at 4 steps away to 2.288 on the food, in all 10 seeds, so E9 is reproduced. The humanness score stays at 25%, since dopamine as prediction error was already a SYNO capability.
 

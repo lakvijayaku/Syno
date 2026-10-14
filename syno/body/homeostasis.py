@@ -1,5 +1,5 @@
 # ── SYNO · syno/body/homeostasis.py ─────────────────────
-# The Homeostatic Core: SYNO's energy, stomach, and water
+# The Homeostatic Core: SYNO's energy, stomach, water, and fatigue
 # Laksheth Vijayakumar · 2026-10-07 · GPL-3.0
 # ────────────────────────────────────────────────────────
 
@@ -16,6 +16,13 @@ DRIVE_EXPONENT = 2
 # Water is lost every step, by breathing and sweating, whether or not SYNO
 # moves. Used only by HydratedCore.
 WATER_BURN = 0.01
+
+# Fatigue builds up on every waking step, like sleep pressure, whether or
+# not SYNO moves, and falls on every step spent asleep. Sleeping halves the
+# base burn. Used only by FatiguedCore.
+FATIGUE_RATE = 0.02
+RECOVERY_RATE = 0.05
+SLEEP_SAVING = 0.5
 
 class HomeostaticCore:
     """
@@ -184,3 +191,58 @@ class HydratedCore(HomeostaticCore):
         :return: True if either has reached 0.0.
         """
         return self.energy <= 0.0 or self.water <= 0.0
+
+
+class FatiguedCore(HomeostaticCore):
+    """
+    SYNO's body with a second need: rest. Fatigue builds up while SYNO is
+    awake and is relieved only by sleeping.
+
+    Energy, the stomach, and digestion work exactly as in HomeostaticCore,
+    except that a step spent asleep burns less energy. Fatigue ranges from
+    0.0, fully rested, to 1.0, exhausted.
+    """
+
+    def __init__(self, energy: float, stomach: float, fatigue: float):
+        """
+        Initializes the body.
+
+        :param energy: Starting energy, from 0.0 to 1.0.
+        :param stomach: Starting stomach fill, from 0.0 to 1.0.
+        :param fatigue: Starting fatigue, from 0.0 to 1.0.
+        :raises ValueError: If any value is outside 0.0 to 1.0.
+        """
+        super().__init__(energy, stomach)
+        if not 0.0 <= fatigue <= 1.0:
+            raise ValueError("Fatigue must be between 0.0 and 1.0 inclusive.")
+        self.fatigue = fatigue
+
+    def tick(self, moved: bool, slept: bool = False) -> None:
+        """
+        Advances the body by one step: everything HomeostaticCore does, then
+        fatigue builds up while awake or falls while asleep.
+
+        :param moved: True if SYNO moved this step, which burns extra energy.
+        :param slept: True if SYNO slept this step, which saves energy and
+            relieves fatigue.
+        """
+        super().tick(moved)
+        if slept:
+            # HomeostaticCore has already burned the full BASE_BURN and
+            # clamped energy, so part of that burn is given back here. A
+            # dead SYNO gets nothing back, so sleep cannot revive it.
+            if self.energy > 0.0:
+                self.energy = min(1.0, self.energy + BASE_BURN * SLEEP_SAVING)
+            self.fatigue = max(0.0, self.fatigue - RECOVERY_RATE)
+        else:
+            self.fatigue = min(1.0, self.fatigue + FATIGUE_RATE)
+
+    def drive(self) -> float:
+        """
+        Measures the combined push of both needs. Each is squared, so
+        whichever need is larger dominates (Keramati & Gutkin, 2014).
+
+        :return: The squared energy deficit plus the squared fatigue, from
+            0.0 to 2.0.
+        """
+        return self.deficit() ** DRIVE_EXPONENT + self.fatigue ** DRIVE_EXPONENT

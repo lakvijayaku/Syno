@@ -11,7 +11,7 @@ SYNO consists of the **Habitat (HB)**, which is the external world, a body, the 
 | Package | Contains |
 |---|---|
 | `syno/world/` | The Habitat: the grid, movement, eating, drinking, and senses |
-| `syno/body/` | The Homeostatic Core (energy, stomach, water, drive, and reward) and hormones |
+| `syno/body/` | The Homeostatic Core (energy, stomach, water, fatigue, drive, and reward) and hormones |
 | `syno/brain/` | Neurons, layers, networks, training, the Dopamine System, action selection, the Novelty System, the Memory Store, working memory, and the Growth Engine |
 | `syno/tools/` | Recording data from runs, smoothing it, and drawing it as charts |
 | `experiments/` | Runnable experiments, each adding one mechanism to the one before |
@@ -58,7 +58,7 @@ Across lives, the **Growth Engine (GE)** adds a hidden neuron to the DN whenever
 | Hard-Coded (Physiology) | Emergent (Behavior) |
 |---|---|
 | Internal variables and set-points | Eating when partially full |
-| Energy and water drain, movement cost, and death | Choosing whether to pursue distant food |
+| Energy and water drain, fatigue and recovery, movement cost, and death | Choosing whether to pursue distant food |
 | Signal formulas (drive and novelty) | Anticipation when food is seen |
 | Reward as drive reduction; reward prediction error (RPE) | Boredom, resting, and renewed curiosity |
 | | Choosing food or water by the larger need |

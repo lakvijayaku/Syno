@@ -6,6 +6,11 @@
 from syno.brain.layer import Layer
 
 class Network:
+    """
+    A stack of layers, where each layer's outputs are the next layer's
+    inputs. SYNO's Decision Network is a Network whose final layer has one
+    linear neuron per action.
+    """
 
     def __init__(self, layers: list[Layer]):
         """
