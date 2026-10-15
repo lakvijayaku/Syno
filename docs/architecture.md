@@ -50,7 +50,7 @@ Each tick follows the same sequence:
 6. The **DN** updates its weights for the action taken, using the RPE.
 7. The step is stored in the **Memory Store (MS)** with a priority equal to the size of its RPE, and SYNO re-learns from a few past steps, recalled in proportion to their priority (memory replay).
 
-In the sleep experiment, SYNO senses its fatigue and can sleep: it stays still, its fatigue falls, its eyes are closed for the next view, and it gets no novelty bonus.
+In the sleep experiment, SYNO senses its fatigue and can sleep: it stays still, its fatigue falls, its eyes are closed for the next view, and it gets no novelty bonus. In the dreaming experiment, the replay in step 7 of the loop happens only after a step asleep.
 
 In the blink experiment, SYNO's eyes are closed on some steps, and a working memory of its earlier views is added to its senses in step 1 and updated after each decision.
 

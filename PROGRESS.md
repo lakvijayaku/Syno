@@ -31,6 +31,7 @@ Steps 1 to 16 are complete, and step 17 is in progress. Measured over 10 seeds, 
 
 ### Log
 #### 2026-10-15
+- **Step 17b complete:** `experiments/dreaming.py`, where SYNO replays 6 memories after each step asleep and none while awake, covered by 8 tests. Its average energy rose from 0.32 to 0.69 over 3000 lives, as high as when it replays after every step, and it still slept 30% of the time.
 - **Step 17a complete:** `sleep.live` takes how many memories SYNO replays after a step awake and after a step asleep, covered by 6 new tests. Both default to 2, so the sleep experiment and its results are unchanged.
 
 #### 2026-10-14
