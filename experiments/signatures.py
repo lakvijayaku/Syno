@@ -445,7 +445,8 @@ def trained_energy(seed: int, awake_replays: int, sleep_replays: int) -> float:
     for _ in range(sleep.LIVES):
         energy, _ = sleep.live(network, memory, awake_replays, sleep_replays)
         energies.append(energy)
-    return sum(energies[-FINAL_LIVES:]) / FINAL_LIVES
+    final = energies[-FINAL_LIVES:]
+    return sum(final) / len(final)
 
 
 def measure(seed: int) -> dict:
