@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-All 16 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, E9, E10, and E11 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 26.5% of the human capabilities listed in `docs/humanness.md`.
+Steps 1 to 16 are complete, and step 17 is in progress. Measured over 10 seeds, E4, E5, E7, E8, E9, E10, and E11 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 26.5% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -27,8 +27,12 @@ All 16 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, E9, E
 | **14** | Working memory | ✅ Done |
 | **15** | Dopamine ramping | ✅ Done |
 | **16** | Fatigue and sleep | ✅ Done |
+| **17** | Consolidation during sleep | 🚧 In progress |
 
 ### Log
+#### 2026-10-15
+- **Step 17a complete:** `sleep.live` takes how many memories SYNO replays after a step awake and after a step asleep, covered by 6 new tests. Both default to 2, so the sleep experiment and its results are unchanged.
+
 #### 2026-10-14
 - **Step 16c complete:** `experiments/signatures.py` measures E10, sleep pressure, and E11, sleep rebound, on a SYNO from each seed trained in the sleep experiment, covered by 17 new tests. With no food in sight, SYNO chooses to sleep on 0.68 of squares at fatigue 0.2 and on all of them at 0.8, in 8 of 10 seeds, and once asleep it sleeps 4.98 steps at fatigue 0.4 against 15.03 at 0.9, in all 10 seeds, so both are reproduced. The humanness score stays at 26.5%. Step 16 (Fatigue and sleep) is complete.
 - **Step 16b complete:** `experiments/sleep.py`, where SYNO forages in the scarce world with sleep as a sixth action, covered by 21 tests. While asleep it stays still, its eyes are closed, and it gets no novelty bonus. Over 3000 lives its average energy rose from 0.32 to 0.70, and its time asleep fell from 0.44 to 0.30, close to the 0.29 that keeps fatigue level. Fatigue and rest become a SYNO capability, and sleep a partial one, raising the humanness score to 26.5%.

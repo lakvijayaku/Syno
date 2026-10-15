@@ -2,11 +2,11 @@
 Experiment tests for experiments/sleep.py.
 
 The fast tests check the experiment's settings, what SYNO senses awake and
-asleep, and that a sleeping SYNO stays still, ticks its body as asleep, sees
-with its eyes closed, and gets no novelty. The slow test trains SYNO for the
-full 3000 lives (about 80 seconds) and reproduces the recorded energy and
-sleep curve. It is skipped by default and runs only when SYNO_SLOW_TESTS is
-set:
+asleep, that a sleeping SYNO stays still, ticks its body as asleep, sees
+with its eyes closed, and gets no novelty, and how many memories it replays
+awake and asleep. The slow test trains SYNO for the full 3000 lives (about
+80 seconds) and reproduces the recorded energy and sleep curve. It is
+skipped by default and runs only when SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
 
@@ -191,6 +191,50 @@ class TestSleepLive(unittest.TestCase):
         self.assertLessEqual(energy, 1.0)
         self.assertGreaterEqual(asleep, 0.0)
         self.assertLessEqual(asleep, 1.0)
+
+
+class TestSleepReplays(unittest.TestCase):
+    """Verifies how many memories SYNO replays awake and asleep."""
+
+    def count_learning(self, action: int, *replays: int) -> int:
+        """
+        Runs one life choosing the same action on every step, with the given
+        replay counts, and returns how many times SYNO learned.
+        """
+        random.seed(0)
+        with mock.patch.object(sleep, "learn", wraps=sleep.learn) as learned, \
+                mock.patch.object(sleep, "choose_action", return_value=action):
+            sleep.live(new_network(), MemoryStore(sleep.MEMORY_CAPACITY), *replays)
+        return learned.call_count
+
+    def test_defaults_replay_every_step(self):
+        # One live update and REPLAYS_PER_STEP replays on every step.
+        expected = sleep.LIFE_STEPS * (1 + sleep.REPLAYS_PER_STEP)
+        self.assertEqual(self.count_learning(SLEEP), expected)
+        self.assertEqual(self.count_learning(UP), expected)
+
+    def test_sleep_replays_only_while_asleep(self):
+        self.assertEqual(self.count_learning(SLEEP, 0, 6), sleep.LIFE_STEPS * 7)
+        self.assertEqual(self.count_learning(UP, 0, 6), sleep.LIFE_STEPS)
+
+    def test_awake_replays_only_while_awake(self):
+        self.assertEqual(self.count_learning(UP, 5, 0), sleep.LIFE_STEPS * 6)
+        self.assertEqual(self.count_learning(SLEEP, 5, 0), sleep.LIFE_STEPS)
+
+    def test_no_replay(self):
+        self.assertEqual(self.count_learning(SLEEP, 0, 0), sleep.LIFE_STEPS)
+
+    def test_defaults_match_step_16(self):
+        random.seed(0)
+        default = sleep.live(new_network(), MemoryStore(sleep.MEMORY_CAPACITY))
+        random.seed(0)
+        explicit = sleep.live(new_network(), MemoryStore(sleep.MEMORY_CAPACITY),
+                              sleep.REPLAYS_PER_STEP, sleep.REPLAYS_PER_STEP)
+        self.assertEqual(default, explicit)
+
+    def test_defaults(self):
+        defaults = sleep.live.__defaults__
+        self.assertEqual(defaults, (sleep.REPLAYS_PER_STEP, sleep.REPLAYS_PER_STEP))
 
 
 @unittest.skipUnless(os.environ.get("SYNO_SLOW_TESTS"), "slow: set SYNO_SLOW_TESTS=1")

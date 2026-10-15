@@ -70,7 +70,9 @@ def senses(habitat: Habitat, body: FatiguedCore, visible: bool) -> list[float]:
     return view(habitat, visible) + [body.deficit(), body.stomach, body.fatigue]
 
 
-def live(network: Network, memory: MemoryStore) -> tuple[float, float]:
+def live(network: Network, memory: MemoryStore,
+         awake_replays: int = REPLAYS_PER_STEP,
+         sleep_replays: int = REPLAYS_PER_STEP) -> tuple[float, float]:
     """
     Runs one life of LIFE_STEPS steps in the scarce world, where SYNO can
     also sleep.
@@ -81,6 +83,11 @@ def live(network: Network, memory: MemoryStore) -> tuple[float, float]:
 
     :param network: The Decision Network, with one output per action.
     :param memory: The Memory Store, shared across lives.
+    :param awake_replays: How many memories SYNO replays after each step
+        awake.
+    :param sleep_replays: How many memories SYNO replays after each step
+        asleep. Both default to REPLAYS_PER_STEP, so replay does not depend
+        on sleep unless an experiment chooses otherwise.
     :return: SYNO's average energy over the life, and the fraction of steps
         it spent asleep.
     """
@@ -135,7 +142,8 @@ def live(network: Network, memory: MemoryStore) -> tuple[float, float]:
         rpe = learn(network, state, action, reward, next_state, False, DISCOUNT, LEARNING_RATE)
         memory.store((state, action, reward, next_state), abs(rpe) + PRIORITY_FLOOR)
 
-        for _ in range(REPLAYS_PER_STEP):
+        # How much SYNO replays depends on whether it slept this step.
+        for _ in range(sleep_replays if slept else awake_replays):
             index = memory.sample_by_priority()
             old_state, old_action, old_reward, old_next_state = memory.experiences[index]
             old_rpe = learn(
