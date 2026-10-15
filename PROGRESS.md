@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Steps 1 to 16 are complete, and step 17 is in progress. Measured over 10 seeds, E4, E5, E7, E8, E9, E10, and E11 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 26.5% of the human capabilities listed in `docs/humanness.md`.
+All 17 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, E9, E10, E11, and E12 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 27.5% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -27,10 +27,11 @@ Steps 1 to 16 are complete, and step 17 is in progress. Measured over 10 seeds, 
 | **14** | Working memory | ✅ Done |
 | **15** | Dopamine ramping | ✅ Done |
 | **16** | Fatigue and sleep | ✅ Done |
-| **17** | Consolidation during sleep | 🚧 In progress |
+| **17** | Consolidation during sleep | ✅ Done |
 
 ### Log
 #### 2026-10-15
+- **Step 17c complete:** `experiments/signatures.py` measures E12, sleep consolidation, by training two dreaming SYNOs from each seed, one with its sleep replay blocked, covered by 8 new tests. Over its last 500 lives, the SYNO that replays during sleep reaches an average energy of 0.696, against 0.318 with sleep replay blocked, in all 10 seeds, so E12 is reproduced. Consolidation during sleep becomes a SYNO capability, raising the humanness score to 27.5%. Step 17 (Consolidation during sleep) is complete.
 - **Step 17b complete:** `experiments/dreaming.py`, where SYNO replays 6 memories after each step asleep and none while awake, covered by 8 tests. Its average energy rose from 0.32 to 0.69 over 3000 lives, as high as when it replays after every step, and it still slept 30% of the time.
 - **Step 17a complete:** `sleep.live` takes how many memories SYNO replays after a step awake and after a step asleep, covered by 6 new tests. Both default to 2, so the sleep experiment and its results are unchanged.
 

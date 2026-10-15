@@ -3,12 +3,14 @@ Experiment tests for experiments/signatures.py.
 
 The fast tests probe eating_rate, approach_rate, eating_rpe, cue_rpe,
 switch_rate, delayed_rate, value_ramp, sleep_rate and sleep_bout with
-hand-built networks whose predictions are known exactly, and check that
-new_brain, train and measure are reproducible. The slow test trains SYNO with
-all 10 seeds, in the scarce world, the thirst experiment, the blink
-experiment, and the sleep experiment, in parallel (about 16 minutes on a
-MacBook Air M4), and reproduces the recorded E1 to E11 results. It is skipped by
-default and runs only when SYNO_SLOW_TESTS is set:
+hand-built networks whose predictions are known exactly, check
+trained_energy with a stand-in for sleep.live, and check that new_brain,
+train and measure are reproducible. The slow test trains SYNO with all 10
+seeds, in the scarce world, the thirst experiment, the blink experiment, the
+sleep experiment, and the dreaming experiment with its sleep replay kept and
+blocked, in parallel (about 17 minutes on a MacBook Air M4), and reproduces
+the recorded E1 to E12 results. It is skipped by default and runs only when
+SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
 
@@ -28,6 +30,7 @@ import experiments.signatures as signatures
 import experiments.thirst as thirst
 import experiments.blink as blink
 import experiments.sleep as sleep
+import experiments.dreaming as dreaming
 from syno.brain.working_memory import WorkingMemory
 from experiments.xor import make_layer
 from syno.brain.memory import MemoryStore
@@ -706,6 +709,63 @@ class TestSleepBout(unittest.TestCase):
         self.assertEqual(visible, [True, False, False] * 25)
 
 
+class TestTrainedEnergy(unittest.TestCase):
+    """Verifies trained_energy with a stand-in for sleep.live."""
+
+    def train(self, lives: int, *replays: int):
+        """
+        Runs trained_energy where life number i (from 1) has energy i / 1000,
+        and returns the result and every call made to sleep.live.
+        """
+        calls = []
+
+        def numbered_live(network, memory, *args):
+            calls.append((network, memory, args))
+            return len(calls) / 1000, 0.3
+
+        with mock.patch.object(sleep, "live", side_effect=numbered_live), \
+                mock.patch.object(sleep, "LIVES", lives):
+            result = signatures.trained_energy(0, *replays)
+        return result, calls
+
+    def test_final_lives_setting(self):
+        self.assertEqual(signatures.FINAL_LIVES, 500)
+
+    def test_averages_the_last_lives(self):
+        # Lives 101 to 600 have energies 0.101 to 0.600, averaging 0.3505.
+        result, _ = self.train(600, 0, 6)
+        self.assertAlmostEqual(result, 0.3505)
+
+    def test_short_training_averages_every_life(self):
+        # With fewer lives than FINAL_LIVES, the average is over the lives
+        # that exist: 0.001 and 0.002.
+        result, _ = self.train(2, 0, 6)
+        self.assertAlmostEqual(result, 0.0015)
+
+    def test_trains_for_every_life_with_the_given_replays(self):
+        _, calls = self.train(7, 0, 6)
+        self.assertEqual(len(calls), 7)
+        self.assertTrue(all(args == (0, 6) for _, _, args in calls))
+
+    def test_one_network_and_memory_for_the_whole_training(self):
+        _, calls = self.train(5, 2, 2)
+        self.assertEqual(len({id(network) for network, _, _ in calls}), 1)
+        self.assertEqual(len({id(memory) for _, memory, _ in calls}), 1)
+
+    def test_network_shape(self):
+        _, calls = self.train(1, 2, 2)
+        network = calls[0][0]
+        self.assertEqual(len(network.layers[0].neurons), sleep.HIDDEN_NEURONS)
+        self.assertEqual(len(network.layers[0].neurons[0].weights), SLEEP_INPUTS)
+        self.assertEqual(len(network.layers[-1].neurons), len(sleep.ACTIONS))
+
+    def test_same_seed_same_start(self):
+        _, first = self.train(1, 2, 2)
+        _, second = self.train(1, 0, 0)
+        weights = lambda calls: [n.weights for layer in calls[0][0].layers for n in layer.neurons]
+        self.assertEqual(weights(first), weights(second))
+
+
 class TestValueRamp(unittest.TestCase):
     """
     Verifies value_ramp against networks with known predictions. On the 5x5
@@ -770,6 +830,13 @@ class TestMeasure(unittest.TestCase):
     def tearDown(self):
         signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES = self.saved
 
+    def test_consolidation_compares_kept_and_blocked_sleep_replay(self):
+        results = signatures.measure(3)
+        self.assertEqual(results["e12"], [
+            signatures.trained_energy(3, dreaming.AWAKE_REPLAYS, dreaming.SLEEP_REPLAYS),
+            signatures.trained_energy(3, 0, 0),
+        ])
+
     def test_sleep_signatures_use_a_sleep_trained_network(self):
         results = signatures.measure(3)
         random.seed(3)
@@ -823,6 +890,7 @@ class TestMeasure(unittest.TestCase):
         self.assertEqual(len(results["e5"]), 2)
         self.assertEqual(len(results["e10"]), 2)
         self.assertEqual(len(results["e11"]), 2)
+        self.assertEqual(len(results["e12"]), 2)
 
     def test_matches_the_probes_on_the_same_network(self):
         results = signatures.measure(3)
@@ -851,7 +919,7 @@ class TestMeasure(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("SYNO_SLOW_TESTS"), "slow: set SYNO_SLOW_TESTS=1")
 class TestSignaturesRun(unittest.TestCase):
-    """Reproduces the recorded E1 to E11 results."""
+    """Reproduces the recorded E1 to E12 results."""
 
     def test_results(self):
         output = io.StringIO()
@@ -926,6 +994,11 @@ Seeds: 8/10
 E11: Sleep rebound (10 seeds)
 Fatigue 0.4 | Bout: 4.98 [3.44, 6.16]
 Fatigue 0.9 | Bout: 15.03 [13.72, 16.12]
+Seeds: 10/10
+
+E12: Sleep consolidation (10 seeds)
+Sleep replay | Energy: 0.696 [0.640, 0.730]
+Blocked      | Energy: 0.318 [0.211, 0.486]
 Seeds: 10/10""".splitlines()
         self.assertEqual(output.getvalue().splitlines(), expected)
 

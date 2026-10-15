@@ -9,6 +9,7 @@ from multiprocessing import Pool
 import experiments.thirst as thirst
 import experiments.blink as blink
 import experiments.sleep as sleep
+import experiments.dreaming as dreaming
 from experiments.xor import make_layer
 from syno.brain.network import Network
 from syno.brain.memory import MemoryStore
@@ -68,6 +69,10 @@ RESTED_FATIGUE = 0.2
 TIRED_FATIGUE = 0.8
 SHORT_WAKE_FATIGUE = 0.4
 LONG_WAKE_FATIGUE = 0.9
+
+# For E12, a SYNO is judged by its average energy over its last FINAL_LIVES
+# lives of training, the same window the experiments print.
+FINAL_LIVES = 500
 
 
 def new_brain(seed: int) -> tuple[Network, MemoryStore]:
@@ -414,11 +419,41 @@ def sleep_bout(network: Network, fatigue: float) -> float:
     return total_bout / squares
 
 
+def trained_energy(seed: int, awake_replays: int, sleep_replays: int) -> float:
+    """
+    Trains a SYNO in the sleep experiment with the given replay counts and
+    measures how well it ends up keeping itself fed (E12).
+
+    Unlike the other probes, E12 is about how well SYNO learns, so the
+    measurement is the training itself. Blocking replay during sleep, as
+    suppressing hippocampal ripples does in rats, should slow learning.
+
+    :param seed: The random seed, so every condition starts from the same
+        network and the same world.
+    :param awake_replays: How many memories SYNO replays after a step awake.
+    :param sleep_replays: How many memories SYNO replays after a step asleep.
+    :return: SYNO's average energy over its last FINAL_LIVES lives.
+    """
+    random.seed(seed)
+    inputs = sleep.WINDOW + 3
+    network = Network([
+        make_layer(sleep.HIDDEN_NEURONS, inputs),
+        make_layer(len(sleep.ACTIONS), sleep.HIDDEN_NEURONS, "linear")
+    ])
+    memory = MemoryStore(MEMORY_CAPACITY)
+    energies = []
+    for _ in range(sleep.LIVES):
+        energy, _ = sleep.live(network, memory, awake_replays, sleep_replays)
+        energies.append(energy)
+    return sum(energies[-FINAL_LIVES:]) / FINAL_LIVES
+
+
 def measure(seed: int) -> dict:
     """
-    Trains four SYNOs from the same seed, in the scarce world, the thirst
-    experiment, the blink experiment, and the sleep experiment, and measures
-    every signature.
+    Trains six SYNOs from the same seed, in the scarce world, the thirst
+    experiment, the blink experiment, the sleep experiment, and the dreaming
+    experiment with its sleep replay kept and blocked, and measures every
+    signature.
 
     Each seed runs in its own process, so the results are returned rather
     than added to shared totals.
@@ -427,7 +462,7 @@ def measure(seed: int) -> dict:
     :return: The results by signature: "food" and "cue" (E4, one value per
         checkpoint), "e1", "e2", "near" and "far" (E3), "e5", "thirsty"
         and "hungry" (E7), "e8", "e9" (one value per distance), "e10", and
-        "e11".
+        "e11", and "e12" (sleep replay kept, then blocked).
     """
     network, memory = new_brain(seed)
     results = {"food": [], "cue": []}
@@ -485,6 +520,10 @@ def measure(seed: int) -> dict:
         sleep.live(network, memory)
     results["e10"] = [sleep_rate(network, RESTED_FATIGUE), sleep_rate(network, TIRED_FATIGUE)]
     results["e11"] = [sleep_bout(network, SHORT_WAKE_FATIGUE), sleep_bout(network, LONG_WAKE_FATIGUE)]
+    # E12 compares the dreaming SYNO with the same SYNO whose sleep replay
+    # is blocked. Both sleep as much as they choose; only replay differs.
+    results["e12"] = [trained_energy(seed, dreaming.AWAKE_REPLAYS, dreaming.SLEEP_REPLAYS),
+                      trained_energy(seed, 0, 0)]
     return results
 
 
@@ -591,6 +630,14 @@ def main():
     print(f"Fatigue {SHORT_WAKE_FATIGUE:.1f} | Bout: {rested_bout}")
     print(f"Fatigue {LONG_WAKE_FATIGUE:.1f} | Bout: {tired_bout}")
     n = sum(r["e11"][1] >= r["e11"][0] + CLEAR_REBOUND for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
+    print()
+    print(f"E12: Sleep consolidation ({SEEDS} seeds)")
+    sleep_replay_energy = spread([r["e12"][0] for r in results], 3)
+    blocked_energy = spread([r["e12"][1] for r in results], 3)
+    print(f"Sleep replay | Energy: {sleep_replay_energy}")
+    print(f"Blocked      | Energy: {blocked_energy}")
+    n = sum(r["e12"][0] >= r["e12"][1] + CLEAR_EFFECT for r in results)
     print(f"Seeds: {n}/{SEEDS}")
 
 

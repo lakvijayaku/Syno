@@ -2,8 +2,8 @@
 
 This document scores how close SYNO is to having every capability of a human mind and body. It lists 104 capabilities, from regulating energy to language and consciousness, and records which ones SYNO has. Behavioral signatures that have been formally measured are listed in [`evaluation.md`](evaluation.md).
 
-### Score: 26.5%
-SYNO earns **26.5 of 100 points** across the capabilities that a synthetic organism can achieve.
+### Score: 27.5%
+SYNO earns **27.5 of 100 points** across the capabilities that a synthetic organism can achieve.
 
 | Status | Meaning | Points |
 |---|---|---|
@@ -11,7 +11,7 @@ SYNO earns **26.5 of 100 points** across the capabilities that a synthetic organ
 | ◐ | SYNO has it partly or weakly | 0.5 |
 | ❌ | SYNO does not have it | 0 |
 
-SYNO has 21 capabilities (✅) and 11 in part (◐), and lacks 72 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
+SYNO has 22 capabilities (✅) and 11 in part (◐), and lacks 71 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
 
 ### Columns
 - **Shared With:** how widely the capability is found in nature, from *All animals* through *Mammals*, *Some animals* (such as primates and corvids), and *Mostly human* to *Uniquely human*.
@@ -82,7 +82,7 @@ SYNO has 21 capabilities (✅) and 11 in part (◐), and lacks 72 (❌). Of the 
 | Working memory | ◐ a fading trace that lasts a few steps (E8) | Mammals | Yes |
 | Recalling specific events | ◐ stored, not recalled by cue | Some animals | Yes |
 | Factual memory | ❌ | Some animals | Yes |
-| Consolidation during sleep | ❌ | Mammals | Yes |
+| Consolidation during sleep | ✅ blocking sleep replay slows learning (E12) | Mammals | Yes |
 | Remembering to act later | ❌ | Mostly human | Yes |
 | Life story memory | ❌ | Uniquely human | Partly |
 
@@ -166,7 +166,7 @@ SYNO has 21 capabilities (✅) and 11 in part (◐), and lacks 72 (❌). Of the 
 | Evolution across generations | ❌ | All animals | Yes |
 
 ### What Earns the Score
-SYNO's capabilities are concentrated in learning and motivation, the foundation shared by all animals: reward learning driven by a dopamine-like prediction error, curiosity, memory replay, hunger and thirst, death when either is neglected, sleeping off fatigue, and a surprise-driven arousal hormone. In measured behavior, its dopamine response moves from eating to the sight of food (E4), dips when expected food is missing (E5), and ramps up as food gets closer (E9). It falls asleep more readily and sleeps longer the more tired it is (E10, E11).
+SYNO's capabilities are concentrated in learning and motivation, the foundation shared by all animals: reward learning driven by a dopamine-like prediction error, curiosity, memory replay, hunger and thirst, death when either is neglected, sleeping off fatigue, and a surprise-driven arousal hormone. In measured behavior, its dopamine response moves from eating to the sight of food (E4), dips when expected food is missing (E5), and ramps up as food gets closer (E9). It falls asleep more readily and sleeps longer the more tired it is (E10, E11), and the replay of memories during sleep is what lets it learn (E12).
 
 ### What Holds It Back
 - **Hunger alone barely changes its choices:** when food is the only need at stake, a hungry and a nearly full SYNO choose almost the same (E2, E3). With two needs, it chooses by the larger one (E7).
