@@ -8,12 +8,13 @@ from multiprocessing import Pool
 
 import experiments.thirst as thirst
 import experiments.blink as blink
+import experiments.sleep as sleep
 from experiments.xor import make_layer
 from syno.brain.network import Network
 from syno.brain.memory import MemoryStore
 from syno.brain.working_memory import WorkingMemory
 from syno.world.habitat import Habitat, ACTIONS
-from syno.body.homeostasis import HomeostaticCore, HydratedCore, homeostatic_reward
+from syno.body.homeostasis import HomeostaticCore, HydratedCore, FatiguedCore, homeostatic_reward
 from syno.brain.dopamine import reward_prediction_error
 from experiments.hunger import ACTION_NAMES, HIDDEN_NEURONS, SENSE_RADIUS, senses, DISCOUNT, FOOD_AMOUNT, REWARD_SCALE
 from experiments.replay import MEMORY_CAPACITY
@@ -27,11 +28,13 @@ TRAINING_LIVES = LIVES
 SEEDS = 10
 
 # A seed shows a signature only when its own effect is clearly larger than
-# chance: a rate that changes by at least CLEAR_EFFECT, or an RPE that dips by
-# at least CLEAR_DIP. Seeds are counted, not averaged, because different
+# chance: a rate that changes by at least CLEAR_EFFECT, an RPE that dips by at
+# least CLEAR_DIP, or a sleep bout that lasts at least CLEAR_REBOUND steps
+# longer. Seeds are counted, not averaged, because different
 # seeds can learn very different habits.
 CLEAR_EFFECT = 0.1
 CLEAR_DIP = 0.5
+CLEAR_REBOUND = 1
 
 # The points in training, in lives, at which E4 is measured.
 CHECKPOINTS = [0, 50, 200, 1000, TRAINING_LIVES]
@@ -52,6 +55,19 @@ APPROACH_ENERGIES = [0.2, 0.5, 0.8, 1.0]
 # (NEED_LOW), in a SYNO trained in the thirst experiment.
 NEED_HIGH = 0.8
 NEED_LOW = 0.2
+
+# For E10 and E11, SYNO is nearly full (SLEEP_ENERGY) with no food in the
+# world, so fatigue is the only reason to sleep. E10 compares how often a
+# rested and a tired SYNO fall asleep. E11 compares how long SYNO sleeps
+# after a short time awake and after being kept awake, and follows a sleep
+# bout for at most MAX_BOUT steps, so a SYNO that never wakes cannot run
+# forever.
+SLEEP_ENERGY = 0.8
+MAX_BOUT = 30
+RESTED_FATIGUE = 0.2
+TIRED_FATIGUE = 0.8
+SHORT_WAKE_FATIGUE = 0.4
+LONG_WAKE_FATIGUE = 0.9
 
 
 def new_brain(seed: int) -> tuple[Network, MemoryStore]:
@@ -337,10 +353,72 @@ def value_ramp(network: Network) -> list[float]:
     return [total / count for total, count in zip(totals, counts)]
 
 
+def sleep_rate(network: Network, fatigue: float) -> float:
+    """
+    Measures how often SYNO chooses to sleep at a given fatigue (E10).
+
+    SYNO is placed on every square with no food in the world and energy
+    SLEEP_ENERGY, so fatigue is the only reason to sleep. Animals are more likely to
+    fall asleep the longer they have been awake (sleep pressure).
+
+    :param network: A Decision Network trained in the sleep experiment.
+    :param fatigue: SYNO's fatigue, from 0.0 to 1.0.
+    :return: The fraction of squares where SYNO's preferred action is sleep.
+    """
+    count = 0
+    squares = sleep.GRID_SIZE * sleep.GRID_SIZE
+    for y in range(sleep.GRID_SIZE):
+        for x in range(sleep.GRID_SIZE):
+            habitat = Habitat(sleep.GRID_SIZE, sleep.GRID_SIZE, (x, y), [])
+            body = FatiguedCore(SLEEP_ENERGY, 0.0, fatigue)
+            values = network.forward(sleep.senses(habitat, body, True))
+            if values.index(max(values)) == sleep.ACTIONS.index("sleep"):
+                count += 1
+    return count / squares
+
+
+def sleep_bout(network: Network, fatigue: float) -> float:
+    """
+    Measures how long SYNO sleeps once it falls asleep at a given fatigue
+    (E11).
+
+    From every square, with no food in the world and energy SLEEP_ENERGY,
+    SYNO decides with its eyes open, then keeps choosing with its eyes closed
+    and its body recovering, until it chooses anything but sleep or MAX_BOUT
+    steps have passed. Animals kept awake sleep longer afterwards (sleep rebound).
+
+    :param network: A Decision Network trained in the sleep experiment.
+    :param fatigue: SYNO's fatigue when it first decides, from 0.0 to 1.0.
+    :return: The average number of steps slept in a row, from 0 to
+        MAX_BOUT.
+    """
+    total_bout = 0
+    squares = sleep.GRID_SIZE * sleep.GRID_SIZE
+    for y in range(sleep.GRID_SIZE):
+        for x in range(sleep.GRID_SIZE):
+            habitat = Habitat(sleep.GRID_SIZE, sleep.GRID_SIZE, (x, y), [])
+            body = FatiguedCore(SLEEP_ENERGY, 0.0, fatigue)
+            values = network.forward(sleep.senses(habitat, body, True))
+            name = sleep.ACTIONS[values.index(max(values))]
+            bout = 0
+            # Each step asleep lowers fatigue, so a bout ends when SYNO is
+            # rested enough to wake.
+            for _ in range(MAX_BOUT):
+                if name != "sleep":
+                    break
+                bout += 1
+                body.tick(False, True)
+                values = network.forward(sleep.senses(habitat, body, False))
+                name = sleep.ACTIONS[values.index(max(values))]
+            total_bout += bout
+    return total_bout / squares
+
+
 def measure(seed: int) -> dict:
     """
-    Trains three SYNOs from the same seed, in the scarce world, the thirst
-    experiment, and the blink experiment, and measures every signature.
+    Trains four SYNOs from the same seed, in the scarce world, the thirst
+    experiment, the blink experiment, and the sleep experiment, and measures
+    every signature.
 
     Each seed runs in its own process, so the results are returned rather
     than added to shared totals.
@@ -348,7 +426,8 @@ def measure(seed: int) -> dict:
     :param seed: The random seed for this SYNO.
     :return: The results by signature: "food" and "cue" (E4, one value per
         checkpoint), "e1", "e2", "near" and "far" (E3), "e5", "thirsty"
-        and "hungry" (E7), "e8", and "e9" (one value per distance).
+        and "hungry" (E7), "e8", "e9" (one value per distance), "e10", and
+        "e11".
     """
     network, memory = new_brain(seed)
     results = {"food": [], "cue": []}
@@ -392,6 +471,20 @@ def measure(seed: int) -> dict:
     for _ in range(blink.LIVES):
         blink.live(network, memory, working_memory)
     results["e8"] = [delayed_rate(network, True), delayed_rate(network, False)]
+
+    # E10 and E11 need a SYNO that gets tired and can sleep, trained in the
+    # sleep experiment from the same seed.
+    random.seed(seed)
+    inputs = sleep.WINDOW + 3
+    network = Network([
+        make_layer(sleep.HIDDEN_NEURONS, inputs),
+        make_layer(len(sleep.ACTIONS), sleep.HIDDEN_NEURONS, "linear")
+    ])
+    memory = MemoryStore(MEMORY_CAPACITY)
+    for _ in range(sleep.LIVES):
+        sleep.live(network, memory)
+    results["e10"] = [sleep_rate(network, RESTED_FATIGUE), sleep_rate(network, TIRED_FATIGUE)]
+    results["e11"] = [sleep_bout(network, SHORT_WAKE_FATIGUE), sleep_bout(network, LONG_WAKE_FATIGUE)]
     return results
 
 
@@ -482,6 +575,22 @@ def main():
         value = spread([r["e9"][d] for r in results], 3)
         print(f"Distance {d} | Value: {value}")
     n = sum(all(r["e9"][d - 1] > r["e9"][d] for d in range(1, 5)) for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
+    print()
+    print(f"E10: Sleep pressure ({SEEDS} seeds)")
+    rested_rate = spread([r["e10"][0] for r in results], 2)
+    tired_rate = spread([r["e10"][1] for r in results], 2)
+    print(f"Fatigue {RESTED_FATIGUE:.1f} | Sleeps: {rested_rate}")
+    print(f"Fatigue {TIRED_FATIGUE:.1f} | Sleeps: {tired_rate}")
+    n = sum(r["e10"][1] >= r["e10"][0] + CLEAR_EFFECT for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
+    print()
+    print(f"E11: Sleep rebound ({SEEDS} seeds)")
+    rested_bout = spread([r["e11"][0] for r in results], 2)
+    tired_bout = spread([r["e11"][1] for r in results], 2)
+    print(f"Fatigue {SHORT_WAKE_FATIGUE:.1f} | Bout: {rested_bout}")
+    print(f"Fatigue {LONG_WAKE_FATIGUE:.1f} | Bout: {tired_bout}")
+    n = sum(r["e11"][1] >= r["e11"][0] + CLEAR_REBOUND for r in results)
     print(f"Seeds: {n}/{SEEDS}")
 
 

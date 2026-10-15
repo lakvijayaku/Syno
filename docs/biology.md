@@ -5,7 +5,7 @@ This document maps each SYNO component to the biological mechanism it is modeled
 ### Homeostatic Regulation
 The hypothalamus regulates food intake by integrating signals about the body's energy state [1]. Ghrelin, released by the stomach, rises when it is empty and increases hunger. Satiety hormones such as CCK and GLP-1 rise during a meal and reduce hunger gradually rather than instantly. Leptin, released by fat tissue, signals long-term energy stores.
 
-**In SYNO:** The **Homeostatic Core (HC)** holds energy and stomach fill, and digests food into energy gradually. SYNO senses its energy deficit, stomach fill, and, with water, its water deficit directly; separate hunger and satiety signals, the **Signal Emitters (SE)**, are not modeled. Even so, in 7 of 10 seeds a trained SYNO's preference to eat tapers as its stomach fills, so a weak satiety effect emerges from learning alone (signature E1 in [`evaluation.md`](evaluation.md)). `HydratedCore` adds water as a second need: it drains every step, drinking refills it, and the drive is the sum of both squared deficits, so whichever need is larger dominates [6]. SYNO dies when either runs out. In a world with one pond and regrowing food, SYNO learns to keep both needs met: its average lifespan rose from 46 to 88 of 100 steps. With food one step one way and water one step the other, a thirsty SYNO goes for water and a hungry one for food, in 9 of 10 seeds (signature E7). `FatiguedCore` adds fatigue as a second need instead: it builds up on every waking step and falls on every step asleep, and sleep burns half the energy of being awake. It is not yet used in an experiment.
+**In SYNO:** The **Homeostatic Core (HC)** holds energy and stomach fill, and digests food into energy gradually. SYNO senses its energy deficit, stomach fill, and, with water, its water deficit directly; separate hunger and satiety signals, the **Signal Emitters (SE)**, are not modeled. Even so, in 7 of 10 seeds a trained SYNO's preference to eat tapers as its stomach fills, so a weak satiety effect emerges from learning alone (signature E1 in [`evaluation.md`](evaluation.md)). `HydratedCore` adds water as a second need: it drains every step, drinking refills it, and the drive is the sum of both squared deficits, so whichever need is larger dominates [6]. SYNO dies when either runs out. In a world with one pond and regrowing food, SYNO learns to keep both needs met: its average lifespan rose from 46 to 88 of 100 steps. With food one step one way and water one step the other, a thirsty SYNO goes for water and a hungry one for food, in 9 of 10 seeds (signature E7).
 
 ### Reward Prediction Error
 Dopamine neurons encode the difference between received and expected reward [2]. An unexpected reward causes a burst of activity. Once a cue reliably predicts the reward, the burst shifts to the cue, and an omitted reward causes activity to fall below baseline. Dopamine also ramps upward as an animal approaches a distant reward [3].
@@ -42,6 +42,11 @@ Some neurons in the prefrontal cortex keep firing after a stimulus disappears, h
 
 **In SYNO:** Working memory is a fading trace of SYNO's view: at every step it keeps half of what it held and takes in the rest from what SYNO saw. In a world where SYNO's eyes are closed on half of all steps, a SYNO that saw food just before its eyes closed moves toward it in 0.75 of cases, against 0.56 when it never saw the food, in 9 of 10 seeds (signature E8 in [`evaluation.md`](evaluation.md)). The memory fades within a few steps, much faster than an animal's.
 
+### Sleep and Fatigue
+The need for sleep builds up the longer an animal is awake and is discharged by sleeping; this sleep pressure explains both why animals fall asleep more readily when tired and why they sleep longer after being kept awake (sleep rebound) [16]. In the brain, adenosine accumulates during wakefulness and promotes sleep [17].
+
+**In SYNO:** `FatiguedCore` adds fatigue as a second need: it builds up on every waking step, like adenosine, and falls on every step asleep, and sleep burns half the energy of being awake. The drive adds the squared fatigue to the squared energy deficit. In the scarce world with sleep as a sixth action, SYNO learns to sleep about 30% of the time, close to the 29% that keeps fatigue level, while its average energy rose from 0.32 to 0.70 over 3000 lives. With no food in sight, a tired SYNO chooses sleep more often than a rested one in 8 of 10 seeds (signature E10 in [`evaluation.md`](evaluation.md)), and once asleep, a more tired SYNO sleeps about 15 steps rather than 5, in all 10 seeds (signature E11). No rule says when or how long to sleep.
+
 ### Neurogenesis
 New neurons continue to be born in parts of the adult brain, including the human hippocampus [12], and must integrate into existing circuits without disrupting them.
 
@@ -56,6 +61,7 @@ Hormones and neuromodulators act slowly and globally, so their levels reflect th
 - Hormones are single numbers, not concentrations that diffuse through tissue.
 - The hypothalamus, ventral tegmental area (VTA), and nucleus accumbens are not modeled as separate brain regions.
 - Leptin and long-term energy storage are not modeled.
+- Sleep is a single action, with no sleep stages and no day-night (circadian) cycle.
 - "Liking" and conscious experience are not modeled. SYNO's signals are numbers; they do not imply feelings.
 
 ### References
@@ -74,3 +80,5 @@ Hormones and neuromodulators act slowly and globally, so their levels reflect th
 13. Pearce, J. M., & Hall, G. (1980). A model for Pavlovian learning: Variations in the effectiveness of conditioned but not of unconditioned stimuli. *Psychological Review*, 87(6), 532–552.
 14. Funahashi, S., Bruce, C. J., & Goldman-Rakic, P. S. (1989). Mnemonic coding of visual space in the monkey's dorsolateral prefrontal cortex. *Journal of Neurophysiology*, 61(2), 331–349.
 15. Hamid, A. A., Pettibone, J. R., Mabrouk, O. S., Hetrick, V. L., Schmidt, R., Vander Weele, C. M., Kennedy, R. T., Aragona, B. J., & Berke, J. D. (2016). Mesolimbic dopamine signals the value of work. *Nature Neuroscience*, 19(1), 117–126.
+16. Borbély, A. A. (1982). A two process model of sleep regulation. *Human Neurobiology*, 1(3), 195–204.
+17. Porkka-Heiskanen, T., Strecker, R. E., Thakkar, M., Bjørkum, A. A., Greene, R. W., & McCarley, R. W. (1997). Adenosine: A mediator of the sleep-inducing effects of prolonged wakefulness. *Science*, 276(5316), 1265–1268.

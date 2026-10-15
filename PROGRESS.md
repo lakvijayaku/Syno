@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Steps 1 to 15 are complete, and step 16 is in progress. Measured over 10 seeds, E4, E5, E7, E8, and E9 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 25% of the human capabilities listed in `docs/humanness.md`.
+All 16 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, E9, E10, and E11 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 26.5% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -26,10 +26,12 @@ Steps 1 to 15 are complete, and step 16 is in progress. Measured over 10 seeds, 
 | **13** | Thirst | ✅ Done |
 | **14** | Working memory | ✅ Done |
 | **15** | Dopamine ramping | ✅ Done |
-| **16** | Fatigue and sleep | 🚧 In progress |
+| **16** | Fatigue and sleep | ✅ Done |
 
 ### Log
 #### 2026-10-14
+- **Step 16c complete:** `experiments/signatures.py` measures E10, sleep pressure, and E11, sleep rebound, on a SYNO from each seed trained in the sleep experiment, covered by 17 new tests. With no food in sight, SYNO chooses to sleep on 0.68 of squares at fatigue 0.2 and on all of them at 0.8, in 8 of 10 seeds, and once asleep it sleeps 4.98 steps at fatigue 0.4 against 15.03 at 0.9, in all 10 seeds, so both are reproduced. The humanness score stays at 26.5%. Step 16 (Fatigue and sleep) is complete.
+- **Step 16b complete:** `experiments/sleep.py`, where SYNO forages in the scarce world with sleep as a sixth action, covered by 21 tests. While asleep it stays still, its eyes are closed, and it gets no novelty bonus. Over 3000 lives its average energy rose from 0.32 to 0.70, and its time asleep fell from 0.44 to 0.30, close to the 0.29 that keeps fatigue level. Fatigue and rest become a SYNO capability, and sleep a partial one, raising the humanness score to 26.5%.
 - **Step 16a complete:** `FatiguedCore`, a body with fatigue as a second need, covered by 28 unit tests. Fatigue builds up on every waking step and falls on every sleeping step, sleep burns half the base energy, and the drive adds the squared fatigue to the squared energy deficit. `HomeostaticCore` is unchanged, so earlier experiments are unaffected.
 - **Documentation:** `CLAUDE.md` records how Claude Code tutors on SYNO, including catching up from the repo at the start of each session, the commit message style, and the checks before every commit. The README links to it, and `Neuron`, `Layer`, and `Network` gained class docstrings.
 

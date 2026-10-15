@@ -2,11 +2,12 @@
 Experiment tests for experiments/signatures.py.
 
 The fast tests probe eating_rate, approach_rate, eating_rpe, cue_rpe,
-switch_rate, delayed_rate and value_ramp with hand-built networks whose
-predictions are known exactly, and check that new_brain, train and measure
-are reproducible. The slow test trains SYNO with all 10 seeds, in the scarce
-world, the thirst experiment, and the blink experiment, in parallel (about 10
-minutes), and reproduces the recorded E1 to E9 results. It is skipped by
+switch_rate, delayed_rate, value_ramp, sleep_rate and sleep_bout with
+hand-built networks whose predictions are known exactly, and check that
+new_brain, train and measure are reproducible. The slow test trains SYNO with
+all 10 seeds, in the scarce world, the thirst experiment, the blink
+experiment, and the sleep experiment, in parallel (about 16 minutes on a
+MacBook Air M4), and reproduces the recorded E1 to E11 results. It is skipped by
 default and runs only when SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
@@ -26,6 +27,7 @@ import experiments.scarcity as scarcity
 import experiments.signatures as signatures
 import experiments.thirst as thirst
 import experiments.blink as blink
+import experiments.sleep as sleep
 from syno.brain.working_memory import WorkingMemory
 from experiments.xor import make_layer
 from syno.brain.memory import MemoryStore
@@ -33,7 +35,7 @@ from experiments.hunger import LIFE_STEPS
 from syno.brain.layer import Layer
 from syno.brain.network import Network
 from syno.brain.neuron import Neuron
-from syno.body.homeostasis import HomeostaticCore, homeostatic_reward
+from syno.body.homeostasis import FatiguedCore, HomeostaticCore, homeostatic_reward
 
 INPUTS = (2 * signatures.SENSE_RADIUS + 1) ** 2 + 2
 CENTER = ((2 * signatures.SENSE_RADIUS + 1) ** 2) // 2
@@ -75,6 +77,17 @@ class TestSignaturesSetup(unittest.TestCase):
     def test_clear_effect_thresholds(self):
         self.assertEqual(signatures.CLEAR_EFFECT, 0.1)
         self.assertEqual(signatures.CLEAR_DIP, 0.5)
+        self.assertEqual(signatures.CLEAR_REBOUND, 1)
+
+    def test_sleep_probe_settings(self):
+        self.assertEqual(signatures.SLEEP_ENERGY, 0.8)
+        self.assertEqual(signatures.MAX_BOUT, 30)
+
+    def test_sleep_fatigue_levels(self):
+        self.assertEqual(signatures.RESTED_FATIGUE, 0.2)
+        self.assertEqual(signatures.TIRED_FATIGUE, 0.8)
+        self.assertEqual(signatures.SHORT_WAKE_FATIGUE, 0.4)
+        self.assertEqual(signatures.LONG_WAKE_FATIGUE, 0.9)
 
     def test_stomach_levels_span_empty_to_full(self):
         self.assertEqual(signatures.STOMACH_LEVELS[0], 0.0)
@@ -583,6 +596,116 @@ class TestDelayedRate(unittest.TestCase):
         made.assert_called_once_with(blink.WINDOW, blink.MEMORY_DECAY)
 
 
+SLEEP_INPUTS = sleep.WINDOW + 3
+SLEEP_DEFICIT = SLEEP_INPUTS - 3
+SLEEP_STOMACH = SLEEP_INPUTS - 2
+SLEEP_FATIGUE = SLEEP_INPUTS - 1
+
+
+def sleep_network(weights: dict[int, float], bias: float) -> Network:
+    """
+    Builds a one-layer linear network for the sleep experiment where every
+    action outputs 0.0 except sleep, whose output is bias plus the given
+    weights on chosen inputs. On a tie, up is preferred.
+    """
+    neurons = []
+    for action in range(len(sleep.ACTIONS)):
+        row = [0.0] * SLEEP_INPUTS
+        neuron_bias = 0.0
+        if sleep.ACTIONS[action] == "sleep":
+            for index, weight in weights.items():
+                row[index] = weight
+            neuron_bias = bias
+        neurons.append(Neuron(row, neuron_bias, "linear"))
+    return Network([Layer(neurons)])
+
+
+class TestSleepRate(unittest.TestCase):
+    """Verifies sleep_rate against networks with known preferences."""
+
+    def test_always_sleeps(self):
+        self.assertEqual(signatures.sleep_rate(sleep_network({}, 1.0), 0.0), 1.0)
+
+    def test_never_sleeps(self):
+        self.assertEqual(signatures.sleep_rate(sleep_network({}, -1.0), 1.0), 0.0)
+
+    def test_sleeps_only_when_tired(self):
+        network = sleep_network({SLEEP_FATIGUE: 1.0}, -0.5)
+        self.assertEqual(signatures.sleep_rate(network, 0.2), 0.0)
+        self.assertEqual(signatures.sleep_rate(network, 0.8), 1.0)
+
+    def test_syno_has_sleep_energy(self):
+        # Sleep wins only when the energy deficit is above 0.15, which
+        # SLEEP_ENERGY (0.8) gives, and not above 0.25.
+        self.assertEqual(signatures.sleep_rate(sleep_network({SLEEP_DEFICIT: 1.0}, -0.15), 0.0), 1.0)
+        self.assertEqual(signatures.sleep_rate(sleep_network({SLEEP_DEFICIT: 1.0}, -0.25), 0.0), 0.0)
+
+    def test_stomach_is_empty(self):
+        network = sleep_network({SLEEP_STOMACH: -1.0}, 0.01)
+        self.assertEqual(signatures.sleep_rate(network, 0.0), 1.0)
+
+    def test_no_food_in_the_world(self):
+        # Sleep wins only if food is under SYNO.
+        network = sleep_network({CENTER: 1.0}, -0.5)
+        self.assertEqual(signatures.sleep_rate(network, 0.0), 0.0)
+
+    def test_tests_every_square(self):
+        # Sleep wins only where a wall is directly to SYNO's left: the 5
+        # squares of the left column.
+        left = CENTER - 1
+        network = sleep_network({left: -1.0}, -0.5)
+        self.assertEqual(signatures.sleep_rate(network, 0.0), 5 / 25)
+
+    def test_eyes_are_open(self):
+        with mock.patch.object(signatures.sleep, "senses", wraps=sleep.senses) as sensed:
+            signatures.sleep_rate(sleep_network({}, 1.0), 0.5)
+        self.assertEqual(sensed.call_count, 25)
+        self.assertTrue(all(call.args[2] is True for call in sensed.call_args_list))
+
+
+class TestSleepBout(unittest.TestCase):
+    """Verifies sleep_bout against networks with known preferences."""
+
+    def test_never_sleeps(self):
+        self.assertEqual(signatures.sleep_bout(sleep_network({}, -1.0), 1.0), 0.0)
+
+    def test_never_wakes_is_capped_at_30(self):
+        self.assertEqual(signatures.sleep_bout(sleep_network({}, 1.0), 0.0), 30.0)
+
+    def test_sleeps_until_rested(self):
+        # Sleep wins while fatigue is above 0.52. From 0.9, fatigue falls by
+        # RECOVERY_RATE (0.05) per step, so SYNO sleeps at 0.9, 0.85, ...,
+        # 0.55: 8 steps.
+        network = sleep_network({SLEEP_FATIGUE: 1.0}, -0.52)
+        self.assertEqual(signatures.sleep_bout(network, 0.9), 8.0)
+        self.assertEqual(signatures.sleep_bout(network, 0.4), 0.0)
+
+    def test_more_tired_sleeps_longer(self):
+        network = sleep_network({SLEEP_FATIGUE: 1.0}, -0.52)
+        self.assertGreater(signatures.sleep_bout(network, 0.9), signatures.sleep_bout(network, 0.7))
+
+    def test_body_is_ticked_asleep_and_still(self):
+        ticks = []
+        original = FatiguedCore.tick
+
+        def recording_tick(body, moved, slept=False):
+            ticks.append((moved, slept))
+            original(body, moved, slept)
+
+        with mock.patch.object(FatiguedCore, "tick", recording_tick):
+            signatures.sleep_bout(sleep_network({}, 1.0), 0.5)
+        self.assertEqual(len(ticks), 25 * 30)
+        self.assertEqual(set(ticks), {(False, True)})
+
+    def test_eyes_open_first_then_closed(self):
+        with mock.patch.object(signatures.sleep, "senses", wraps=sleep.senses) as sensed:
+            signatures.sleep_bout(sleep_network({SLEEP_FATIGUE: 1.0}, -0.52), 0.6)
+        visible = [call.args[2] for call in sensed.call_args_list]
+        # From each square: one decision with open eyes, then one asleep at
+        # 0.55 and the waking decision at 0.5, both with closed eyes.
+        self.assertEqual(visible, [True, False, False] * 25)
+
+
 class TestValueRamp(unittest.TestCase):
     """
     Verifies value_ramp against networks with known predictions. On the 5x5
@@ -638,13 +761,29 @@ class TestMeasure(unittest.TestCase):
     """Verifies that measure trains one SYNO and measures every signature."""
 
     def setUp(self):
-        self.saved = signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES
+        self.saved = signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES
         signatures.CHECKPOINTS = [0, 1, 2]
         thirst.LIVES = 2
         blink.LIVES = 2
+        sleep.LIVES = 2
 
     def tearDown(self):
-        signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES = self.saved
+        signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES = self.saved
+
+    def test_sleep_signatures_use_a_sleep_trained_network(self):
+        results = signatures.measure(3)
+        random.seed(3)
+        network = Network([
+            make_layer(sleep.HIDDEN_NEURONS, SLEEP_INPUTS),
+            make_layer(len(sleep.ACTIONS), sleep.HIDDEN_NEURONS, "linear"),
+        ])
+        memory = MemoryStore(sleep.MEMORY_CAPACITY)
+        for _ in range(2):
+            sleep.live(network, memory)
+        self.assertEqual(results["e10"], [signatures.sleep_rate(network, 0.2),
+                                          signatures.sleep_rate(network, 0.8)])
+        self.assertEqual(results["e11"], [signatures.sleep_bout(network, 0.4),
+                                          signatures.sleep_bout(network, 0.9)])
 
     def test_delayed_response_uses_a_blink_trained_network(self):
         results = signatures.measure(3)
@@ -682,6 +821,8 @@ class TestMeasure(unittest.TestCase):
         self.assertEqual(len(results["near"]), len(signatures.APPROACH_ENERGIES))
         self.assertEqual(len(results["far"]), len(signatures.APPROACH_ENERGIES))
         self.assertEqual(len(results["e5"]), 2)
+        self.assertEqual(len(results["e10"]), 2)
+        self.assertEqual(len(results["e11"]), 2)
 
     def test_matches_the_probes_on_the_same_network(self):
         results = signatures.measure(3)
@@ -710,7 +851,7 @@ class TestMeasure(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("SYNO_SLOW_TESTS"), "slow: set SYNO_SLOW_TESTS=1")
 class TestSignaturesRun(unittest.TestCase):
-    """Reproduces the recorded E1 to E5 results."""
+    """Reproduces the recorded E1 to E11 results."""
 
     def test_results(self):
         output = io.StringIO()
@@ -775,6 +916,16 @@ Distance 3 | Value: 1.481 [1.054, 1.814]
 Distance 2 | Value: 1.760 [1.387, 2.048]
 Distance 1 | Value: 2.060 [1.706, 2.390]
 Distance 0 | Value: 2.288 [2.108, 2.530]
+Seeds: 10/10
+
+E10: Sleep pressure (10 seeds)
+Fatigue 0.2 | Sleeps: 0.68 [0.16, 1.00]
+Fatigue 0.8 | Sleeps: 1.00 [1.00, 1.00]
+Seeds: 8/10
+
+E11: Sleep rebound (10 seeds)
+Fatigue 0.4 | Bout: 4.98 [3.44, 6.16]
+Fatigue 0.9 | Bout: 15.03 [13.72, 16.12]
 Seeds: 10/10""".splitlines()
         self.assertEqual(output.getvalue().splitlines(), expected)
 

@@ -23,7 +23,6 @@ Claude does not remember earlier conversations, so it catches up from the repo b
 - Explain each concept concisely, then give one small, specific task.
 - Explain every line a task needs and why it exists, because the owner documents their code heavily.
 - When the owner is stuck, give hints in stages: the concept first, then pseudocode, then a small snippet, and a snippet only if they ask for one after trying.
-- Before moving on, ask questions that check understanding.
 - Pitch Python at a beginner-to-intermediate level. Do not explain Git basics; commit signing, force pushing, and professional GitHub workflows are worth teaching.
 
 ### Reviewing
@@ -33,7 +32,7 @@ Claude does not remember earlier conversations, so it catches up from the repo b
 - Be honest. Say so when an idea will not work, or when a result is being read as more human than it is.
 
 ### Finishing a Step
-When the owner finishes a step and asks for a check, reply in this order:
+When the owner finishes a step and asks "can you check", reply in this order:
 
 1. Review findings, if any.
 2. Documentation added, such as tests, docstrings, and `PROGRESS.md`, and every document that changed.
