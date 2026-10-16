@@ -47,6 +47,11 @@ The need for sleep builds up the longer an animal is awake and is discharged by 
 
 **In SYNO:** `FatiguedCore` adds fatigue as a second need: it builds up on every waking step, like adenosine, and falls on every step asleep, and sleep burns half the energy of being awake. The drive adds the squared fatigue to the squared energy deficit. In the scarce world with sleep as a sixth action, SYNO learns to sleep about 30% of the time, close to the 29% that keeps fatigue level, while its average energy rose from 0.32 to 0.70 over 3000 lives. With no food in sight, a tired SYNO chooses sleep more often than a rested one in 8 of 10 seeds (signature E10 in [`evaluation.md`](evaluation.md)), and once asleep, a more tired SYNO sleeps about 15 steps rather than 5, in all 10 seeds (signature E11). No rule says when or how long to sleep.
 
+### Pain
+Pain signals damage to the body and drives animals to learn to avoid what caused it; in reinforcement learning terms, it acts as a negative reward that is precise about where harm came from [20]. Pain also competes with other needs: in hungry mice, hunger-sensing neurons suppress the response to lasting pain, so a hungry animal accepts more pain to reach food [21].
+
+**In SYNO:** `InjuredCore` adds injury as a second need: it rises when SYNO is hurt and heals by 0.02 every step, and the drive adds the squared injury to the squared energy deficit, so being hurt is a negative reward. In the pain experiment, the scarce world has 2 thorns, and stepping onto one adds 0.4 injury. Food can grow on a thorn, so hunger and pain can compete. Over 3000 lives, SYNO's average energy rose from 0.25 to 0.57, lower than in the same world without thorns, and it stepped onto a thorn about 0.6 times per life, mostly to reach food growing on one. No rule says to avoid thorns.
+
 ### Neurogenesis
 New neurons continue to be born in parts of the adult brain, including the human hippocampus [12], and must integrate into existing circuits without disrupting them.
 
@@ -62,6 +67,7 @@ Hormones and neuromodulators act slowly and globally, so their levels reflect th
 - The hypothalamus, ventral tegmental area (VTA), and nucleus accumbens are not modeled as separate brain regions.
 - Leptin and long-term energy storage are not modeled.
 - Sleep is a single action, with no sleep stages and no day-night (circadian) cycle.
+- Pain is a single number for the whole body, with no location, and no lasting fear state.
 - "Liking" and conscious experience are not modeled. SYNO's signals are numbers; they do not imply feelings.
 
 ### References
@@ -84,3 +90,5 @@ Hormones and neuromodulators act slowly and globally, so their levels reflect th
 17. Porkka-Heiskanen, T., Strecker, R. E., Thakkar, M., Bjørkum, A. A., Greene, R. W., & McCarley, R. W. (1997). Adenosine: A mediator of the sleep-inducing effects of prolonged wakefulness. *Science*, 276(5316), 1265–1268.
 18. Girardeau, G., Benchenane, K., Wiener, S. I., Buzsáki, G., & Zugaro, M. B. (2009). Selective suppression of hippocampal ripples impairs spatial memory. *Nature Neuroscience*, 12(10), 1222–1223.
 19. Ego-Stengel, V., & Wilson, M. A. (2010). Disruption of ripple-associated hippocampal activity during rest impairs spatial learning in the rat. *Hippocampus*, 20(1), 1–10.
+20. Seymour, B. (2019). Pain: A precision signal for reinforcement learning and control. *Neuron*, 101(6), 1029–1041.
+21. Burnett, C. J., Li, C., Webber, E., Tsaousidou, E., Xue, S. Y., Brüning, J. C., & Krashes, M. J. (2016). Hunger-driven motivational state competition. *Neuron*, 92(1), 187–201.

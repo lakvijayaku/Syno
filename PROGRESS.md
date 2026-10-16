@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Steps 1 to 17 are complete, and step 18 is in progress. Measured over 10 seeds, E4, E5, E7, E8, E9, E10, E11, and E12 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 27.5% of the human capabilities listed in `docs/humanness.md`.
+Steps 1 to 17 are complete, and step 18 is in progress. Measured over 10 seeds, E4, E5, E7, E8, E9, E10, E11, and E12 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 28.5% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -32,6 +32,7 @@ Steps 1 to 17 are complete, and step 18 is in progress. Measured over 10 seeds, 
 
 ### Log
 #### 2026-10-15
+- **Step 18c complete:** `experiments/pain.py`, where the scarce world has 2 thorns and stepping onto one hurts SYNO, covered by 16 tests. Food can grow on a thorn. Over 3000 lives, SYNO's average energy rose from 0.25 to 0.57, and it stepped onto a thorn about 0.6 times per life. Pain signals become a SYNO capability, raising the humanness score to 28.5%.
 - **Step 18b complete:** `InjuredCore`, a body with injury as a second need, covered by 24 unit tests. Injury rises when SYNO is hurt, heals by 0.02 every step, and adds its square to the drive, so being hurt is punished and healing rewarded. `HomeostaticCore` is unchanged.
 - **Step 18a complete:** the Habitat can hold thorns, which SYNO can step onto and see with `sense_hazard`, covered by 20 new unit tests. Worlds without thorns are unchanged.
 - **Documentation:** `CLAUDE.md` says the commit command comes only after every fix is in and the tests pass.
