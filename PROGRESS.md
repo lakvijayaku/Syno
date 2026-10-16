@@ -32,6 +32,7 @@ Steps 1 to 17 are complete, and step 18 is in progress. Measured over 10 seeds, 
 
 ### Log
 #### 2026-10-15
+- **Step 18b complete:** `InjuredCore`, a body with injury as a second need, covered by 24 unit tests. Injury rises when SYNO is hurt, heals by 0.02 every step, and adds its square to the drive, so being hurt is punished and healing rewarded. `HomeostaticCore` is unchanged.
 - **Step 18a complete:** the Habitat can hold thorns, which SYNO can step onto and see with `sense_hazard`, covered by 20 new unit tests. Worlds without thorns are unchanged.
 - **Documentation:** `CLAUDE.md` says the commit command comes only after every fix is in and the tests pass.
 - **Step 17c complete:** `experiments/signatures.py` measures E12, sleep consolidation, by training two dreaming SYNOs from each seed, one with its sleep replay blocked, covered by 8 new tests. Over its last 500 lives, the SYNO that replays during sleep reaches an average energy of 0.696, against 0.318 with sleep replay blocked, in all 10 seeds, so E12 is reproduced. Consolidation during sleep becomes a SYNO capability, raising the humanness score to 27.5%. Step 17 (Consolidation during sleep) is complete.

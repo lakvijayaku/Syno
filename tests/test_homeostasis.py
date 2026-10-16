@@ -7,7 +7,7 @@ the body (digestion, burning, clamping, and stomach capacity), the drive and
 the reward it produces, including alliesthesia, and that invalid values fail
 loudly. HydratedCore is checked to add water without changing anything about
 energy, the stomach, or HomeostaticCore itself, and FatiguedCore to add
-fatigue and sleep the same way.
+fatigue and sleep the same way, and InjuredCore to add injury and healing.
 
 Run from the repository root with:
     python3 -m unittest discover tests -v
@@ -20,12 +20,14 @@ from syno.body.homeostasis import (
     DIGESTION_RATE,
     DRIVE_EXPONENT,
     FATIGUE_RATE,
+    HEAL_RATE,
     MOVE_BURN,
     RECOVERY_RATE,
     SLEEP_SAVING,
     STOMACH_CAPACITY,
     WATER_BURN,
     FatiguedCore,
+    InjuredCore,
     HomeostaticCore,
     HydratedCore,
     homeostatic_reward,
@@ -594,6 +596,140 @@ class TestFatiguedCoreDrive(unittest.TestCase):
         self.assertLess(homeostatic_reward(before, body.drive()), 0.0)
 
     def test_parent_drive_ignores_fatigue(self):
+        self.assertAlmostEqual(HomeostaticCore(0.8, 0.0).drive(), 0.2 ** 2)
+
+
+class TestInjuredCoreSetup(unittest.TestCase):
+    """Verifies the constant, starting values, and that invalid ones fail loudly."""
+
+    def test_heal_rate(self):
+        self.assertEqual(HEAL_RATE, 0.02)
+
+    def test_stores_values(self):
+        body = InjuredCore(0.6, 0.3, 0.4)
+        self.assertEqual((body.energy, body.stomach, body.injury), (0.6, 0.3, 0.4))
+
+    def test_unhurt_by_default(self):
+        self.assertEqual(InjuredCore(1.0, 0.0).injury, 0.0)
+
+    def test_is_a_homeostatic_core(self):
+        self.assertIsInstance(InjuredCore(1.0, 0.0), HomeostaticCore)
+
+    def test_accepts_bounds(self):
+        self.assertEqual(InjuredCore(1.0, 0.0, 1.0).injury, 1.0)
+
+    def test_rejects_injury_out_of_range(self):
+        for injury in (-0.01, 1.01):
+            with self.assertRaises(ValueError):
+                InjuredCore(1.0, 0.0, injury)
+
+    def test_still_checks_energy_and_stomach(self):
+        with self.assertRaises(ValueError):
+            InjuredCore(1.5, 0.0)
+        with self.assertRaises(ValueError):
+            InjuredCore(1.0, -0.1)
+
+
+class TestInjuredCoreHurt(unittest.TestCase):
+    """Verifies how the body is injured."""
+
+    def test_adds_injury(self):
+        body = InjuredCore(1.0, 0.0, 0.1)
+        body.hurt(0.4)
+        self.assertAlmostEqual(body.injury, 0.5)
+
+    def test_clamps_at_one(self):
+        body = InjuredCore(1.0, 0.0, 0.8)
+        body.hurt(0.4)
+        self.assertEqual(body.injury, 1.0)
+
+    def test_zero_does_nothing(self):
+        body = InjuredCore(1.0, 0.0, 0.3)
+        body.hurt(0.0)
+        self.assertEqual(body.injury, 0.3)
+
+    def test_rejects_negative_amount(self):
+        body = InjuredCore(1.0, 0.0, 0.3)
+        with self.assertRaises(ValueError):
+            body.hurt(-0.1)
+        self.assertEqual(body.injury, 0.3)
+
+    def test_does_not_touch_energy_or_stomach(self):
+        body = InjuredCore(0.7, 0.2)
+        body.hurt(0.4)
+        self.assertEqual((body.energy, body.stomach), (0.7, 0.2))
+
+
+class TestInjuredCoreTick(unittest.TestCase):
+    """Verifies a step: the parent's physics, then healing."""
+
+    def test_heals(self):
+        body = InjuredCore(0.5, 0.0, 0.4)
+        body.tick(False)
+        self.assertAlmostEqual(body.injury, 0.4 - HEAL_RATE)
+
+    def test_heals_the_same_when_moving(self):
+        body = InjuredCore(0.5, 0.0, 0.4)
+        body.tick(True)
+        self.assertAlmostEqual(body.injury, 0.4 - HEAL_RATE)
+
+    def test_clamps_at_zero(self):
+        body = InjuredCore(0.5, 0.0, 0.01)
+        body.tick(False)
+        self.assertEqual(body.injury, 0.0)
+
+    def test_energy_matches_parent(self):
+        for moved in (False, True):
+            hurt = InjuredCore(0.5, 0.2, 0.6)
+            plain = HomeostaticCore(0.5, 0.2)
+            hurt.tick(moved)
+            plain.tick(moved)
+            self.assertEqual((hurt.energy, hurt.stomach), (plain.energy, plain.stomach))
+
+    def test_worst_injury_heals_in_fifty_steps(self):
+        body = InjuredCore(1.0, 1.0, 1.0)
+        for _ in range(49):
+            body.tick(False)
+        self.assertGreater(body.injury, 0.0)
+        body.tick(False)
+        self.assertAlmostEqual(body.injury, 0.0)
+
+
+class TestInjuredCoreDrive(unittest.TestCase):
+    """Verifies the drive adds squared injury to the squared energy deficit."""
+
+    def test_fed_and_unhurt_is_zero(self):
+        self.assertEqual(InjuredCore(1.0, 0.0).drive(), 0.0)
+
+    def test_sums_both_squares(self):
+        self.assertAlmostEqual(InjuredCore(0.7, 0.0, 0.4).drive(), 0.3 ** 2 + 0.4 ** 2)
+
+    def test_maximum_is_two(self):
+        self.assertEqual(InjuredCore(0.0, 0.0, 1.0).drive(), 2.0)
+
+    def test_being_hurt_is_punished(self):
+        body = InjuredCore(1.0, 1.0)
+        before = body.drive()
+        body.hurt(0.4)
+        self.assertLess(homeostatic_reward(before, body.drive()), 0.0)
+
+    def test_healing_is_rewarded(self):
+        body = InjuredCore(1.0, 1.0, 0.5)
+        before = body.drive()
+        body.tick(False)
+        self.assertGreater(homeostatic_reward(before, body.drive()), 0.0)
+
+    def test_bad_injury_matters_more_than_a_scratch(self):
+        # The same 0.1 of extra injury costs more on top of a bad one.
+        scratch, bad = InjuredCore(1.0, 0.0, 0.0), InjuredCore(1.0, 0.0, 0.6)
+        costs = []
+        for body in (scratch, bad):
+            before = body.drive()
+            body.hurt(0.1)
+            costs.append(body.drive() - before)
+        self.assertGreater(costs[1], costs[0])
+
+    def test_parent_drive_ignores_injury(self):
         self.assertAlmostEqual(HomeostaticCore(0.8, 0.0).drive(), 0.2 ** 2)
 
 

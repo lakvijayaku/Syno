@@ -1,5 +1,5 @@
 # ── SYNO · syno/body/homeostasis.py ─────────────────────
-# The Homeostatic Core: SYNO's energy, stomach, water, and fatigue
+# The Homeostatic Core: SYNO's energy, stomach, water, fatigue, and injury
 # Laksheth Vijayakumar · 2026-10-07 · GPL-3.0
 # ────────────────────────────────────────────────────────
 
@@ -23,6 +23,11 @@ WATER_BURN = 0.01
 FATIGUE_RATE = 0.02
 RECOVERY_RATE = 0.05
 SLEEP_SAVING = 0.5
+
+# Injury heals by 0.02 every step, so the worst injury (1.0) heals in 50
+# steps. That is half a life, long enough that pain matters to SYNO for a
+# while after it's hurt. Used only by InjuredCore.
+HEAL_RATE = 0.02
 
 class HomeostaticCore:
     """
@@ -246,3 +251,64 @@ class FatiguedCore(HomeostaticCore):
             0.0 to 2.0.
         """
         return self.deficit() ** DRIVE_EXPONENT + self.fatigue ** DRIVE_EXPONENT
+
+
+class InjuredCore(HomeostaticCore):
+    """
+    SYNO's body with a second need: to be unhurt. Injury rises when the world
+    hurts SYNO and heals slowly on its own.
+
+    Energy, the stomach, and digestion work exactly as in HomeostaticCore.
+    Injury ranges from 0.0, unhurt, to 1.0, badly hurt. Pain is not a rule
+    about what SYNO should avoid: injury raises the drive, so being hurt is
+    a negative reward and healing a small positive one.
+    """
+
+    def __init__(self, energy: float, stomach: float, injury: float = 0.0):
+        """
+        Initializes the body.
+
+        :param energy: Starting energy, from 0.0 to 1.0.
+        :param stomach: Starting stomach fill, from 0.0 to 1.0.
+        :param injury: Starting injury, from 0.0 to 1.0. Unhurt by default.
+        :raises ValueError: If any value is outside 0.0 to 1.0.
+        """
+        super().__init__(energy, stomach)
+        if not 0.0 <= injury <= 1.0:
+            raise ValueError("Injury must be between 0.0 and 1.0 inclusive.")
+        self.injury = injury
+
+    def hurt(self, amount: float) -> None:
+        """
+        Injures the body, up to the worst injury.
+
+        The amount comes from what hurt SYNO, such as a thorn, so the body
+        does not decide how much anything hurts.
+
+        :param amount: How much injury is added.
+        :raises ValueError: If amount is negative.
+        """
+        if amount < 0.0:
+            raise ValueError("Amount to hurt cannot be negative.")
+        self.injury = min(1.0, self.injury + amount)
+
+    def tick(self, moved: bool) -> None:
+        """
+        Advances the body by one step: everything HomeostaticCore does, then
+        injury heals by HEAL_RATE.
+
+        :param moved: True if SYNO moved this step, which burns extra energy.
+        """
+        super().tick(moved)
+        self.injury = max(0.0, self.injury - HEAL_RATE)
+
+    def drive(self) -> float:
+        """
+        Measures the combined push of both needs. Each is squared, so a bad
+        injury matters far more than a scratch, and whichever need is larger
+        dominates (Keramati & Gutkin, 2014).
+
+        :return: The squared energy deficit plus the squared injury, from 0.0
+            to 2.0.
+        """
+        return self.deficit() ** DRIVE_EXPONENT + self.injury ** DRIVE_EXPONENT
