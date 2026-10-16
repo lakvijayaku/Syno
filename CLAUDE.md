@@ -40,6 +40,8 @@ When the owner finishes a step and asks "can you check", reply in this order:
 4. The git commit command, with the full message.
 5. Instructions for the next step.
 
+If the review finds anything to fix, stop after the review and wait. Give the commit command only once every fix is in and `python3 -m unittest` passes, so a commit never goes in ahead of its fix.
+
 When the owner says "flag me", end the reply and wait, usually so they can commit.
 
 ### Commit Messages

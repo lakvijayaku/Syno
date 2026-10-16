@@ -6,8 +6,8 @@ This glossary defines every named component and key term used in SYNO. Component
 | Name | Full Name | Role | Status |
 |---|---|---|---|
 | **AM** | Artificial Mind | The complete cognitive system. Owns and orchestrates every component below. | In progress |
-| **HB** | Habitat | The grid world SYNO lives in, containing food, water, and open space, bounded by walls. External to the AM. | Built: `syno/world/habitat.py` |
-| **SI** | Sensory Interface | Converts what SYNO can perceive in the HB into numeric input signals. | Built: `Habitat.sense` for food and walls, and `Habitat.sense_water` for water |
+| **HB** | Habitat | The grid world SYNO lives in, containing food, water, thorns, and open space, bounded by walls. External to the AM. | Built: `syno/world/habitat.py` |
+| **SI** | Sensory Interface | Converts what SYNO can perceive in the HB into numeric input signals. | Built: `Habitat.sense` for food and walls, `Habitat.sense_water` for water, and `Habitat.sense_hazard` for thorns |
 | **DN** | Decision Network | The neural network that maps sensory and internal signals to an action. | Built: `syno/brain/` (one value per action) |
 | **HC** | Homeostatic Core | Holds SYNO's internal body variables (energy, stomach fill, in `HydratedCore`, water, and in `FatiguedCore`, fatigue) and updates them every tick. | Built: `syno/body/homeostasis.py`. `HydratedCore` adds water, a second need, and death when energy or water runs out. `FatiguedCore` adds fatigue, which builds up while awake and falls during sleep, and sleep burns less energy |
 | **SE** | Signal Emitters | Hormone-like signals computed from the HC: the hunger signal (ghrelin analog) and the satiety signal (CCK/GLP-1 analog). | Not built: the energy deficit, stomach fill, and water deficit are sensed directly |

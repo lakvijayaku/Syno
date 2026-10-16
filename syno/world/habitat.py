@@ -1,5 +1,5 @@
 # ── SYNO · syno/world/habitat.py ────────────────────────
-# The grid world SYNO lives in, with food and water
+# The grid world SYNO lives in, with food, water, and thorns
 # Laksheth Vijayakumar · 2026-10-07 · GPL-3.0
 # ────────────────────────────────────────────────────────
 
@@ -14,7 +14,7 @@ ACTIONS = {
 
 class Habitat:
     """
-    A rectangular grid containing SYNO and food.
+    A rectangular grid containing SYNO, food, water, and thorns.
 
     Positions are (x, y) tuples: x is the column, counting left to right, and
     y is the row, counting top to bottom, so (0, 0) is the top-left corner.
@@ -32,7 +32,7 @@ class Habitat:
         x, y = position
         return 0 <= x < self.width and 0 <= y < self.height
 
-    def __init__(self, width: int, height: int, agent: tuple[int, int], food: list[tuple[int, int]], water: list[tuple[int, int]] = ()):
+    def __init__(self, width: int, height: int, agent: tuple[int, int], food: list[tuple[int, int]], water: list[tuple[int, int]] = (), hazards: list[tuple[int, int]] = ()):
         """
         Initializes a habitat.
 
@@ -42,6 +42,8 @@ class Habitat:
         :param food: A list of (x, y) positions that contain food.
         :param water: A list of (x, y) positions that contain water. Empty by
             default, so worlds without water are unchanged.
+        :param hazards: A list of (x, y) positions that contain thorns. Empty
+            by default, so worlds without thorns are unchanged.
         :raises ValueError: If the size is invalid or any position is off the grid.
         """
         # Guard clauses: reject an invalid world before storing anything.
@@ -59,21 +61,27 @@ class Habitat:
         for position in water:
             if not self.in_bounds(position):
                 raise ValueError(f"Water position {position} is out of bounds.")
+        for position in hazards:
+            if not self.in_bounds(position):
+                raise ValueError(f"Hazard position {position} is out of bounds.")
         # Tuples cannot be changed, so the agent position is stored as given.
-        # The food and water lists are copied, so changes to the caller's
-        # lists cannot add or remove anything behind the habitat's back. The
-        # default for water is an empty tuple rather than [], because a list
-        # default would be created once and shared by every habitat.
+        # The food, water, and hazard lists are copied, so changes to the
+        # caller's lists cannot add or remove anything behind the habitat's
+        # back. The defaults for water and hazards are empty tuples rather
+        # than [], because a list default would be created once and shared by
+        # every habitat.
         self.agent = agent
         self.food = list(food)
         self.water = list(water)
+        self.hazards = list(hazards)
 
     def render(self) -> str:
         """
         Draws the habitat as text, one line per row.
 
-        S marks SYNO, F marks food, W marks water, and . marks an empty
-        square. When SYNO stands on food or water, the square shows S.
+        S marks SYNO, F marks food, W marks water, T marks a thorn, and .
+        marks an empty square. When SYNO stands on food, water, or a thorn,
+        the square shows S, and food growing on a thorn shows F.
 
         :return: The grid as a multi-line string.
         """
@@ -87,6 +95,9 @@ class Habitat:
                     row += "F"
                 elif (x, y) in self.water:
                     row += "W"
+                # Checked after food, so food growing on a thorn shows F.
+                elif (x, y) in self.hazards:
+                    row += "T"
                 else:
                     row += "."
             rows.append(row)
@@ -192,6 +203,34 @@ class Habitat:
             for dx in range(-radius, radius + 1):
                 position = (x + dx, y + dy)
                 if self.in_bounds(position) and position in self.water:
+                    senses.append(1.0)
+                else:
+                    senses.append(0.0)
+
+        return senses
+
+    def sense_hazard(self, radius: int) -> list[float]:
+        """
+        Describes where thorns are in the square window around SYNO.
+
+        Uses the same window and order as sense. Each square becomes 1.0 for
+        a thorn and 0.0 otherwise. Walls are already reported by sense, so
+        they read 0.0 here. A thorn is not a wall: SYNO can step onto it.
+
+        :param radius: How many squares SYNO can see in each direction.
+        :return: A list of (2 * radius + 1) ** 2 values.
+        :raises ValueError: If radius is negative.
+        """
+        if radius < 0:
+            raise ValueError("Radius must be at least 0.")
+
+        x, y = self.agent
+        senses = []
+
+        for dy in range(-radius, radius + 1):
+            for dx in range(-radius, radius + 1):
+                position = (x + dx, y + dy)
+                if self.in_bounds(position) and position in self.hazards:
                     senses.append(1.0)
                 else:
                     senses.append(0.0)

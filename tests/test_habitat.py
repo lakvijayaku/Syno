@@ -442,5 +442,102 @@ class TestHabitatWater(unittest.TestCase):
             Habitat(3, 3, (1, 1), []).sense_water(-1)
 
 
+class TestHabitatHazards(unittest.TestCase):
+    """Verifies thorns: storing, drawing, stepping onto, and sensing them."""
+
+    def test_step_18a_example(self):
+        habitat = Habitat(3, 3, (1, 1), [(0, 0)], [(0, 2)], [(2, 1)])
+        self.assertEqual(habitat.render(), "F..\n.ST\nW..")
+        self.assertEqual(habitat.sense_hazard(1), [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+
+    def test_no_hazards_by_default(self):
+        self.assertEqual(Habitat(3, 3, (1, 1), []).hazards, [])
+        self.assertEqual(Habitat(3, 3, (1, 1), [], [(0, 0)]).hazards, [])
+
+    def test_default_is_not_shared(self):
+        first = Habitat(3, 3, (1, 1), [])
+        first.hazards.append((0, 0))
+        self.assertEqual(Habitat(3, 3, (1, 1), []).hazards, [])
+
+    def test_hazard_list_is_copied(self):
+        hazards = [(0, 0)]
+        habitat = Habitat(3, 3, (1, 1), [], [], hazards)
+        hazards.append((2, 2))
+        self.assertEqual(habitat.hazards, [(0, 0)])
+
+    def test_keyword_argument(self):
+        self.assertEqual(Habitat(3, 3, (1, 1), [], hazards=[(0, 1)]).hazards, [(0, 1)])
+
+    def test_rejects_hazards_off_the_grid(self):
+        for position in ((-1, 0), (3, 0), (0, 3), (0, -1)):
+            with self.subTest(position=position):
+                with self.assertRaises(ValueError):
+                    Habitat(3, 3, (1, 1), [], [], [position])
+
+    def test_accepts_hazards_on_every_edge(self):
+        Habitat(3, 3, (1, 1), [], [], [(0, 0), (2, 0), (0, 2), (2, 2)])
+
+    def test_render_shows_syno_over_a_thorn(self):
+        self.assertEqual(Habitat(2, 1, (0, 0), [], [], [(0, 0)]).render(), "S.")
+
+    def test_render_shows_food_growing_on_a_thorn(self):
+        self.assertEqual(Habitat(2, 1, (0, 0), [(1, 0)], [], [(1, 0)]).render(), "SF")
+
+    def test_render_without_hazards_is_unchanged(self):
+        self.assertEqual(Habitat(2, 2, (0, 0), [(1, 1)], [(1, 0)]).render(), "SW\n.F")
+
+    def test_syno_can_step_onto_a_thorn(self):
+        habitat = Habitat(3, 1, (0, 0), [], [], [(1, 0)])
+        self.assertTrue(habitat.move("right"))
+        self.assertEqual(habitat.agent, (1, 0))
+        self.assertEqual(habitat.hazards, [(1, 0)])
+
+    def test_food_on_a_thorn_can_be_eaten(self):
+        habitat = Habitat(3, 3, (1, 1), [(1, 1)], [], [(1, 1)])
+        self.assertTrue(habitat.eat())
+        self.assertEqual(habitat.food, [])
+        self.assertEqual(habitat.hazards, [(1, 1)])
+
+    def test_a_thorn_is_not_food_or_water(self):
+        habitat = Habitat(3, 3, (1, 1), [], [], [(1, 1)])
+        self.assertFalse(habitat.eat())
+        self.assertFalse(habitat.drink())
+        self.assertEqual(habitat.sense(0), [0.0])
+        self.assertEqual(habitat.sense_water(0), [0.0])
+
+    def test_food_and_water_are_not_thorns(self):
+        habitat = Habitat(3, 3, (1, 1), [(1, 1)], [(0, 0)])
+        self.assertEqual(habitat.sense_hazard(1), [0.0] * 9)
+
+    def test_sense_hazard_window_size(self):
+        habitat = Habitat(5, 5, (2, 2), [])
+        for radius in (0, 1, 2):
+            with self.subTest(radius=radius):
+                self.assertEqual(len(habitat.sense_hazard(radius)), (2 * radius + 1) ** 2)
+
+    def test_sense_hazard_order_matches_sense(self):
+        habitat = Habitat(3, 3, (1, 1), [(0, 0), (2, 2)], [], [(0, 0), (2, 2)])
+        hazards = habitat.sense_hazard(1)
+        self.assertEqual(hazards, habitat.sense(1))
+        self.assertEqual(hazards[0], 1.0)
+        self.assertEqual(hazards[-1], 1.0)
+
+    def test_sense_hazard_reads_walls_as_zero(self):
+        self.assertEqual(Habitat(1, 1, (0, 0), []).sense_hazard(1), [0.0] * 9)
+
+    def test_sense_hazard_follows_syno(self):
+        habitat = Habitat(3, 1, (0, 0), [], [], [(2, 0)])
+        self.assertEqual(habitat.sense_hazard(1), [0.0] * 9)
+        habitat.move("right")
+        self.assertEqual(habitat.sense_hazard(1)[5], 1.0)
+
+    def test_sense_hazard_under_syno(self):
+        self.assertEqual(Habitat(3, 3, (1, 1), [], [], [(1, 1)]).sense_hazard(0), [1.0])
+
+    def test_sense_hazard_rejects_negative_radius(self):
+        with self.assertRaises(ValueError):
+            Habitat(3, 3, (1, 1), []).sense_hazard(-1)
+
+
 if __name__ == "__main__":
     unittest.main()
