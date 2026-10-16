@@ -69,7 +69,9 @@ Across lives, the **Growth Engine (GE)** adds a hidden neuron to the DN whenever
 | | When and how long to sleep |
 | A small random exploration rate | Acting on food it can no longer see |
 | When the Growth Engine (GE) adds a neuron | |
-| How quickly working memory fades | |
+| How quickly working memory fades | Avoiding thorns, and stepping onto one for food when hungry |
+| How many memories are replayed awake and asleep | |
+| How much a thorn hurts | |
 
 ### Development Phases
 - **Phase 1:** Pure Python, standard library only.

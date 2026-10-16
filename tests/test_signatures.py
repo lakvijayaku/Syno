@@ -2,15 +2,15 @@
 Experiment tests for experiments/signatures.py.
 
 The fast tests probe eating_rate, approach_rate, eating_rpe, cue_rpe,
-switch_rate, delayed_rate, value_ramp, sleep_rate and sleep_bout with
-hand-built networks whose predictions are known exactly, check
-trained_energy with a stand-in for sleep.live, and check that new_brain,
-train and measure are reproducible. The slow test trains SYNO with all 10
-seeds, in the scarce world, the thirst experiment, the blink experiment, the
-sleep experiment, and the dreaming experiment with its sleep replay kept and
-blocked, in parallel (about 17 minutes on a MacBook Air M4), and reproduces
-the recorded E1 to E12 results. It is skipped by default and runs only when
-SYNO_SLOW_TESTS is set:
+switch_rate, delayed_rate, value_ramp, sleep_rate, sleep_bout, step_rate and
+thorn_food_rate with hand-built networks whose predictions are known
+exactly, check trained_energy with a stand-in for sleep.live, and check that
+new_brain, train and measure are reproducible. The slow test trains SYNO with
+all 10 seeds, in the scarce world, the thirst experiment, the blink
+experiment, the sleep experiment, the dreaming experiment with its sleep
+replay kept and blocked, and the pain experiment, in parallel (about 20
+minutes on a MacBook Air M4), and reproduces the recorded E1 to E14 results.
+It is skipped by default and runs only when SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
 
@@ -31,6 +31,7 @@ import experiments.thirst as thirst
 import experiments.blink as blink
 import experiments.sleep as sleep
 import experiments.dreaming as dreaming
+import experiments.pain as pain
 from syno.brain.working_memory import WorkingMemory
 from experiments.xor import make_layer
 from syno.brain.memory import MemoryStore
@@ -38,7 +39,7 @@ from experiments.hunger import LIFE_STEPS
 from syno.brain.layer import Layer
 from syno.brain.network import Network
 from syno.brain.neuron import Neuron
-from syno.body.homeostasis import FatiguedCore, HomeostaticCore, homeostatic_reward
+from syno.body.homeostasis import FatiguedCore, HomeostaticCore, InjuredCore, homeostatic_reward
 
 INPUTS = (2 * signatures.SENSE_RADIUS + 1) ** 2 + 2
 CENTER = ((2 * signatures.SENSE_RADIUS + 1) ** 2) // 2
@@ -85,6 +86,11 @@ class TestSignaturesSetup(unittest.TestCase):
     def test_sleep_probe_settings(self):
         self.assertEqual(signatures.SLEEP_ENERGY, 0.8)
         self.assertEqual(signatures.MAX_BOUT, 30)
+
+    def test_pain_probe_energies(self):
+        self.assertEqual(signatures.PAIN_ENERGY, 0.5)
+        self.assertEqual(signatures.HUNGRY_ENERGY, 0.2)
+        self.assertEqual(signatures.SATED_ENERGY, 0.8)
 
     def test_sleep_fatigue_levels(self):
         self.assertEqual(signatures.RESTED_FATIGUE, 0.2)
@@ -766,6 +772,100 @@ class TestTrainedEnergy(unittest.TestCase):
         self.assertEqual(weights(first), weights(second))
 
 
+PAIN_WINDOW = (2 * signatures.SENSE_RADIUS + 1) ** 2
+PAIN_INPUTS = 2 * PAIN_WINDOW + 3
+PAIN_DEFICIT = PAIN_INPUTS - 3
+PAIN_INJURY = PAIN_INPUTS - 1
+# The square just above SYNO in the food window and in the thorn window.
+FOOD_ABOVE = CENTER - (2 * signatures.SENSE_RADIUS + 1)
+THORN_ABOVE = PAIN_WINDOW + FOOD_ABOVE
+
+
+def pain_network(weights: dict[int, float], bias: float) -> Network:
+    """
+    Builds a one-layer linear network for the pain experiment that prefers
+    up when bias plus the given weights on chosen inputs is above 0.0, and
+    otherwise prefers eat, which is never a step. The other moves output
+    -1.0.
+    """
+    neurons = []
+    for action in range(len(pain.ACTION_NAMES)):
+        row = [0.0] * PAIN_INPUTS
+        neuron_bias = 0.0 if pain.ACTION_NAMES[action] == "eat" else -1.0
+        if pain.ACTION_NAMES[action] == "up":
+            for index, weight in weights.items():
+                row[index] = weight
+            neuron_bias = bias
+        neurons.append(Neuron(row, neuron_bias, "linear"))
+    return Network([Layer(neurons)])
+
+
+class TestStepRate(unittest.TestCase):
+    """
+    Verifies step_rate against networks with known preferences. On the 5x5
+    grid there are 80 pairings of a square and a direction that stays on
+    the grid, 20 of them up.
+    """
+
+    def test_always_up(self):
+        network = pain_network({}, 1.0)
+        self.assertEqual(signatures.step_rate(network, False), 20 / 80)
+        self.assertEqual(signatures.step_rate(network, True), 20 / 80)
+
+    def test_never_up(self):
+        network = pain_network({}, -1.0)
+        self.assertEqual(signatures.step_rate(network, False), 0.0)
+
+    def test_avoids_a_thorn_above(self):
+        # Up wins unless a thorn is directly above.
+        network = pain_network({THORN_ABOVE: -2.0}, 1.0)
+        self.assertEqual(signatures.step_rate(network, False), 20 / 80)
+        self.assertEqual(signatures.step_rate(network, True), 0.0)
+
+    def test_the_thorn_is_on_the_target_square(self):
+        # Up wins only when a thorn is directly above, which happens only
+        # when up is the direction being tested.
+        network = pain_network({THORN_ABOVE: 2.0}, -1.0)
+        self.assertEqual(signatures.step_rate(network, True), 20 / 80)
+
+    def test_no_food_in_the_world(self):
+        network = pain_network({CENTER - 5: 2.0, CENTER: 2.0}, -1.0)
+        self.assertEqual(signatures.step_rate(network, True), 0.0)
+
+    def test_syno_is_half_hungry_and_unhurt(self):
+        self.assertEqual(signatures.step_rate(pain_network({PAIN_DEFICIT: 1.0}, -0.45), False), 20 / 80)
+        self.assertEqual(signatures.step_rate(pain_network({PAIN_DEFICIT: 1.0}, -0.55), False), 0.0)
+        self.assertEqual(signatures.step_rate(pain_network({PAIN_INJURY: -1.0}, 0.01), False), 20 / 80)
+
+    def test_never_builds_a_world_with_an_off_grid_thorn(self):
+        # Every square on the edge has a direction off the grid. Building a
+        # habitat with a thorn there would raise ValueError.
+        network = pain_network({}, 0.0)
+        signatures.step_rate(network, True)
+
+
+class TestThornFoodRate(unittest.TestCase):
+    """Verifies thorn_food_rate against networks with known preferences."""
+
+    def test_food_and_thorn_share_the_target(self):
+        # Up wins only when food and a thorn are both directly above.
+        network = pain_network({FOOD_ABOVE: 1.0, THORN_ABOVE: 1.0}, -1.5)
+        self.assertEqual(signatures.thorn_food_rate(network, 0.5), 20 / 80)
+
+    def test_hunger_sets_the_choice(self):
+        # Up wins only when the energy deficit is above 0.5.
+        network = pain_network({PAIN_DEFICIT: 1.0}, -0.5)
+        self.assertEqual(signatures.thorn_food_rate(network, 0.2), 20 / 80)
+        self.assertEqual(signatures.thorn_food_rate(network, 0.8), 0.0)
+
+    def test_syno_is_unhurt_with_an_empty_stomach(self):
+        network = pain_network({PAIN_INJURY: -1.0, PAIN_INPUTS - 2: -1.0}, 0.01)
+        self.assertEqual(signatures.thorn_food_rate(network, 0.5), 20 / 80)
+
+    def test_never_builds_a_world_off_the_grid(self):
+        signatures.thorn_food_rate(pain_network({}, 0.0), 0.5)
+
+
 class TestValueRamp(unittest.TestCase):
     """
     Verifies value_ramp against networks with known predictions. On the 5x5
@@ -821,14 +921,30 @@ class TestMeasure(unittest.TestCase):
     """Verifies that measure trains one SYNO and measures every signature."""
 
     def setUp(self):
-        self.saved = signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES
+        self.saved = signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES, pain.LIVES
         signatures.CHECKPOINTS = [0, 1, 2]
         thirst.LIVES = 2
         blink.LIVES = 2
         sleep.LIVES = 2
+        pain.LIVES = 2
 
     def tearDown(self):
-        signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES = self.saved
+        signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES, pain.LIVES = self.saved
+
+    def test_pain_signatures_use_a_pain_trained_network(self):
+        results = signatures.measure(3)
+        random.seed(3)
+        network = Network([
+            make_layer(pain.HIDDEN_NEURONS, PAIN_INPUTS),
+            make_layer(len(pain.ACTION_NAMES), pain.HIDDEN_NEURONS, "linear"),
+        ])
+        memory = MemoryStore(pain.MEMORY_CAPACITY)
+        for _ in range(2):
+            pain.live(network, memory)
+        self.assertEqual(results["e13"], [signatures.step_rate(network, False),
+                                          signatures.step_rate(network, True)])
+        self.assertEqual(results["e14"], [signatures.thorn_food_rate(network, 0.2),
+                                          signatures.thorn_food_rate(network, 0.8)])
 
     def test_consolidation_compares_kept_and_blocked_sleep_replay(self):
         results = signatures.measure(3)
@@ -891,6 +1007,8 @@ class TestMeasure(unittest.TestCase):
         self.assertEqual(len(results["e10"]), 2)
         self.assertEqual(len(results["e11"]), 2)
         self.assertEqual(len(results["e12"]), 2)
+        self.assertEqual(len(results["e13"]), 2)
+        self.assertEqual(len(results["e14"]), 2)
 
     def test_matches_the_probes_on_the_same_network(self):
         results = signatures.measure(3)
@@ -919,7 +1037,7 @@ class TestMeasure(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("SYNO_SLOW_TESTS"), "slow: set SYNO_SLOW_TESTS=1")
 class TestSignaturesRun(unittest.TestCase):
-    """Reproduces the recorded E1 to E12 results."""
+    """Reproduces the recorded E1 to E14 results."""
 
     def test_results(self):
         output = io.StringIO()
@@ -999,6 +1117,16 @@ Seeds: 10/10
 E12: Sleep consolidation (10 seeds)
 Sleep replay | Energy: 0.696 [0.640, 0.730]
 Blocked      | Energy: 0.318 [0.211, 0.486]
+Seeds: 10/10
+
+E13: Pain avoidance (10 seeds)
+Empty | Steps: 0.29 [0.20, 0.31]
+Thorn | Steps: 0.00 [0.00, 0.04]
+Seeds: 10/10
+
+E14: Hunger overrides pain (10 seeds)
+Energy 0.2 | Steps onto thorn: 0.72 [0.39, 0.95]
+Energy 0.8 | Steps onto thorn: 0.29 [0.09, 0.80]
 Seeds: 10/10""".splitlines()
         self.assertEqual(output.getvalue().splitlines(), expected)
 

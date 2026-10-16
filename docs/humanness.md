@@ -2,8 +2,8 @@
 
 This document scores how close SYNO is to having every capability of a human mind and body. It lists 104 capabilities, from regulating energy to language and consciousness, and records which ones SYNO has. Behavioral signatures that have been formally measured are listed in [`evaluation.md`](evaluation.md).
 
-### Score: 28.5%
-SYNO earns **28.5 of 100 points** across the capabilities that a synthetic organism can achieve.
+### Score: 29%
+SYNO earns **29 of 100 points** across the capabilities that a synthetic organism can achieve.
 
 | Status | Meaning | Points |
 |---|---|---|
@@ -11,7 +11,7 @@ SYNO earns **28.5 of 100 points** across the capabilities that a synthetic organ
 | ◐ | SYNO has it partly or weakly | 0.5 |
 | ❌ | SYNO does not have it | 0 |
 
-SYNO has 23 capabilities (✅) and 11 in part (◐), and lacks 70 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
+SYNO has 23 capabilities (✅) and 12 in part (◐), and lacks 69 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
 
 ### Columns
 - **Shared With:** how widely the capability is found in nature, from *All animals* through *Mammals*, *Some animals* (such as primates and corvids), and *Mostly human* to *Uniquely human*.
@@ -28,7 +28,7 @@ SYNO has 23 capabilities (✅) and 11 in part (◐), and lacks 70 (❌). Of the 
 | Long-term energy storage | ❌ | Mammals | Yes |
 | Fatigue and rest | ✅ sleeps sooner and longer when tired (E10, E11) | All animals | Yes |
 | Sleep and circadian rhythm | ◐ sleeps, but has no day-night cycle | All animals | Yes |
-| Pain signals | ✅ injury from thorns is a negative reward | All animals | Yes |
+| Pain signals | ✅ injury from thorns is a negative reward (E13, E14) | All animals | Yes |
 | Injury and healing | ❌ | All animals | Partly |
 | Aging over a lifespan | ❌ | All animals | Yes |
 | Death from neglected needs | ✅ dies of hunger or thirst | All animals | Yes |
@@ -93,7 +93,7 @@ SYNO has 23 capabilities (✅) and 11 in part (◐), and lacks 70 (❌). Of the 
 | Wanting | ✅ | All animals | Yes |
 | Liking | ❌ | Mammals | Partly |
 | Arousal | ✅ sets the learning rate | All animals | Yes |
-| Fear and threat avoidance | ❌ | All animals | Yes |
+| Fear and threat avoidance | ◐ avoids thorns it can see (E13), but has no lasting fear state | All animals | Yes |
 | Stress response | ❌ | All animals | Yes |
 | Boredom | ◐ novelty habituates | Mammals | Yes |
 | Frustration | ◐ the dip in reward prediction error (E5) | Mammals | Yes |
@@ -166,7 +166,7 @@ SYNO has 23 capabilities (✅) and 11 in part (◐), and lacks 70 (❌). Of the 
 | Evolution across generations | ❌ | All animals | Yes |
 
 ### What Earns the Score
-SYNO's capabilities are concentrated in learning and motivation, the foundation shared by all animals: reward learning driven by a dopamine-like prediction error, curiosity, memory replay, hunger and thirst, death when either is neglected, sleeping off fatigue, pain from injury, and a surprise-driven arousal hormone. In measured behavior, its dopamine response moves from eating to the sight of food (E4), dips when expected food is missing (E5), and ramps up as food gets closer (E9). It falls asleep more readily and sleeps longer the more tired it is (E10, E11), and the replay of memories during sleep is what lets it learn (E12).
+SYNO's capabilities are concentrated in learning and motivation, the foundation shared by all animals: reward learning driven by a dopamine-like prediction error, curiosity, memory replay, hunger and thirst, death when either is neglected, sleeping off fatigue, pain from injury, and a surprise-driven arousal hormone. In measured behavior, its dopamine response moves from eating to the sight of food (E4), dips when expected food is missing (E5), and ramps up as food gets closer (E9). It falls asleep more readily and sleeps longer the more tired it is (E10, E11), and the replay of memories during sleep is what lets it learn (E12). It learns to avoid thorns, yet steps onto one for food the hungrier it is (E13, E14).
 
 ### What Holds It Back
 - **Hunger alone barely changes its choices:** when food is the only need at stake, a hungry and a nearly full SYNO choose almost the same (E2, E3). With two needs, it chooses by the larger one (E7).

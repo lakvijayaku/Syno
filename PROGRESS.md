@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-Steps 1 to 17 are complete, and step 18 is in progress. Measured over 10 seeds, E4, E5, E7, E8, E9, E10, E11, and E12 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 28.5% of the human capabilities listed in `docs/humanness.md`.
+All 18 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, E9, E10, E11, E12, E13, and E14 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 29% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -28,10 +28,11 @@ Steps 1 to 17 are complete, and step 18 is in progress. Measured over 10 seeds, 
 | **15** | Dopamine ramping | ✅ Done |
 | **16** | Fatigue and sleep | ✅ Done |
 | **17** | Consolidation during sleep | ✅ Done |
-| **18** | Pain and fear | 🚧 In progress |
+| **18** | Pain and fear | ✅ Done |
 
 ### Log
 #### 2026-10-15
+- **Step 18d complete:** `experiments/signatures.py` measures E13, pain avoidance, and E14, hunger overrides pain, on a SYNO from each seed trained in the pain experiment, covered by 13 new tests. With no food in sight, SYNO steps onto a neighboring square in 0.29 of cases when it is empty and 0.00 when it has a thorn, and with food growing on the thorn, it steps onto it in 0.72 of cases at energy 0.2 against 0.29 at 0.8, both in all 10 seeds, so both are reproduced. Fear and threat avoidance becomes a partial SYNO capability, raising the humanness score to 29%. Step 18 (Pain and fear) is complete.
 - **Step 18c complete:** `experiments/pain.py`, where the scarce world has 2 thorns and stepping onto one hurts SYNO, covered by 16 tests. Food can grow on a thorn. Over 3000 lives, SYNO's average energy rose from 0.25 to 0.57, and it stepped onto a thorn about 0.6 times per life. Pain signals become a SYNO capability, raising the humanness score to 28.5%.
 - **Step 18b complete:** `InjuredCore`, a body with injury as a second need, covered by 24 unit tests. Injury rises when SYNO is hurt, heals by 0.02 every step, and adds its square to the drive, so being hurt is punished and healing rewarded. `HomeostaticCore` is unchanged.
 - **Step 18a complete:** the Habitat can hold thorns, which SYNO can step onto and see with `sense_hazard`, covered by 20 new unit tests. Worlds without thorns are unchanged.

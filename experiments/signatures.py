@@ -10,12 +10,13 @@ import experiments.thirst as thirst
 import experiments.blink as blink
 import experiments.sleep as sleep
 import experiments.dreaming as dreaming
+import experiments.pain as pain
 from experiments.xor import make_layer
 from syno.brain.network import Network
 from syno.brain.memory import MemoryStore
 from syno.brain.working_memory import WorkingMemory
 from syno.world.habitat import Habitat, ACTIONS
-from syno.body.homeostasis import HomeostaticCore, HydratedCore, FatiguedCore, homeostatic_reward
+from syno.body.homeostasis import HomeostaticCore, HydratedCore, FatiguedCore, InjuredCore, homeostatic_reward
 from syno.brain.dopamine import reward_prediction_error
 from experiments.hunger import ACTION_NAMES, HIDDEN_NEURONS, SENSE_RADIUS, senses, DISCOUNT, FOOD_AMOUNT, REWARD_SCALE
 from experiments.replay import MEMORY_CAPACITY
@@ -73,6 +74,13 @@ LONG_WAKE_FATIGUE = 0.9
 # For E12, a SYNO is judged by its average energy over its last FINAL_LIVES
 # lives of training, the same window the experiments print.
 FINAL_LIVES = 500
+
+# For E13, a half-hungry SYNO decides whether to step onto a thorn. For E14,
+# a hungry and a nearly full SYNO decide whether to step onto a thorn to
+# reach food.
+PAIN_ENERGY = 0.5
+HUNGRY_ENERGY = 0.2
+SATED_ENERGY = 0.8
 
 
 def new_brain(seed: int) -> tuple[Network, MemoryStore]:
@@ -449,12 +457,79 @@ def trained_energy(seed: int, awake_replays: int, sleep_replays: int) -> float:
     return sum(final) / len(final)
 
 
+def step_rate(network: Network, thorn: bool) -> float:
+    """
+    Measures how often SYNO steps onto a neighboring square that is empty or
+    has a thorn (E13).
+
+    For every square and every direction that stays on the grid, SYNO is
+    half-hungry and unhurt with no food in the world, and its preferred
+    action is checked against that direction. Animals learn to avoid what
+    hurt them.
+
+    :param network: A Decision Network trained in the pain experiment.
+    :param thorn: True to put a thorn on the neighboring square.
+    :return: The fraction of pairings where SYNO steps onto that square.
+    """
+    count = 0
+    pairs = 0
+    for y in range(pain.GRID_SIZE):
+        for x in range(pain.GRID_SIZE):
+            for name, (dx, dy) in ACTIONS.items():
+                target = (x + dx, y + dy)
+                # Checked before building the habitat, which rejects a
+                # thorn off the grid.
+                if not (0 <= target[0] < pain.GRID_SIZE and 0 <= target[1] < pain.GRID_SIZE):
+                    continue
+                habitat = Habitat(pain.GRID_SIZE, pain.GRID_SIZE, (x, y), [], hazards=[target] if thorn else [])
+                body = InjuredCore(PAIN_ENERGY, 0.0)
+                values = network.forward(pain.senses(habitat, body))
+                action = pain.ACTION_NAMES[values.index(max(values))]
+                pairs += 1
+                if action == name:
+                    count += 1
+    return count / pairs
+
+
+def thorn_food_rate(network: Network, energy: float) -> float:
+    """
+    Measures how often SYNO steps onto a thorn to reach food growing on it
+    (E14).
+
+    For every square and every direction that stays on the grid, food and a
+    thorn share the neighboring square, and SYNO is unhurt with an empty
+    stomach. A hungry animal accepts more pain to reach food.
+
+    :param network: A Decision Network trained in the pain experiment.
+    :param energy: SYNO's energy, from 0.0 to 1.0.
+    :return: The fraction of pairings where SYNO steps onto the thorn.
+    """
+    count = 0
+    pairs = 0
+    for y in range(pain.GRID_SIZE):
+        for x in range(pain.GRID_SIZE):
+            for name, (dx, dy) in ACTIONS.items():
+                target = (x + dx, y + dy)
+                # Checked before building the habitat, which rejects a
+                # thorn off the grid.
+                if not (0 <= target[0] < pain.GRID_SIZE and 0 <= target[1] < pain.GRID_SIZE):
+                    continue
+                habitat = Habitat(pain.GRID_SIZE, pain.GRID_SIZE, (x, y), [target], hazards=[target])
+                body = InjuredCore(energy, 0.0)
+                values = network.forward(pain.senses(habitat, body))
+                action = pain.ACTION_NAMES[values.index(max(values))]
+                pairs += 1
+                if action == name:
+                    count += 1
+    return count / pairs
+
+
 def measure(seed: int) -> dict:
     """
-    Trains six SYNOs from the same seed, in the scarce world, the thirst
-    experiment, the blink experiment, the sleep experiment, and the dreaming
-    experiment with its sleep replay kept and blocked, and measures every
-    signature.
+    Trains seven SYNOs from the same seed, in the scarce world, the thirst
+    experiment, the blink experiment, the sleep experiment, the dreaming
+    experiment with its sleep replay kept and blocked, and the pain
+    experiment, and measures every signature.
 
     Each seed runs in its own process, so the results are returned rather
     than added to shared totals.
@@ -463,7 +538,8 @@ def measure(seed: int) -> dict:
     :return: The results by signature: "food" and "cue" (E4, one value per
         checkpoint), "e1", "e2", "near" and "far" (E3), "e5", "thirsty"
         and "hungry" (E7), "e8", "e9" (one value per distance), "e10", and
-        "e11", and "e12" (sleep replay kept, then blocked).
+        "e11", "e12" (sleep replay kept, then blocked), "e13" (empty, then
+        thorn), and "e14" (hungry, then sated).
     """
     network, memory = new_brain(seed)
     results = {"food": [], "cue": []}
@@ -525,6 +601,20 @@ def measure(seed: int) -> dict:
     # is blocked. Both sleep as much as they choose; only replay differs.
     results["e12"] = [trained_energy(seed, dreaming.AWAKE_REPLAYS, dreaming.SLEEP_REPLAYS),
                       trained_energy(seed, 0, 0)]
+
+    # E13 and E14 need a SYNO that can be hurt, trained in the pain
+    # experiment from the same seed.
+    random.seed(seed)
+    inputs = 2 * (2 * SENSE_RADIUS + 1) ** 2 + 3
+    network = Network([
+        make_layer(pain.HIDDEN_NEURONS, inputs),
+        make_layer(len(pain.ACTION_NAMES), pain.HIDDEN_NEURONS, "linear")
+    ])
+    memory = MemoryStore(MEMORY_CAPACITY)
+    for _ in range(pain.LIVES):
+        pain.live(network, memory)
+    results["e13"] = [step_rate(network, False), step_rate(network, True)]
+    results["e14"] = [thorn_food_rate(network, HUNGRY_ENERGY), thorn_food_rate(network, SATED_ENERGY)]
     return results
 
 
@@ -639,6 +729,22 @@ def main():
     print(f"Sleep replay | Energy: {sleep_replay_energy}")
     print(f"Blocked      | Energy: {blocked_energy}")
     n = sum(r["e12"][0] >= r["e12"][1] + CLEAR_EFFECT for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
+    print()
+    print(f"E13: Pain avoidance ({SEEDS} seeds)")
+    empty_rate = spread([r["e13"][0] for r in results], 2)
+    thorn_rate = spread([r["e13"][1] for r in results], 2)
+    print(f"Empty | Steps: {empty_rate}")
+    print(f"Thorn | Steps: {thorn_rate}")
+    n = sum(r["e13"][1] <= r["e13"][0] - CLEAR_EFFECT for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
+    print()
+    print(f"E14: Hunger overrides pain ({SEEDS} seeds)")
+    hungry_rate = spread([r["e14"][0] for r in results], 2)
+    sated_rate = spread([r["e14"][1] for r in results], 2)
+    print(f"Energy {HUNGRY_ENERGY:.1f} | Steps onto thorn: {hungry_rate}")
+    print(f"Energy {SATED_ENERGY:.1f} | Steps onto thorn: {sated_rate}")
+    n = sum(r["e14"][0] >= r["e14"][1] + CLEAR_EFFECT for r in results)
     print(f"Seeds: {n}/{SEEDS}")
 
 
