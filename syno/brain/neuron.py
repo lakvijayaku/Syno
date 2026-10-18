@@ -45,17 +45,19 @@ class Neuron:
         :return: The sigmoid-activated output of the neuron.
         :raises ValueError: If the number of inputs does not match the number of weights.
         """
-        # Pair each weight with its matching input and compute the weighted sum.
-        # strict=True makes zip raise a ValueError when the lists differ in
-        # length, instead of silently ignoring the extra values.
-        try:
-            weighted_sum = sum(w * x for w, x in zip(self.weights, inputs, strict=True)) + self.bias
-        # Re-raise the error with a clearer message. "from e" preserves the
-        # original error as the cause.
-        except ValueError as e:
-            raise ValueError(
-                f"Mismatched input dimensions. Expected {len(self.weights)} inputs, got {len(inputs)}."
-            ) from e
+        # Each weight must have exactly one input. Without this check, extra
+        # inputs would be silently ignored, and missing ones would raise an
+        # unclear IndexError partway through the loop.
+        if len(self.weights) != len(inputs):
+            raise ValueError(f"Mismatched input dimensions. Expected {len(self.weights)} inputs, got {len(inputs)}.")
+        # Multiply each input by its matching weight and add them up.
+        weighted_sum = 0.0
+        for i in range(len(inputs)):
+            weighted_sum += self.weights[i] * inputs[i]
+        # The bias is added once, after the loop. Adding in this order keeps
+        # every result identical to earlier versions, since floats round
+        # differently when the same numbers are added in another order.
+        weighted_sum += self.bias
 
         # A linear neuron skips the sigmoid, so its output is not limited to
         # the range 0 to 1. Output layers that predict values use this.

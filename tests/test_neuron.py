@@ -147,12 +147,35 @@ class TestInputValidation(unittest.TestCase):
             neuron.forward([1.0, 2.0, 3.0])
         self.assertIn("Expected 2 inputs, got 3", str(context.exception))
 
-    def test_error_preserves_original_cause(self):
-        # "raise ... from e" must keep the original zip error as the cause.
-        neuron = Neuron([0.5, 0.5], 0.0)
+    def test_too_few_inputs_report_both_lengths(self):
+        # Missing inputs must get the clear message, not an IndexError from
+        # reading past the end of the inputs.
+        neuron = Neuron([0.5, 0.5, 0.5], 0.0)
         with self.assertRaises(ValueError) as context:
             neuron.forward([1.0])
-        self.assertIsInstance(context.exception.__cause__, ValueError)
+        self.assertIn("Expected 3 inputs, got 1", str(context.exception))
+
+
+class TestWeightedSum(unittest.TestCase):
+    """Verifies that the weighted sum adds every input once and the bias once."""
+
+    def test_bias_is_added_once(self):
+        neuron = Neuron([1.0, 1.0, 1.0, 1.0], 0.5, "linear")
+        self.assertEqual(neuron.forward([0.0, 0.0, 0.0, 0.0]), 0.5)
+
+    def test_every_input_is_weighted(self):
+        neuron = Neuron([1.0, 2.0, 3.0], 0.0, "linear")
+        self.assertEqual(neuron.forward([1.0, 10.0, 100.0]), 321.0)
+
+    def test_matches_the_original_order_exactly(self):
+        # The inputs are added in order and the bias last, as the original
+        # one-line sum did. Floats round differently in a different order,
+        # and the slow tests reproduce training curves exactly.
+        weights = [0.1, 0.2, 0.3, 1e-17, -0.7]
+        inputs = [0.3, 0.2, 0.1, 1.0, 0.9]
+        neuron = Neuron(weights, 0.1, "linear")
+        expected = sum(w * x for w, x in zip(weights, inputs)) + 0.1
+        self.assertEqual(neuron.forward(inputs), expected)
 
 
 class TestStateIsolation(unittest.TestCase):

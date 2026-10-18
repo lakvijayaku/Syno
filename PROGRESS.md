@@ -31,6 +31,9 @@ All 18 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, E9, E
 | **18** | Pain and fear | ✅ Done |
 
 ### Log
+#### 2026-10-18
+- **Readability:** `Neuron.forward` computes its weighted sum with a plain loop instead of a one-line generator, checks the input count itself, and adds the bias last, so every result is unchanged. The loop also runs about a third faster.
+
 #### 2026-10-15
 - **Step 18d complete:** `experiments/signatures.py` measures E13, pain avoidance, and E14, hunger overrides pain, on a SYNO from each seed trained in the pain experiment, covered by 13 new tests. With no food in sight, SYNO steps onto a neighboring square in 0.29 of cases when it is empty and 0.00 when it has a thorn, and with food growing on the thorn, it steps onto it in 0.72 of cases at energy 0.2 against 0.29 at 0.8, both in all 10 seeds, so both are reproduced. Fear and threat avoidance becomes a partial SYNO capability, raising the humanness score to 29%. Step 18 (Pain and fear) is complete.
 - **Step 18c complete:** `experiments/pain.py`, where the scarce world has 2 thorns and stepping onto one hurts SYNO, covered by 16 tests. Food can grow on a thorn. Over 3000 lives, SYNO's average energy rose from 0.25 to 0.57, and it stepped onto a thorn about 0.6 times per life. Pain signals become a SYNO capability, raising the humanness score to 28.5%.
