@@ -21,7 +21,7 @@ In the diagram below, SYNO's senses pass through the Sensory Interface (SI) to t
 
 ```
 ┌──────────────────────── HB ────────────────────────┐
-│  food, water, thorns, and open space, and walls    │
+│  food, water, thorns, open space, and walls        │
 └──────────┬──────────────────────────────▲──────────┘
      senses│                              │action
 ┌──────────▼─────────────── AM ───────────┴──────────┐

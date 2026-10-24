@@ -10,12 +10,19 @@ The policy is as follows:
 - **Code:** All code must be written by a human. AI-generated code is not permitted.
 - **Tests:** AI tools may be used to draft tests. The contributor must read, verify, and take full responsibility for every test before committing it. Tests are an additional safeguard and never a substitute for understanding the code they test.
 - **Documentation and commit messages:** AI tools may be used to produce a first draft. The contributor must read, verify, and take full responsibility for every word before committing it.
-- **Commits:** Every commit must be made by a human. Commits must not carry AI attribution, such as a `Co-Authored-By` trailer naming an AI tool.
+- **Commits:** Every commit must be made and signed by a human. Commits must not carry AI attribution, such as a `Co-Authored-By` trailer naming an AI tool.
 
 Contributors who commit unverified AI-generated content, whether code or documentation, may be banned from the project.
 
 ### Documentation Rule
 Documentation must always describe the code as it is. Any commit that makes a document wrong, such as a changed number, a renamed file, or a new capability, must fix that document in the same commit. Historical log entries in `PROGRESS.md` record what was true when they were written and are not rewritten.
 
+### House Style
+Follow the house style in [`CLAUDE.md`](CLAUDE.md): file headers, docstrings, comments, and Markdown layout. It applies to every contribution, whether or not AI tools were used.
+
 ### How to Contribute
-At this stage, the project owner is learning neural networks and brain-inspired AI and intends to write the code personally. Code contributions are therefore not being accepted yet. The best way to contribute is to report bugs or suggest improvements by email to [`lakvijayaku@gmail.com`](mailto:lakvijayaku@gmail.com).
+The project owner is learning neural networks and brain-inspired AI by building SYNO, so all of its code is written by the owner, and code contributions are not accepted. Contributors can still help in three ways:
+
+- **Bugs:** Report any bug by email to [`lakvijayaku@gmail.com`](mailto:lakvijayaku@gmail.com).
+- **Documentation:** Correct or improve any document with a pull request, following the Documentation Rule and the house style.
+- **Learning:** Study SYNO with Claude Code, which follows the rules in [`CLAUDE.md`](CLAUDE.md) for every contributor.
