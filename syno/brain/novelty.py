@@ -43,6 +43,35 @@ class NoveltySystem:
         self.familiarity[position] = familiarity + self.habituation * (1.0 - familiarity)
         return bonus
 
+    def sense(self, position: tuple[int, int], radius: int) -> list[float]:
+        """
+        Reports how familiar every square in the window around a position is,
+        without visiting any of them.
+
+        Values are ordered row by row from the top-left of the window, the
+        same order as Habitat.sense, so each familiarity lines up with what
+        SYNO sees on that square.
+
+        :param position: The (x, y) position at the center of the window.
+        :param radius: How many squares to report in each direction.
+        :return: A list of (2 * radius + 1) ** 2 values, from 0.0 (new) to
+            1.0 (completely familiar).
+        :raises ValueError: If radius is negative.
+        """
+        if radius < 0:
+            raise ValueError("Radius must be at least 0.")
+
+        x, y = position
+        senses = []
+        for dy in range(-radius, radius + 1):
+            for dx in range(-radius, radius + 1):
+                # A square never visited counts as completely new. This also
+                # covers squares off the grid, which SYNO's eyes already show
+                # as walls. Only reading with get means that looking at a
+                # square never counts as visiting it.
+                senses.append(self.familiarity.get((x + dx, y + dy), 0.0))
+        return senses
+
     def tick(self) -> None:
         """
         Lets every familiarity fade by one step, so curiosity recovers over time.

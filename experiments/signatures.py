@@ -11,10 +11,12 @@ import experiments.blink as blink
 import experiments.sleep as sleep
 import experiments.dreaming as dreaming
 import experiments.pain as pain
+import experiments.habituation as habituation
 from experiments.xor import make_layer
 from syno.brain.network import Network
 from syno.brain.memory import MemoryStore
 from syno.brain.working_memory import WorkingMemory
+from syno.brain.novelty import NoveltySystem
 from syno.world.habitat import Habitat, ACTIONS
 from syno.body.homeostasis import HomeostaticCore, HydratedCore, FatiguedCore, InjuredCore, homeostatic_reward
 from syno.brain.dopamine import reward_prediction_error
@@ -81,6 +83,13 @@ FINAL_LIVES = 500
 PAIN_ENERGY = 0.5
 HUNGRY_ENERGY = 0.2
 SATED_ENERGY = 0.8
+
+# E6 probes a half-hungry SYNO, which wants to move but is not desperate.
+# After FAMILIAR_VISITS visits, a square's familiarity is 0.94; after
+# ABSENCE_STEPS steps away, it has faded back to about 0.02.
+HABITUATION_ENERGY = 0.5
+FAMILIAR_VISITS = 4
+ABSENCE_STEPS = 80
 
 
 def new_brain(seed: int) -> tuple[Network, MemoryStore]:
@@ -524,12 +533,53 @@ def thorn_food_rate(network: Network, energy: float) -> float:
     return count / pairs
 
 
+def familiar_rate(network: Network, visits: int, absence: int) -> float:
+    """
+    Measures how often SYNO steps onto a neighboring square after visiting
+    it visits times and being away for absence steps (E6).
+
+    For every square and every direction that stays on the grid, SYNO is
+    half-hungry with no food in the world, its own square has been seen
+    once, and the neighboring square's familiarity comes from real visits to
+    it in a Novelty System, which then fades for absence ticks. Animals
+    explore a familiar place less, and return to it after time away.
+
+    :param network: A Decision Network trained in the habituation experiment.
+    :param visits: How many times SYNO has visited the neighboring square.
+    :param absence: How many steps have passed since the last visit.
+    :return: The fraction of pairings where SYNO steps onto that square.
+    """
+    count = 0
+    pairs = 0
+    for y in range(GRID_SIZE):
+        for x in range(GRID_SIZE):
+            for name, (dx, dy) in ACTIONS.items():
+                target = (x + dx, y + dy)
+                # A square off the grid cannot be stepped onto.
+                if not (0 <= target[0] < GRID_SIZE and 0 <= target[1] < GRID_SIZE):
+                    continue
+                habitat = Habitat(GRID_SIZE, GRID_SIZE, (x, y), [])
+                novelty = NoveltySystem(habituation.NOVELTY_SCALE, habituation.HABITUATION, habituation.RECOVERY)
+                for _ in range(visits):
+                    novelty.signal(target)
+                for _ in range(absence):
+                    novelty.tick()
+                novelty.signal((x, y))
+                body = HomeostaticCore(HABITUATION_ENERGY, 0.0)
+                values = network.forward(habituation.senses(habitat, body, novelty))
+                action = habituation.ACTION_NAMES[values.index(max(values))]
+                pairs += 1
+                if action == name:
+                    count += 1
+    return count / pairs
+
+
 def measure(seed: int) -> dict:
     """
-    Trains seven SYNOs from the same seed, in the scarce world, the thirst
+    Trains eight SYNOs from the same seed, in the scarce world, the thirst
     experiment, the blink experiment, the sleep experiment, the dreaming
-    experiment with its sleep replay kept and blocked, and the pain
-    experiment, and measures every signature.
+    experiment with its sleep replay kept and blocked, the pain experiment,
+    and the habituation experiment, and measures every signature.
 
     Each seed runs in its own process, so the results are returned rather
     than added to shared totals.
@@ -539,7 +589,8 @@ def measure(seed: int) -> dict:
         checkpoint), "e1", "e2", "near" and "far" (E3), "e5", "thirsty"
         and "hungry" (E7), "e8", "e9" (one value per distance), "e10", and
         "e11", "e12" (sleep replay kept, then blocked), "e13" (empty, then
-        thorn), and "e14" (hungry, then sated).
+        thorn), "e14" (hungry, then sated), and "e6" (fresh, familiar,
+        then returned).
     """
     network, memory = new_brain(seed)
     results = {"food": [], "cue": []}
@@ -615,6 +666,21 @@ def measure(seed: int) -> dict:
         pain.live(network, memory)
     results["e13"] = [step_rate(network, False), step_rate(network, True)]
     results["e14"] = [thorn_food_rate(network, HUNGRY_ENERGY), thorn_food_rate(network, SATED_ENERGY)]
+
+    # E6 needs a SYNO that senses familiarity, trained in the habituation
+    # experiment from the same seed.
+    random.seed(seed)
+    inputs = 2 * (2 * SENSE_RADIUS + 1) ** 2 + 2
+    network = Network([
+        make_layer(habituation.HIDDEN_NEURONS, inputs),
+        make_layer(len(habituation.ACTION_NAMES), habituation.HIDDEN_NEURONS, "linear")
+    ])
+    memory = MemoryStore(MEMORY_CAPACITY)
+    for _ in range(habituation.LIVES):
+        habituation.live(network, memory)
+    results["e6"] = [familiar_rate(network, 0, 0),
+                     familiar_rate(network, FAMILIAR_VISITS, 0),
+                     familiar_rate(network, FAMILIAR_VISITS, ABSENCE_STEPS)]
     return results
 
 
@@ -676,6 +742,20 @@ def main():
     print(f"Food delivered | RPE: {delivered_rpe}")
     print(f"Food omitted   | RPE: {omitted_rpe}")
     n = sum(r["e5"][1] <= r["e5"][0] - CLEAR_DIP for r in results)
+    print(f"Seeds: {n}/{SEEDS}")
+    print()
+    print(f"E6: Habituation ({SEEDS} seeds)")
+    fresh_rate = spread([r["e6"][0] for r in results], 2)
+    familiar_rate_avg = spread([r["e6"][1] for r in results], 2)
+    returned_rate = spread([r["e6"][2] for r in results], 2)
+    print(f"Fresh    | Steps: {fresh_rate}")
+    print(f"Familiar | Steps: {familiar_rate_avg}")
+    print(f"Returned | Steps: {returned_rate}")
+    n = sum(
+        r["e6"][1] <= r["e6"][0] - CLEAR_EFFECT
+        and r["e6"][2] >= r["e6"][1] + CLEAR_EFFECT
+        for r in results
+    )
     print(f"Seeds: {n}/{SEEDS}")
     print()
     print(f"E7: Need switching ({SEEDS} seeds)")

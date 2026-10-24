@@ -2,14 +2,15 @@
 Experiment tests for experiments/signatures.py.
 
 The fast tests probe eating_rate, approach_rate, eating_rpe, cue_rpe,
-switch_rate, delayed_rate, value_ramp, sleep_rate, sleep_bout, step_rate and
-thorn_food_rate with hand-built networks whose predictions are known
+switch_rate, delayed_rate, value_ramp, sleep_rate, sleep_bout, step_rate,
+thorn_food_rate and familiar_rate with hand-built networks whose predictions are known
 exactly, check trained_energy with a stand-in for sleep.live, and check that
 new_brain, train and measure are reproducible. The slow test trains SYNO with
 all 10 seeds, in the scarce world, the thirst experiment, the blink
 experiment, the sleep experiment, the dreaming experiment with its sleep
-replay kept and blocked, and the pain experiment, in parallel (about 20
-minutes on a MacBook Air M4), and reproduces the recorded E1 to E14 results.
+replay kept and blocked, the pain experiment, and the habituation
+experiment, in parallel (about 23 minutes on a MacBook Air M4), and
+reproduces the recorded E1 to E14 results.
 It is skipped by default and runs only when SYNO_SLOW_TESTS is set:
 
     SYNO_SLOW_TESTS=1 python3 -m unittest discover tests -v
@@ -32,6 +33,7 @@ import experiments.blink as blink
 import experiments.sleep as sleep
 import experiments.dreaming as dreaming
 import experiments.pain as pain
+import experiments.habituation as habituation
 from syno.brain.working_memory import WorkingMemory
 from experiments.xor import make_layer
 from syno.brain.memory import MemoryStore
@@ -91,6 +93,11 @@ class TestSignaturesSetup(unittest.TestCase):
         self.assertEqual(signatures.PAIN_ENERGY, 0.5)
         self.assertEqual(signatures.HUNGRY_ENERGY, 0.2)
         self.assertEqual(signatures.SATED_ENERGY, 0.8)
+
+    def test_habituation_probe_settings(self):
+        self.assertEqual(signatures.HABITUATION_ENERGY, 0.5)
+        self.assertEqual(signatures.FAMILIAR_VISITS, 4)
+        self.assertEqual(signatures.ABSENCE_STEPS, 80)
 
     def test_sleep_fatigue_levels(self):
         self.assertEqual(signatures.RESTED_FATIGUE, 0.2)
@@ -866,6 +873,88 @@ class TestThornFoodRate(unittest.TestCase):
         signatures.thorn_food_rate(pain_network({}, 0.0), 0.5)
 
 
+HABITUATION_WINDOW = (2 * habituation.SENSE_RADIUS + 1) ** 2
+HABITUATION_INPUTS = 2 * HABITUATION_WINDOW + 2
+FAMILIAR_ABOVE = HABITUATION_WINDOW + FOOD_ABOVE
+FAMILIAR_HERE = HABITUATION_WINDOW + CENTER
+
+
+def habituation_network(weights: dict[int, float], bias: float) -> Network:
+    """
+    Builds a one-layer linear network for the habituation experiment that
+    prefers up when bias plus the given weights on chosen inputs is above
+    0.0, and otherwise prefers eat, which is never a step. The other moves
+    output -1.0.
+    """
+    neurons = []
+    for action in range(len(habituation.ACTION_NAMES)):
+        row = [0.0] * HABITUATION_INPUTS
+        neuron_bias = 0.0 if habituation.ACTION_NAMES[action] == "eat" else -1.0
+        if habituation.ACTION_NAMES[action] == "up":
+            for index, weight in weights.items():
+                row[index] = weight
+            neuron_bias = bias
+        neurons.append(Neuron(row, neuron_bias, "linear"))
+    return Network([Layer(neurons)])
+
+
+class TestFamiliarRate(unittest.TestCase):
+    """
+    Verifies familiar_rate against networks with known preferences. With
+    the habituation experiment's Novelty System, a square visited 1, 2,
+    and 4 times has a familiarity of 0.5, 0.75, and 0.9375, which then fades
+    by 0.95 every step away.
+    """
+
+    def test_always_up(self):
+        network = habituation_network({}, 1.0)
+        self.assertEqual(signatures.familiar_rate(network, 0, 0), 20 / 80)
+        self.assertEqual(signatures.familiar_rate(network, 4, 80), 20 / 80)
+
+    def test_avoids_a_familiar_square_until_it_fades(self):
+        # Up wins unless the square above is more than half familiar.
+        network = habituation_network({FAMILIAR_ABOVE: -2.0}, 1.0)
+        self.assertEqual(signatures.familiar_rate(network, 0, 0), 20 / 80)
+        self.assertEqual(signatures.familiar_rate(network, 4, 0), 0.0)
+        self.assertEqual(signatures.familiar_rate(network, 4, 80), 20 / 80)
+
+    def test_the_familiar_square_is_the_target(self):
+        # Up wins only when the square above is familiar, which happens only
+        # when up is the direction being tested.
+        network = habituation_network({FAMILIAR_ABOVE: 2.0}, -1.0)
+        self.assertEqual(signatures.familiar_rate(network, 4, 0), 20 / 80)
+        self.assertEqual(signatures.familiar_rate(network, 0, 0), 0.0)
+
+    def test_counts_every_visit(self):
+        # Up wins while the square above is below 0.6 familiar.
+        network = habituation_network({FAMILIAR_ABOVE: -1.0}, 0.6)
+        self.assertEqual(signatures.familiar_rate(network, 1, 0), 20 / 80)
+        self.assertEqual(signatures.familiar_rate(network, 2, 0), 0.0)
+
+    def test_counts_every_step_away(self):
+        # After 4 visits, the square is 0.561 familiar 10 steps later and
+        # 0.533 familiar 11 steps later.
+        network = habituation_network({FAMILIAR_ABOVE: -1.0}, 0.55)
+        self.assertEqual(signatures.familiar_rate(network, 4, 10), 0.0)
+        self.assertEqual(signatures.familiar_rate(network, 4, 11), 20 / 80)
+
+    def test_own_square_is_seen_once_after_the_absence(self):
+        # SYNO's own square is half familiar, even after a long absence.
+        self.assertEqual(signatures.familiar_rate(habituation_network({FAMILIAR_HERE: 1.0}, -0.4), 0, 80), 20 / 80)
+        self.assertEqual(signatures.familiar_rate(habituation_network({FAMILIAR_HERE: 1.0}, -0.6), 0, 0), 0.0)
+
+    def test_no_food_in_the_world(self):
+        network = habituation_network({FOOD_ABOVE: 2.0, CENTER: 2.0}, -1.0)
+        self.assertEqual(signatures.familiar_rate(network, 4, 0), 0.0)
+
+    def test_syno_is_half_hungry_with_an_empty_stomach(self):
+        deficit = HABITUATION_INPUTS - 2
+        stomach = HABITUATION_INPUTS - 1
+        self.assertEqual(signatures.familiar_rate(habituation_network({deficit: 1.0}, -0.45), 0, 0), 20 / 80)
+        self.assertEqual(signatures.familiar_rate(habituation_network({deficit: 1.0}, -0.55), 0, 0), 0.0)
+        self.assertEqual(signatures.familiar_rate(habituation_network({stomach: -1.0}, 0.01), 0, 0), 20 / 80)
+
+
 class TestValueRamp(unittest.TestCase):
     """
     Verifies value_ramp against networks with known predictions. On the 5x5
@@ -921,15 +1010,32 @@ class TestMeasure(unittest.TestCase):
     """Verifies that measure trains one SYNO and measures every signature."""
 
     def setUp(self):
-        self.saved = signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES, pain.LIVES
+        self.saved = (signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES, pain.LIVES,
+                      habituation.LIVES)
         signatures.CHECKPOINTS = [0, 1, 2]
         thirst.LIVES = 2
         blink.LIVES = 2
         sleep.LIVES = 2
         pain.LIVES = 2
+        habituation.LIVES = 2
 
     def tearDown(self):
-        signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES, pain.LIVES = self.saved
+        (signatures.CHECKPOINTS, thirst.LIVES, blink.LIVES, sleep.LIVES, pain.LIVES,
+         habituation.LIVES) = self.saved
+
+    def test_habituation_uses_a_habituation_trained_network(self):
+        results = signatures.measure(3)
+        random.seed(3)
+        network = Network([
+            make_layer(habituation.HIDDEN_NEURONS, HABITUATION_INPUTS),
+            make_layer(len(habituation.ACTION_NAMES), habituation.HIDDEN_NEURONS, "linear"),
+        ])
+        memory = MemoryStore(habituation.MEMORY_CAPACITY)
+        for _ in range(2):
+            habituation.live(network, memory)
+        self.assertEqual(results["e6"], [signatures.familiar_rate(network, 0, 0),
+                                         signatures.familiar_rate(network, 4, 0),
+                                         signatures.familiar_rate(network, 4, 80)])
 
     def test_pain_signatures_use_a_pain_trained_network(self):
         results = signatures.measure(3)
@@ -1009,6 +1115,7 @@ class TestMeasure(unittest.TestCase):
         self.assertEqual(len(results["e12"]), 2)
         self.assertEqual(len(results["e13"]), 2)
         self.assertEqual(len(results["e14"]), 2)
+        self.assertEqual(len(results["e6"]), 3)
 
     def test_matches_the_probes_on_the_same_network(self):
         results = signatures.measure(3)
@@ -1084,6 +1191,12 @@ Seeds: 10/10
 E5: Reward omission (10 seeds)
 Food delivered | RPE: -0.027 [-0.098, 0.036]
 Food omitted   | RPE: -1.337 [-1.625, -1.197]
+Seeds: 10/10
+
+E6: Habituation (10 seeds)
+Fresh    | Steps: 0.31 [0.30, 0.31]
+Familiar | Steps: 0.01 [0.00, 0.03]
+Returned | Steps: 0.30 [0.29, 0.31]
 Seeds: 10/10
 
 E7: Need switching (10 seeds)

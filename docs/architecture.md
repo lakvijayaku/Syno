@@ -50,6 +50,8 @@ Each tick follows the same sequence:
 6. The **DN** updates its weights for the action taken, using the RPE.
 7. The step is stored in the **Memory Store (MS)** with a priority equal to the size of its RPE, and SYNO re-learns from a few past steps, recalled in proportion to their priority (memory replay).
 
+In the habituation experiment, SYNO also senses a window of how familiar each nearby square is (`NoveltySystem.sense`), read from the **Novelty System (NS)** after each visit.
+
 In the pain experiment, the world has thorns, which SYNO senses in a second window (`sense_hazard`) along with its injury, and stepping onto a thorn hurts it.
 
 In the sleep experiment, SYNO senses its fatigue and can sleep: it stays still, its fatigue falls, its eyes are closed for the next view, and it gets no novelty bonus. In the dreaming experiment, the replay in step 7 of the loop happens only after a step asleep.
@@ -65,12 +67,12 @@ Across lives, the **Growth Engine (GE)** adds a hidden neuron to the DN whenever
 | Energy and water drain, fatigue and recovery, injury and healing, movement cost, and death | Choosing whether to pursue distant food |
 | Signal formulas (drive and novelty) | Anticipation when food is seen |
 | Reward as drive reduction; reward prediction error (RPE) | Boredom, resting, and renewed curiosity |
-| | Choosing food or water by the larger need |
+| How quickly a square becomes familiar, and fades | Choosing food or water by the larger need |
 | | When and how long to sleep |
 | A small random exploration rate | Acting on food it can no longer see |
 | When the Growth Engine (GE) adds a neuron | |
 | How quickly working memory fades | Avoiding thorns, and stepping onto one for food when hungry |
-| How many memories are replayed awake and asleep | |
+| How many memories are replayed awake and asleep | Leaving a square it has just explored, and returning after time away |
 | How much a thorn hurts | |
 
 ### Development Phases

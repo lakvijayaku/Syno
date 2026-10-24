@@ -3,8 +3,8 @@ Unit tests for syno.brain.novelty.
 
 These tests are intentionally stricter than the Novelty System's own
 safeguards. They verify the step 5e worked example, habituation, recovery,
-that each square is remembered separately, and that invalid settings fail
-loudly.
+that each square is remembered separately, the familiarity window SYNO
+senses, and that invalid settings fail loudly.
 
 Run from the repository root with:
     python3 -m unittest discover tests -v
@@ -105,6 +105,56 @@ class TestNoveltyRecovery(unittest.TestCase):
 
     def test_tick_with_no_memories_is_allowed(self):
         NoveltySystem(0.2, 0.5, 0.9).tick()
+
+
+class TestNoveltySense(unittest.TestCase):
+    """Verifies the familiarity window SYNO senses."""
+
+    def test_window_size(self):
+        novelty = NoveltySystem(0.2, 0.5, 0.95)
+        self.assertEqual(len(novelty.sense((2, 2), 2)), 25)
+        self.assertEqual(len(novelty.sense((2, 2), 1)), 9)
+        self.assertEqual(novelty.sense((2, 2), 0), [0.0])
+
+    def test_unvisited_squares_are_new(self):
+        self.assertEqual(NoveltySystem(0.2, 0.5, 0.95).sense((2, 2), 2), [0.0] * 25)
+
+    def test_order_is_row_by_row_from_the_top_left(self):
+        novelty = NoveltySystem(0.2, 0.5, 1.0)
+        novelty.familiarity = {
+            (1, 1): 0.1, (2, 1): 0.2, (3, 1): 0.3,
+            (1, 2): 0.4, (2, 2): 0.5, (3, 2): 0.6,
+            (1, 3): 0.7, (2, 3): 0.8, (3, 3): 0.9,
+        }
+        self.assertEqual(novelty.sense((2, 2), 1), [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+
+    def test_reports_familiarity_after_visits_and_fading(self):
+        novelty = NoveltySystem(0.2, 0.5, 0.9)
+        novelty.signal((2, 1))
+        novelty.signal((2, 1))
+        novelty.tick()
+        window = novelty.sense((2, 2), 1)
+        self.assertAlmostEqual(window[1], 0.75 * 0.9)
+        self.assertEqual(window[4], 0.0)
+
+    def test_squares_off_the_grid_are_new(self):
+        novelty = NoveltySystem(0.2, 0.5, 0.95)
+        novelty.signal((0, 0))
+        window = novelty.sense((0, 0), 1)
+        self.assertEqual(window[4], 0.5)
+        self.assertEqual(window[:4] + window[5:], [0.0] * 8)
+
+    def test_sensing_is_not_visiting(self):
+        novelty = NoveltySystem(0.2, 0.5, 0.95)
+        novelty.signal((1, 1))
+        before = dict(novelty.familiarity)
+        novelty.sense((1, 1), 2)
+        self.assertEqual(novelty.familiarity, before)
+        self.assertEqual(novelty.signal((1, 2)), 0.2)
+
+    def test_negative_radius_raises_value_error(self):
+        with self.assertRaises(ValueError):
+            NoveltySystem(0.2, 0.5, 0.95).sense((0, 0), -1)
 
 
 class TestNoveltyValidation(unittest.TestCase):

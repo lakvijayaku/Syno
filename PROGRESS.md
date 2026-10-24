@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-All 18 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, E9, E10, E11, E12, E13, and E14 are reproduced, E1 weakly, E2 and E3 are not, and E6 is not measurable with the current design, and SYNO has 29% of the human capabilities listed in `docs/humanness.md`.
+All 19 roadmap steps are complete. Measured over 10 seeds, E4, E5, E6, E7, E8, E9, E10, E11, E12, E13, and E14 are reproduced, E1 weakly, and E2 and E3 are not, and SYNO has 29.5% of the human capabilities listed in `docs/humanness.md`.
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -29,8 +29,12 @@ All 18 roadmap steps are complete. Measured over 10 seeds, E4, E5, E7, E8, E9, E
 | **16** | Fatigue and sleep | ✅ Done |
 | **17** | Consolidation during sleep | ✅ Done |
 | **18** | Pain and fear | ✅ Done |
+| **19** | Habituation in behavior | ✅ Done |
 
 ### Log
+#### 2026-10-23
+- **Step 19 complete:** SYNO senses how familiar each nearby square is with `NoveltySystem.sense`, in `experiments/habituation.py`, and `experiments/signatures.py` measures E6, habituation, on a SYNO from each seed trained there, covered by 30 new tests. Over 3000 lives, SYNO's average energy rose from 0.506 to 0.685. With no food in sight, it steps onto a neighboring square in 0.31 of cases when it is new, 0.01 after visiting it 4 times, and 0.30 after 80 steps away, in all 10 seeds, so E6, recorded as not measurable since step 10, is reproduced. Habituation becomes a SYNO capability, raising the humanness score to 29.5%. Step 19 (Habituation in behavior) is complete.
+
 #### 2026-10-18
 - **Readability:** `Neuron.forward` computes its weighted sum with a plain loop instead of a one-line generator, checks the input count itself, and adds the bias last, so every result is unchanged. The loop also runs about a third faster.
 

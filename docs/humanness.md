@@ -2,8 +2,8 @@
 
 This document scores how close SYNO is to having every capability of a human mind and body. It lists 104 capabilities, from regulating energy to language and consciousness, and records which ones SYNO has. Behavioral signatures that have been formally measured are listed in [`evaluation.md`](evaluation.md).
 
-### Score: 29%
-SYNO earns **29 of 100 points** across the capabilities that a synthetic organism can achieve.
+### Score: 29.5%
+SYNO earns **29.5 of 100 points** across the capabilities that a synthetic organism can achieve.
 
 | Status | Meaning | Points |
 |---|---|---|
@@ -11,7 +11,7 @@ SYNO earns **29 of 100 points** across the capabilities that a synthetic organis
 | ◐ | SYNO has it partly or weakly | 0.5 |
 | ❌ | SYNO does not have it | 0 |
 
-SYNO has 23 capabilities (✅) and 12 in part (◐), and lacks 69 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
+SYNO has 24 capabilities (✅) and 11 in part (◐), and lacks 69 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
 
 ### Columns
 - **Shared With:** how widely the capability is found in nature, from *All animals* through *Mammals*, *Some animals* (such as primates and corvids), and *Mostly human* to *Uniquely human*.
@@ -37,7 +37,7 @@ SYNO has 23 capabilities (✅) and 12 in part (◐), and lacks 69 (❌). Of the 
 | Capability | SYNO | Shared With | Achievable |
 |---|---|---|---|
 | Sensing its own body | ✅ energy, stomach, water, fatigue, and injury | All animals | Yes |
-| Vision | ◐ a 5x5 window of food, water, and walls | All animals | Yes |
+| Vision | ◐ a 5x5 window of food, water, thorns, and walls | All animals | Yes |
 | Hearing | ❌ | All animals | Yes |
 | Touch | ❌ | All animals | Yes |
 | Taste and smell | ❌ | All animals | Yes |
@@ -64,7 +64,7 @@ SYNO has 23 capabilities (✅) and 12 in part (◐), and lacks 69 (❌). Of the 
 | Dopamine as prediction error | ✅ (E4, E5, E9) | All animals | Yes |
 | Classical conditioning | ✅ (E4) | All animals | Yes |
 | Learning from consequences | ✅ | All animals | Yes |
-| Habituation | ◐ in the Novelty System, not in behavior (E6) | All animals | Yes |
+| Habituation | ✅ Novelty System, in behavior (E6) | All animals | Yes |
 | Curiosity | ✅ Novelty System | Mammals | Yes |
 | Surprise-driven learning speed | ✅ arousal hormone | Mammals | Yes |
 | Learning without forgetting old skills | ◐ memory replay | Mammals | Yes |
@@ -166,10 +166,10 @@ SYNO has 23 capabilities (✅) and 12 in part (◐), and lacks 69 (❌). Of the 
 | Evolution across generations | ❌ | All animals | Yes |
 
 ### What Earns the Score
-SYNO's capabilities are concentrated in learning and motivation, the foundation shared by all animals: reward learning driven by a dopamine-like prediction error, curiosity, memory replay, hunger and thirst, death when either is neglected, sleeping off fatigue, pain from injury, and a surprise-driven arousal hormone. In measured behavior, its dopamine response moves from eating to the sight of food (E4), dips when expected food is missing (E5), and ramps up as food gets closer (E9). It falls asleep more readily and sleeps longer the more tired it is (E10, E11), and the replay of memories during sleep is what lets it learn (E12). It learns to avoid thorns, yet steps onto one for food the hungrier it is (E13, E14).
+SYNO's capabilities are concentrated in learning and motivation, the foundation shared by all animals: reward learning driven by a dopamine-like prediction error, curiosity, memory replay, hunger and thirst, death when either is neglected, sleeping off fatigue, pain from injury, and a surprise-driven arousal hormone. In measured behavior, its dopamine response moves from eating to the sight of food (E4), dips when expected food is missing (E5), and ramps up as food gets closer (E9). It falls asleep more readily and sleeps longer the more tired it is (E10, E11), and the replay of memories during sleep is what lets it learn (E12). It learns to avoid thorns, yet steps onto one for food the hungrier it is (E13, E14), and it leaves a place it has just explored and returns once it has been away (E6).
 
 ### What Holds It Back
 - **Hunger alone barely changes its choices:** when food is the only need at stake, a hungry and a nearly full SYNO choose almost the same (E2, E3). With two needs, it chooses by the larger one (E7).
 - **Short working memory:** SYNO remembers what it saw for only a few steps, which is not enough for planning, imagination, or recalling specific events.
 - **No other agents:** SYNO lives alone, so every social and language capability is out of reach.
-- **Simple senses:** SYNO sees only food, water, thorns, and walls in a small window.
+- **Simple senses:** SYNO sees only food, water, thorns, and walls in a small window, and senses how familiar the squares around it are.

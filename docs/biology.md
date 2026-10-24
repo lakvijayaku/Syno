@@ -25,7 +25,7 @@ The same stimulus is more rewarding when the body needs it more, a principle cal
 ### Novelty and Habituation
 Novel stimuli elicit a response that weakens with repeated exposure [7].
 
-**In SYNO:** The **Novelty System (NS)** provides a novelty bonus that habituates with repetition and recovers over time. SYNO cannot sense how familiar a square is, so habituation shapes its learning but cannot be measured in its behavior (signature E6 in [`evaluation.md`](evaluation.md)).
+**In SYNO:** The **Novelty System (NS)** provides a novelty bonus that habituates with repetition and recovers over time. In the habituation experiment, SYNO also senses how familiar each nearby square is. Nothing tells it what to do with that sense, yet it learns to leave a square it has just explored, stepping onto it in 0.01 of cases after 4 visits against 0.31 when new, and to return once its familiarity has faded, in 0.30 of cases after 80 steps away, matching the spontaneous recovery of habituation [7] (signature E6 in [`evaluation.md`](evaluation.md)).
 
 ### Exploration and Exploitation
 The locus coeruleus–norepinephrine system adjusts whether an animal focuses on a known reward or disengages to explore [8].
