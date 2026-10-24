@@ -17,7 +17,7 @@ SYNO needs only Python 3.10 or later. Run the tests with `python3 -m unittest`, 
 SYNO consists of a simulated world, the Habitat, and an Artificial Mind (AM) that perceives, decides, and learns within it. Only physiology is hard-coded; all behavior must emerge from learning. See [`docs/architecture.md`](docs/architecture.md) for the full design, [`docs/biology.md`](docs/biology.md) for its biological basis, and [`docs/glossary.md`](docs/glossary.md) for component names.
 
 ### AI-Assisted Development
-SYNO does not accept "vibe-coded" contributions. All project code is written by the owner, for the time being, and every commit must be made and signed by a human. AI tools may draft tests and documentation, which the contributor must verify. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full policy, and [`CLAUDE.md`](CLAUDE.md) for the rules Claude Code follows on SYNO, which every contributor who uses it must follow too.
+SYNO does not accept "vibe-coded" contributions. All project code is written by the owner for the time being, and every commit must be made and signed by a human. AI tools may draft tests and documentation, which the contributor must verify. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full policy, and [`CLAUDE.md`](CLAUDE.md) for the rules Claude Code follows on SYNO, which every contributor who uses it must follow too.
 
 ### Contact
 Questions, bug reports, and suggestions can be sent to the project owner at [`lakvijayaku@gmail.com`](mailto:lakvijayaku@gmail.com).
