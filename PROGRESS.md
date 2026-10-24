@@ -1,7 +1,7 @@
 ## Progress
 
 ### Current Status
-All 19 roadmap steps are complete. Measured over 10 seeds, E4, E5, E6, E7, E8, E9, E10, E11, E12, E13, and E14 are reproduced, E1 weakly, and E2 and E3 are not, and SYNO has 29.5% of the human capabilities listed in `docs/humanness.md`.
+Phase 1 is complete: all 20 roadmap steps are done. Measured over 10 seeds, E4, E5, E6, E7, E8, E9, E10, E11, E12, E13, and E14 are reproduced, E1 weakly, and E2 and E3 are not, and SYNO has 30% of the human capabilities listed in `docs/humanness.md`. Phase 2 rewrites SYNO in Rust on the `rust_master` branch (`docs/adr/0002-rewrite-in-rust.md`).
 
 ### Roadmap
 | Step | Milestone | Status |
@@ -30,9 +30,11 @@ All 19 roadmap steps are complete. Measured over 10 seeds, E4, E5, E6, E7, E8, E
 | **17** | Consolidation during sleep | ✅ Done |
 | **18** | Pain and fear | ✅ Done |
 | **19** | Habituation in behavior | ✅ Done |
+| **20** | Phase 1 wrap-up | ✅ Done |
 
 ### Log
 #### 2026-10-23
+- **Step 20 complete:** every slow test passed, so every recorded result reproduces from the code. The Signal Emitters (7 designs) and an Arousal System that sets exploration (6 designs, over 4 seeds each) were tested and ruled out, and `docs/biology.md` records the evidence. ADR 0002 records the decision to rewrite SYNO in Rust on the `rust_master` branch. Injury and healing becomes a partial SYNO capability, which step 18 had missed, raising the humanness score to 30%. Every test helper now has a docstring. Phase 1 is complete.
 - **Step 19 complete:** SYNO senses how familiar each nearby square is with `NoveltySystem.sense`, in `experiments/habituation.py`, and `experiments/signatures.py` measures E6, habituation, on a SYNO from each seed trained there, covered by 30 new tests. Over 3000 lives, SYNO's average energy rose from 0.506 to 0.685. With no food in sight, it steps onto a neighboring square in 0.31 of cases when it is new, 0.01 after visiting it 4 times, and 0.30 after 80 steps away, in all 10 seeds, so E6, recorded as not measurable since step 10, is reproduced. Habituation becomes a SYNO capability, raising the humanness score to 29.5%. Step 19 (Habituation in behavior) is complete.
 
 #### 2026-10-18

@@ -94,8 +94,8 @@ ABSENCE_STEPS = 80
 
 def new_brain(seed: int) -> tuple[Network, MemoryStore]:
     """
-    Creates an untrained SYNO, set up exactly as in the consolidation
-    experiment.
+    Creates an untrained SYNO with the same network and Memory Store as the
+    scarcity experiment, which it is trained in.
 
     :param seed: The random seed, so the same seed gives the same brain and
         the same training afterwards.
@@ -401,8 +401,8 @@ def sleep_rate(network: Network, fatigue: float) -> float:
 
 def sleep_bout(network: Network, fatigue: float) -> float:
     """
-    Measures how long SYNO sleeps once it falls asleep at a given fatigue
-    (E11).
+    Measures how long SYNO sleeps in a row when it decides at a given
+    fatigue (E11), counting 0 on squares where it stays awake.
 
     From every square, with no food in the world and energy SLEEP_ENERGY,
     SYNO decides with its eyes open, then keeps choosing with its eyes closed
@@ -587,8 +587,8 @@ def measure(seed: int) -> dict:
     :param seed: The random seed for this SYNO.
     :return: The results by signature: "food" and "cue" (E4, one value per
         checkpoint), "e1", "e2", "near" and "far" (E3), "e5", "thirsty"
-        and "hungry" (E7), "e8", "e9" (one value per distance), "e10", and
-        "e11", "e12" (sleep replay kept, then blocked), "e13" (empty, then
+        and "hungry" (E7), "e8", "e9" (one value per distance), "e10", "e11",
+        "e12" (sleep replay kept, then blocked), "e13" (empty, then
         thorn), "e14" (hungry, then sated), and "e6" (fresh, familiar,
         then returned).
     """

@@ -70,17 +70,17 @@ Documents record only completed work and the step in progress, never planned fut
 
 ### House Style
 - **Markdown:** `##` for the document title, then a blank line. `###` for each section, with text starting on the next line. Blank lines only between paragraphs and around lists. Bold labels in policy lists. Every link wraps its text in backticks, and no URL or email is left bare. The project name is written "SYNO".
-- **File headers:** every file in `syno/`, `experiments/`, and `.github/` starts with a 4-line header. Line 1 is `# ── SYNO · <path> ` padded with `─` to 58 characters. Line 2 is a description with no trailing period. Line 3 is `# <Author> · <date> · GPL-3.0`. Line 4 is `# ` followed by 56 `─` characters. Test files start with a docstring that describes what they check and how to run them instead.
+- **File headers:** every file in `syno/`, `experiments/`, and `.github/`, except the empty `__init__.py` files, starts with a 4-line header. Line 1 is `# ── SYNO · <path> ` padded with `─` to 58 characters. Line 2 is a description with no trailing period. Line 3 is `# <Author> · <date> · GPL-3.0`. Line 4 is `# ` followed by 56 `─` characters. Test files start with a docstring that describes what they check and how to run them instead.
 - **Docstrings:** every class and function has one, with `:param:`, `:return:`, and `:raises:` lines where they apply.
 - **Comments:** explain why, not just what. Physiology constants carry a comment saying what they model.
-- **Experiments:** scripts live in `experiments/`, run with `python3 -m experiments.<name>`, and save their output to `runs/`, which is not committed.
+- **Experiments:** scripts live in `experiments/`, run with `python3 -m experiments.<name>`, and print their results; any data or charts they save go to `runs/`, which is not committed.
 
 ### Constraints
-- Phase 1 uses only the Python standard library, on Python 3.10 or later. Phase 2 rewrites measured bottlenecks in Rust.
+- Phase 1 uses only the Python standard library, on Python 3.10 or later. Phase 2 rewrites all of SYNO in Rust, using only the Rust standard library, on the `rust_master` branch, as set out in [`ADR 0002`](docs/adr/0002-rewrite-in-rust.md).
 - Any necessary dependency must be pinned, hash-verified, and vendored.
 - Commits are signed, and SYNO trains offline.
 - Only physiology is hard-coded, as set out in [`ADR 0001`](docs/adr/0001-no-hard-coded-behavior.md). Behavior must emerge from learning and is never fixed by adding a rule.
-- Slow tests that retrain SYNO are skipped unless `SYNO_SLOW_TESTS=1` is set. They take several minutes, so run them in the background.
+- Slow tests that retrain SYNO are skipped unless `SYNO_SLOW_TESTS=1` is set. They take from under a minute to about 23 minutes each, so run them in the background.
 
 ### Adapting This File
 To use this approach in another project, keep the parts that make Claude a tutor: the owner writes the code, Claude reviews and teaches, hints come in stages, and Claude catches up from the repo at the start of each session. Replace SYNO's house style, documents, and constraints with your own.

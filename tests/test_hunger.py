@@ -93,6 +93,9 @@ class TestHungerLearning(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Trains SYNO once for the full run, shared by every test in the class.
+        """
         random.seed(0)
         cls.network = new_network()
         cls.energies = [live(cls.network) for _ in range(LIVES)]

@@ -2,8 +2,8 @@
 
 This document scores how close SYNO is to having every capability of a human mind and body. It lists 104 capabilities, from regulating energy to language and consciousness, and records which ones SYNO has. Behavioral signatures that have been formally measured are listed in [`evaluation.md`](evaluation.md).
 
-### Score: 29.5%
-SYNO earns **29.5 of 100 points** across the capabilities that a synthetic organism can achieve.
+### Score: 30%
+SYNO earns **30 of 100 points** across the capabilities that a synthetic organism can achieve.
 
 | Status | Meaning | Points |
 |---|---|---|
@@ -11,7 +11,7 @@ SYNO earns **29.5 of 100 points** across the capabilities that a synthetic organ
 | ◐ | SYNO has it partly or weakly | 0.5 |
 | ❌ | SYNO does not have it | 0 |
 
-SYNO has 24 capabilities (✅) and 11 in part (◐), and lacks 69 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
+SYNO has 24 capabilities (✅) and 12 in part (◐), and lacks 68 (❌). Of the 104, 4 are marked **Unknown**, because no test exists for them even in animals: felt emotions, meaning and purpose, free will, and consciousness. They are left out of the score, so it is out of 100. SYNO's signals are numbers; the score does not imply feelings or awareness.
 
 ### Columns
 - **Shared With:** how widely the capability is found in nature, from *All animals* through *Mammals*, *Some animals* (such as primates and corvids), and *Mostly human* to *Uniquely human*.
@@ -22,14 +22,14 @@ SYNO has 24 capabilities (✅) and 11 in part (◐), and lacks 69 (❌). Of the 
 |---|---|---|---|
 | Energy regulation (hunger) | ✅ | All animals | Yes |
 | Satiety | ◐ weak (E1) | All animals | Yes |
-| Hunger and satiety hormones | ❌ | All animals | Yes |
+| Hunger and satiety hormones | ❌ tested and ruled out | All animals | Yes |
 | Thirst and fluid balance | ✅ learns to drink to stay alive | All animals | Yes |
 | Temperature regulation | ❌ | Mammals | Yes |
 | Long-term energy storage | ❌ | Mammals | Yes |
 | Fatigue and rest | ✅ sleeps sooner and longer when tired (E10, E11) | All animals | Yes |
 | Sleep and circadian rhythm | ◐ sleeps, but has no day-night cycle | All animals | Yes |
 | Pain signals | ✅ injury from thorns is a negative reward (E13, E14) | All animals | Yes |
-| Injury and healing | ❌ | All animals | Partly |
+| Injury and healing | ◐ injury that heals at a fixed rate, with no location | All animals | Partly |
 | Aging over a lifespan | ❌ | All animals | Yes |
 | Death from neglected needs | ✅ dies of hunger or thirst | All animals | Yes |
 
@@ -89,7 +89,7 @@ SYNO has 24 capabilities (✅) and 11 in part (◐), and lacks 69 (❌). Of the 
 ### Motivation and Emotion
 | Capability | SYNO | Shared With | Achievable |
 |---|---|---|---|
-| Drives | ✅ hunger | All animals | Yes |
+| Drives | ✅ hunger, thirst, fatigue, pain, and curiosity | All animals | Yes |
 | Wanting | ✅ | All animals | Yes |
 | Liking | ❌ | Mammals | Partly |
 | Arousal | ✅ sets the learning rate | All animals | Yes |

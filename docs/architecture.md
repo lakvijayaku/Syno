@@ -12,7 +12,7 @@ SYNO consists of the **Habitat (HB)**, which is the external world, a body, the 
 |---|---|
 | `syno/world/` | The Habitat: the grid, food, water, thorns, movement, eating, drinking, and senses |
 | `syno/body/` | The Homeostatic Core (energy, stomach, water, fatigue, injury, drive, and reward) and hormones |
-| `syno/brain/` | Neurons, layers, networks, training, the Dopamine System, action selection, the Novelty System, the Memory Store, working memory, and the Growth Engine |
+| `syno/brain/` | Neurons, layers, networks, the loss, training, Q-learning, the Dopamine System, action selection, the Novelty System, the Memory Store, working memory, and the Growth Engine |
 | `syno/tools/` | Recording data from runs, smoothing it, and drawing it as charts |
 | `experiments/` | Runnable experiments, each adding one mechanism to the one before |
 | `tests/` | Unit tests for every module and experiment |
@@ -37,18 +37,18 @@ In the diagram below, SYNO's senses pass through the Sensory Interface (SI) to t
 └────────────────────────────────────────────────────┘
 ```
 
-The **Value Estimator (VE)** is currently built into the **Decision Network (DN)**: each DN output predicts the value of one action (Q-learning). The **Signal Emitters (SE)** are not separate: the HC's energy deficit, stomach fill, and, in a body with water, water deficit are sensed directly.
+The **Value Estimator (VE)** is currently built into the **Decision Network (DN)**: each DN output predicts the value of one action (Q-learning). The **Signal Emitters (SE)** are not separate: the HC's energy deficit, stomach fill, and, in a body that has them, water deficit, fatigue, and injury are sensed directly. Separate hunger and satiety signals were tested and ruled out, and so was an **Arousal System (AS)** that sets exploration (see [`biology.md`](biology.md)).
 
 ### The Simulation Loop
 Each tick follows the same sequence:
 
 1. The **Sensory Interface (SI)** converts the current view of the Habitat (HB) into input signals: a window of food and walls (`sense`) and, in a world with water, a window of water (`sense_water`). The **Homeostatic Core (HC)**'s energy deficit and stomach fill, and its water deficit if it has water, are added to them.
 2. The **Decision Network (DN)** predicts the value of each action. The best action is chosen, except for a small random fraction of steps.
-3. The **HB** applies the action, which may be a move, eating, drinking, or sleeping. The **HC** updates: food is digested, energy drains, movement costs extra energy, and water drains. If energy or water reaches zero, SYNO dies and the life ends.
+3. The **HB** applies the action, which may be a move, eating, drinking, or sleeping. The **HC** updates: food is digested, energy drains, movement costs extra energy, and water drains. In the thirst experiment, if energy or water reaches zero, SYNO dies and the life ends.
 4. Reward is computed as the reduction in drive (the squared energy deficit, plus the squared water deficit, fatigue, or injury in a body that has one), scaled, plus a novelty bonus from the **Novelty System (NS)**.
 5. The **Dopamine System (DS)** compares the reward with the DN's prediction to produce the reward prediction error (RPE).
 6. The **DN** updates its weights for the action taken, using the RPE.
-7. The step is stored in the **Memory Store (MS)** with a priority equal to the size of its RPE, and SYNO re-learns from a few past steps, recalled in proportion to their priority (memory replay).
+7. The step is stored in the **Memory Store (MS)** with a priority equal to the size of its RPE plus a small floor, and SYNO re-learns from a few past steps, recalled in proportion to their priority (memory replay).
 
 In the habituation experiment, SYNO also senses a window of how familiar each nearby square is (`NoveltySystem.sense`), read from the **Novelty System (NS)** after each visit.
 
@@ -74,7 +74,8 @@ Across lives, the **Growth Engine (GE)** adds a hidden neuron to the DN whenever
 | How quickly working memory fades | Avoiding thorns, and stepping onto one for food when hungry |
 | How many memories are replayed awake and asleep | Leaving a square it has just explored, and returning after time away |
 | How much a thorn hurts | |
+| The world: its size, how fast food regrows, and how often SYNO's eyes close | |
 
 ### Development Phases
-- **Phase 1:** Pure Python, standard library only.
-- **Phase 2:** Measured performance bottlenecks are rewritten in Rust.
+- **Phase 1:** Pure Python, standard library only. Complete, released as v1.0.0.
+- **Phase 2:** SYNO is rewritten in Rust, one file at a time, on the `rust_master` branch, as set out in [`ADR 0002`](adr/0002-rewrite-in-rust.md).

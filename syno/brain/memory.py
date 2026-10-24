@@ -9,10 +9,12 @@ class MemoryStore:
     """
     Holds SYNO's most recent experiences so they can be learned from again.
 
-    Each experience is one step of a life: (state, action, reward,
-    next_state), exactly what learn needs. When the store is full, the oldest
-    experience is forgotten. Each experience also has a priority, so
-    surprising experiences can be recalled more often than ordinary ones.
+    Each experience is one step of a life, such as (state, action, reward,
+    next_state), or with a fifth value saying whether the life ended, as in
+    the thirst experiment. The store does not look inside experiences. When
+    the store is full, the oldest experience is forgotten. Each experience
+    also has a priority, so surprising experiences can be recalled more often
+    than ordinary ones.
     """
 
     def __init__(self, capacity: int):

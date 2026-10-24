@@ -4,7 +4,9 @@
 # ────────────────────────────────────────────────────────
 
 # Physiology constants. Hard-coding these is allowed by ADR 0001: they
-# define the body, not behavior.
+# define the body, not behavior. Each step, the stomach turns up to
+# DIGESTION_RATE of food into energy, staying alive burns BASE_BURN energy,
+# and moving burns MOVE_BURN more. The stomach holds up to STOMACH_CAPACITY.
 DIGESTION_RATE = 0.05
 BASE_BURN = 0.01
 MOVE_BURN = 0.01

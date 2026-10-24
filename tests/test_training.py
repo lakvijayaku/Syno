@@ -31,6 +31,10 @@ def numerical_slopes(neuron: Neuron, inputs: list[float], target: float) -> tupl
     step = 1e-6
 
     def loss_with(weights: list[float], bias: float) -> float:
+        """
+        Measures the loss of a single neuron with the given weights and bias on
+        the test example.
+        """
         return mean_squared_error([Neuron(weights, bias, neuron.activation).forward(inputs)], [target])
 
     weight_slopes = []
@@ -169,7 +173,9 @@ class TestTrainStepSafety(unittest.TestCase):
 
 
 def copy_network(network: Network) -> Network:
-    """Builds an independent copy of a network with the same weights and biases."""
+    """
+    Builds an independent copy of a network with the same weights and biases.
+    """
     return Network([
         Layer([Neuron(list(n.weights), n.bias, n.activation) for n in layer.neurons])
         for layer in network.layers
@@ -187,6 +193,7 @@ def network_slopes(network: Network, inputs: list[float], targets: list[float]) 
     step = 1e-6
 
     def loss_of(net: Network) -> float:
+        """Measures the network's loss on the test example."""
         return mean_squared_error(net.forward(inputs), targets)
 
     slopes = []
@@ -244,6 +251,7 @@ class TestTrainNetworkStepGradient(unittest.TestCase):
     """Verifies that every update follows the true slope of the loss."""
 
     def build_network(self) -> Network:
+        """Builds a fixed 2-3-2 network with known weights."""
         # A 2-3-2 network: two hidden neurons would hide index mix-ups between
         # j and k, so the layer sizes are all different from each other.
         return Network([
@@ -345,6 +353,7 @@ class TestTrainNetworkStepSafety(unittest.TestCase):
     """Verifies that invalid input fails loudly and changes nothing."""
 
     def build_network(self) -> Network:
+        """Builds a fixed 2-2-1 network with known weights."""
         return Network([
             Layer([Neuron([0.5, -0.3], 0.1), Neuron([-0.7, 0.8], -0.2)]),
             Layer([Neuron([0.6, -0.4], 0.3)]),

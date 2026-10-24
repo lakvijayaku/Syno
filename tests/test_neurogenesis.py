@@ -72,6 +72,10 @@ class TestNeurogenesisLearning(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Trains SYNO once for the full run, recording its energy and size,
+        shared by every test in the class.
+        """
         random.seed(0)
         network = new_network()
         memory = MemoryStore(neurogenesis.MEMORY_CAPACITY)

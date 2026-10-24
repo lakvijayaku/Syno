@@ -112,16 +112,22 @@ class TestPainLive(unittest.TestCase):
         tick = InjuredCore.tick
 
         def recording_tick(body, moved):
+            """Ticks the body as normal, then records SYNO's injury."""
             tick(body, moved)
             injuries.append(body.injury)
 
         def fixed_habitat(width, height, agent, food):
+            """Stands in for Habitat: always builds the fixed 3x1 world."""
             return Habitat(3, 1, (0, 0), [])
 
         plan = iter(actions)
         last = [actions[-1]]
 
         def next_action(values, epsilon):
+            """
+            Stands in for choose_action: returns the next planned action,
+            repeating the last one.
+            """
             last[0] = next(plan, last[0])
             return pain.ACTION_NAMES.index(last[0])
 

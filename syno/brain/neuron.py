@@ -32,17 +32,19 @@ class Neuron:
         # alter the neuron's weights.
         self.weights = list(weights)
         # The bias shifts the neuron's activation threshold, just as b shifts
-        # the line in y = mx + b. Without it, the output would always be 0.5
-        # when every input is 0.
+        # the line in y = mx + b. Without it, a sigmoid neuron would always
+        # output 0.5, and a linear one 0.0, when every input is 0.
         self.bias = bias
         self.activation = activation
 
     def forward(self, inputs: list[float]) -> float:
         """
-        Calculates the neuron's output using a numerically stable sigmoid activation function.
+        Calculates the neuron's output: the weighted sum of its inputs plus
+        the bias, passed through a numerically stable sigmoid, or returned
+        unchanged by a linear neuron.
 
         :param inputs: A list of input features (floats).
-        :return: The sigmoid-activated output of the neuron.
+        :return: The neuron's output, from 0.0 to 1.0 for a sigmoid neuron.
         :raises ValueError: If the number of inputs does not match the number of weights.
         """
         # Each weight must have exactly one input. Without this check, extra

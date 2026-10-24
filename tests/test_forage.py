@@ -105,11 +105,15 @@ class TestForageLearning(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Trains SYNO once for 3000 episodes, shared by every test in the class.
+        """
         random.seed(0)
         cls.network = new_network()
         cls.steps = [run_episode(cls.network) for _ in range(3000)]
 
     def average(self, start: int, end: int) -> float:
+        """Averages the steps to eat over the episodes from start to end."""
         return sum(self.steps[start:end]) / (end - start)
 
     def test_seed_zero_matches_the_recorded_learning_curve(self):

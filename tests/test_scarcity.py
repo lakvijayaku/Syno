@@ -74,21 +74,28 @@ class TestRegrowth(unittest.TestCase):
         step = [0]
 
         def food_under_syno(habitat):
+            """
+            Stands in for spawn_food: records the step and grows food under
+            SYNO.
+            """
             spawns.append(step[0])
             habitat.food.append(habitat.agent)
 
         def always_eat(values, epsilon):
+            """Stands in for choose_action: always eats."""
             return EAT
 
         original_eat = scarcity.HomeostaticCore.eat
 
         def counting_eat(body, amount):
+            """Records the step of every meal, then eats as normal."""
             meals.append(step[0])
             original_eat(body, amount)
 
         original_tick = scarcity.HomeostaticCore.tick
 
         def counting_tick(body, moved):
+            """Ticks the body as normal, then counts the step."""
             original_tick(body, moved)
             step[0] += 1
 
@@ -118,7 +125,9 @@ class TestRegrowth(unittest.TestCase):
 
 
 class TestRegrowthWhileMoving(unittest.TestCase):
-    """Verifies that food regrows, and moving costs energy, while SYNO walks."""
+    """
+    Verifies that food regrows, and moving costs energy, while SYNO walks.
+    """
 
     def test_food_regrows_while_syno_moves(self):
         # SYNO eats on the first step, then walks left and right. Food must
@@ -130,15 +139,27 @@ class TestRegrowthWhileMoving(unittest.TestCase):
         walk = [scarcity.ACTION_NAMES.index("left"), scarcity.ACTION_NAMES.index("right")]
 
         def food_under_syno(habitat):
+            """
+            Stands in for spawn_food: records the step and grows food under
+            SYNO.
+            """
             spawns.append(step[0])
             habitat.food.append(habitat.agent)
 
         def eat_then_walk(values, epsilon):
+            """
+            Stands in for choose_action: eats on the first step, then walks
+            back and forth.
+            """
             return EAT if step[0] == 0 else walk[step[0] % 2]
 
         original_tick = scarcity.HomeostaticCore.tick
 
         def recording_tick(body, moved):
+            """
+            Records whether SYNO moved, ticks the body as normal, then counts
+            the step.
+            """
             moves.append(moved)
             original_tick(body, moved)
             step[0] += 1
@@ -167,6 +188,7 @@ class TestScarcityLive(unittest.TestCase):
         original = scarcity.Habitat.move
 
         def recording_move(habitat, name):
+            """Moves as normal, then records the square SYNO is on."""
             moved = original(habitat, name)
             positions.add(habitat.agent)
             return moved

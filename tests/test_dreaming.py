@@ -48,6 +48,10 @@ class TestDreamingMain(unittest.TestCase):
         calls = []
 
         def recording_live(network, memory, *replays):
+            """
+            Stands in for sleep.live: records how it was called and returns a
+            fixed result.
+            """
             calls.append((network, memory, replays))
             return 0.5, 0.25
 

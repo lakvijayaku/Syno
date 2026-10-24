@@ -117,6 +117,10 @@ class TestThirstLive(unittest.TestCase):
         calls = []
 
         def place(habitat):
+            """
+            Stands in for free_square: puts the pond under SYNO when asked,
+            otherwise picks a free square as normal.
+            """
             calls.append(None)
             if len(calls) == 1 and pond_under_syno:
                 return habitat.agent
@@ -167,13 +171,23 @@ class TestThirstLive(unittest.TestCase):
         # the death itself is replayed twice. All three updates for it must
         # be told the step was final.
         class NewestFirst(MemoryStore):
+            """
+            A Memory Store that always recalls its newest memory, so replay is
+            predictable.
+            """
             def sample_by_priority(self):
+                """
+                Recalls the newest memory instead of sampling by priority.
+                """
                 return len(self.experiences) - 1
 
         calls = []
         original = thirst.learn
 
         def recording_learn(*args):
+            """
+            Records whether each update was terminal, then learns as normal.
+            """
             calls.append(args[5])
             return original(*args)
 
@@ -197,6 +211,7 @@ class TestThirstLive(unittest.TestCase):
         original = thirst.Habitat
 
         def recording_habitat(*args, **kwargs):
+            """Builds the habitat as normal, then records it."""
             habitat = original(*args, **kwargs)
             seen.append(habitat)
             return habitat

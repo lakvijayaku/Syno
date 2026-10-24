@@ -70,10 +70,16 @@ class TestConsolidationSetup(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("SYNO_SLOW_TESTS"), "set SYNO_SLOW_TESTS=1 to run")
 class TestConsolidationLearning(unittest.TestCase):
-    """Verifies that surprise-weighted replay learns quickly and stays stable (slow)."""
+    """
+    Verifies that surprise-weighted replay learns quickly and stays stable
+    (slow).
+    """
 
     @classmethod
     def setUpClass(cls):
+        """
+        Trains SYNO once for the full run, shared by every test in the class.
+        """
         random.seed(0)
         network = new_network()
         memory = MemoryStore(consolidation.MEMORY_CAPACITY)

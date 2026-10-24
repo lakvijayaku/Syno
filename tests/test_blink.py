@@ -103,6 +103,10 @@ class TestBlinkLive(unittest.TestCase):
         original = blink.learn
 
         def recording_learn(network, state, action, reward, next_state, *rest):
+            """
+            Records the state and next state of every update, then learns as
+            normal.
+            """
             updates.append((state, next_state))
             return original(network, state, action, reward, next_state, *rest)
 

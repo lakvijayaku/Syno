@@ -705,6 +705,7 @@ class TestSleepBout(unittest.TestCase):
         original = FatiguedCore.tick
 
         def recording_tick(body, moved, slept=False):
+            """Records how the body was ticked, then ticks it as normal."""
             ticks.append((moved, slept))
             original(body, moved, slept)
 
@@ -733,6 +734,10 @@ class TestTrainedEnergy(unittest.TestCase):
         calls = []
 
         def numbered_live(network, memory, *args):
+            """
+            Stands in for sleep.live: records how it was called and returns an
+            energy that numbers each call.
+            """
             calls.append((network, memory, args))
             return len(calls) / 1000, 0.3
 

@@ -163,7 +163,7 @@ def main():
         # rather than inside live. While SYNO is learning, its surprise keeps
         # falling. When it stops falling, the brain may be too small to learn
         # more, so it grows. Known limitation: surprise also stops falling
-        # once the task is mastered, so SYNO keeps growing until MAX_HIDDEN.
+        # once the task is mastered, so SYNO can keep growing until MAX_HIDDEN.
         if life % GROWTH_CHECK == 0 and life >= 2 * GROWTH_CHECK:
             recent = sum(surprises[-GROWTH_CHECK:])
             earlier = sum(surprises[-2 * GROWTH_CHECK:-GROWTH_CHECK])

@@ -106,6 +106,10 @@ class TestHabituationLive(unittest.TestCase):
         learn = habituation.learn
 
         def recording_learn(network, state, chosen, reward, next_state, *rest):
+            """
+            Records the state and next state of every update, then learns as
+            normal.
+            """
             updates.append((state, next_state))
             return learn(network, state, chosen, reward, next_state, *rest)
 

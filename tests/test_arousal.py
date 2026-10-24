@@ -105,10 +105,15 @@ class TestArousalComparison(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Trains SYNO once with a fixed learning rate and once with arousal,
+        shared by every test in the class.
+        """
         cls.fixed = arousal.run(False)
         cls.aroused = arousal.run(True)
 
     def blocks(self, energies: list[float]) -> list[float]:
+        """Averages a run's energies over each block of 250 lives."""
         return [sum(energies[i:i + 250]) / 250 for i in range(0, arousal.LIVES, 250)]
 
     def test_seed_zero_matches_the_recorded_comparison(self):

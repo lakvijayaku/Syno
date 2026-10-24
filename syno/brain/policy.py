@@ -11,7 +11,9 @@ def choose_action(values: list[float], epsilon: float) -> int:
 
     With probability epsilon, a random action is chosen, so SYNO keeps
     exploring. Otherwise, the action with the highest value is chosen. This
-    is a temporary, hard-coded exploration rule.
+    is a hard-coded exploration rule. An Arousal System that raised
+    exploration when the world changed was tested in Phase 1 and did not
+    help, so the rule stays, with epsilon set by each experiment.
 
     :param values: How good SYNO currently believes each action is.
     :param epsilon: The probability of choosing a random action, from 0.0 to 1.0.

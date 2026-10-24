@@ -106,18 +106,28 @@ class TestSleepLive(unittest.TestCase):
         novelty_tick, habitat_init = NoveltySystem.tick, Habitat.__init__
 
         def recording_learn(network, state, chosen, reward, next_state, *rest):
+            """
+            Records the state, reward, and next state of every update, then
+            learns as normal.
+            """
             record["updates"].append((state, reward, next_state))
             return learn(network, state, chosen, reward, next_state, *rest)
 
         def recording_tick(body, moved, slept=False):
+            """Records how the body was ticked, then ticks it as normal."""
             record["ticks"].append((moved, slept))
             tick(body, moved, slept)
 
         def counting_novelty_tick(system):
+            """Counts every novelty tick, then ticks as normal."""
             record["novelty_ticks"] += 1
             novelty_tick(system)
 
         def recording_habitat(habitat, *args, **kwargs):
+            """
+            Builds the habitat as normal, then records it and where SYNO
+            started.
+            """
             habitat_init(habitat, *args, **kwargs)
             record["habitats"].append(habitat)
             record["start"] = habitat.agent

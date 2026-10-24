@@ -21,7 +21,8 @@ GRID_SIZE = 3
 SENSE_RADIUS = 2
 HIDDEN_NEURONS = 8
 LEARNING_RATE = 1.0
-# Temporary, hard-coded exploration rate (see syno/brain/policy.py).
+# Hard-coded exploration rate (see syno/brain/policy.py). The curiosity
+# experiment later cuts it to 0.05, once curiosity does most of the exploring.
 EPSILON = 0.2
 DISCOUNT = 0.9
 EPISODES = 3000
@@ -45,8 +46,9 @@ def run_episode(network: Network) -> int:
     """
     Lets SYNO act and learn in one habitat until it eats or runs out of time.
 
-    The only reward is 1.0 for eating, a temporary stand-in for hunger
-    reduction. Nothing tells SYNO how to reach the food.
+    The only reward is 1.0 for eating, a stand-in for hunger reduction,
+    which the hunger experiment replaces with reward from the body. Nothing
+    tells SYNO how to reach the food.
 
     :param network: The Decision Network, with one output per action.
     :return: The number of steps taken, or MAX_STEPS if SYNO never ate.

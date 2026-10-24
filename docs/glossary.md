@@ -5,17 +5,17 @@ This glossary defines every named component and key term used in SYNO. Component
 ### Components
 | Name | Full Name | Role | Status |
 |---|---|---|---|
-| **AM** | Artificial Mind | The complete cognitive system. Owns and orchestrates every component below. | In progress |
+| **AM** | Artificial Mind | The complete cognitive system. Owns and orchestrates every component below. | Built in Phase 1: each experiment in `experiments/` assembles the components it needs |
 | **HB** | Habitat | The grid world SYNO lives in, containing food, water, thorns, and open space, bounded by walls. External to the AM. | Built: `syno/world/habitat.py` |
 | **SI** | Sensory Interface | Converts what SYNO can perceive in the HB into numeric input signals. | Built: `Habitat.sense` for food and walls, `Habitat.sense_water` for water, `Habitat.sense_hazard` for thorns, and `NoveltySystem.sense` for how familiar nearby squares are |
 | **DN** | Decision Network | The neural network that maps sensory and internal signals to an action. | Built: `syno/brain/` (one value per action) |
 | **HC** | Homeostatic Core | Holds SYNO's internal body variables (energy, stomach fill, in `HydratedCore`, water, in `FatiguedCore`, fatigue, and in `InjuredCore`, injury) and updates them every tick. | Built: `syno/body/homeostasis.py`. `HydratedCore` adds water, a second need, and death when energy or water runs out. `FatiguedCore` adds fatigue, which builds up while awake and falls during sleep, and sleep burns less energy. `InjuredCore` adds injury, which rises when SYNO is hurt and heals slowly |
-| **SE** | Signal Emitters | Hormone-like signals computed from the HC: the hunger signal (ghrelin analog) and the satiety signal (CCK/GLP-1 analog). | Not built: the energy deficit, stomach fill, and water deficit are sensed directly |
+| **SE** | Signal Emitters | Hormone-like signals computed from the HC: the hunger signal (ghrelin analog) and the satiety signal (CCK/GLP-1 analog). | Ruled out: the energy deficit, stomach fill, water deficit, fatigue, and injury are sensed directly, and separate signals did not help (see [`biology.md`](biology.md)) |
 | **VE** | Value Estimator | Predicts how much reward SYNO expects from its current situation. | Built into the DN: each output predicts the value of one action |
 | **DS** | Dopamine System | Computes the reward prediction error (actual reward minus expected reward) and broadcasts it as the learning signal. | Built: `syno/brain/dopamine.py` |
-| **NS** | Novelty System | Produces a novelty signal for unfamiliar states, which fades with repeated exposure. | Built: `syno/brain/novelty.py` |
-| **AS** | Arousal System | Norepinephrine analog that tunes the balance between exploring and exploiting. | Not modeled. The arousal hormone in `experiments/arousal.py` sets the learning rate, not exploration |
-| **MS** | Memory Store | Records experiences for replay, forgetting, and consolidation. | Built: `syno/brain/memory.py`, with uniform replay (`experiments/replay.py`) surprise-weighted replay (`experiments/consolidation.py`), and replay only during sleep (`experiments/dreaming.py`) |
+| **NS** | Novelty System | Produces a novelty signal for unfamiliar states, which fades with repeated exposure, and reports how familiar nearby squares are. | Built: `syno/brain/novelty.py` |
+| **AS** | Arousal System | Norepinephrine analog that tunes the balance between exploring and exploiting. | Ruled out: tested in six designs, extra exploration did not help (see [`biology.md`](biology.md)). The arousal hormone in `experiments/arousal.py` sets the learning rate, not exploration |
+| **MS** | Memory Store | Records experiences for replay, forgetting, and consolidation. | Built: `syno/brain/memory.py`, with uniform replay (`experiments/replay.py`), surprise-weighted replay (`experiments/consolidation.py`), and replay only during sleep (`experiments/dreaming.py`) |
 | **GE** | Growth Engine | Adds neurons to the DN over time, without changing what the DN outputs. | Built: `syno/brain/growth.py`. In `experiments/neurogenesis.py`, SYNO grows when its surprise stops falling |
 | **EM** | Endocrine Modulator | Slow, global hormone and emotion analogs that modulate all other components. | Built: `syno/body/hormones.py`. In `experiments/arousal.py`, an arousal hormone fed by surprise sets the learning rate |
 
@@ -27,11 +27,12 @@ This glossary defines every named component and key term used in SYNO. Component
 - **Drive:** The squared energy deficit, plus the squared water deficit for a body with water, the squared fatigue for a body that gets tired, or the squared injury for a body that can be hurt. Reward is the reduction in drive over a step.
 - **Q-Learning:** The learning method SYNO uses: each output of the DN predicts the value of one action, and only the action taken is updated by its RPE.
 - **Epsilon-Greedy:** Choosing the best-valued action, except for a random action a small fraction (epsilon) of the time.
-- **Life:** One episode of an experiment, from SYNO's first step until it has lived 100 steps or died. An experiment trains SYNO over thousands of lives.
+- **Life:** One episode of an experiment, from SYNO's first step until it has lived 100 steps or died. An experiment trains SYNO over thousands of lives. In the forage experiment, an episode instead ends when SYNO eats, or after 50 steps.
 - **Lifespan:** How many steps SYNO survived in a life. A lifespan of 100 means it survived the whole life.
 - **Reward Prediction Error (RPE):** Actual reward minus expected reward. Positive when better than expected, negative when worse.
 - **Alliesthesia:** The principle that the same stimulus is more rewarding when the body needs it more.
 - **Habituation:** The gradual weakening of a response to a repeated stimulus.
+- **Familiarity:** How well SYNO knows a square, from 0.0 (new) to 1.0. It rises with each visit and fades over time, and in the habituation experiment SYNO senses it for the squares around it.
 - **Exploration / Exploitation:** Trying unfamiliar actions versus repeating actions known to be rewarding.
 - **Learning Rate:** How large a change each RPE makes to the DN's weights.
 - **Experience Replay:** Re-learning from past steps recalled from the MS, in addition to the current step.
